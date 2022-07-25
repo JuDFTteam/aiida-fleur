@@ -11,62 +11,62 @@
  --------------------------------------------------------
  Number of OMP-threads:           2
  --------------------------------------------------------
- Iteration:           1  Distance:   8.1552565488159043     
+ Iteration:           1  Distance:   8.1552565488158706     
  Test for time of next iteration:
  Time provided (min):   5.0000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           2  Distance:   7.7037463528479933     
+ Iteration:           2  Distance:   7.7037463528474284     
  Test for time of next iteration:
  Time provided (min):   5.0000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           3  Distance:  0.86638738936513315     
+ Iteration:           3  Distance:  0.86638738936508775     
  Test for time of next iteration:
  Time provided (min):   5.0000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           4  Distance:  0.50287877285928340     
+ Iteration:           4  Distance:  0.50287877283408600     
  Test for time of next iteration:
  Time provided (min):   5.0000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           5  Distance:  0.20830868611917083     
+ Iteration:           5  Distance:  0.20830868611695377     
  Test for time of next iteration:
  Time provided (min):   5.0000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           6  Distance:   1.8609242676530587E-002
+ Iteration:           6  Distance:   1.8609242618679432E-002
  Test for time of next iteration:
  Time provided (min):   5.0000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           7  Distance:   1.2985055001092746E-002
+ Iteration:           7  Distance:   1.2985054998331812E-002
  Test for time of next iteration:
  Time provided (min):   5.0000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           8  Distance:   1.3122617219906735E-003
+ Iteration:           8  Distance:   1.3122617261215300E-003
  Test for time of next iteration:
  Time provided (min):   5.0000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:           9  Distance:   1.3676622297083833E-003
+ Iteration:           9  Distance:   1.3676622777581326E-003
  Test for time of next iteration:
  Time provided (min):   5.0000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:          10  Distance:   1.7620293872208534E-004
+ Iteration:          10  Distance:   1.7620295239682179E-004
  Test for time of next iteration:
  Time provided (min):   5.0000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:          11  Distance:   3.2952693963331907E-005
+ Iteration:          11  Distance:   3.2952528463468168E-005
  Test for time of next iteration:
  Time provided (min):   5.0000000000000000     
  Time used     (min):           1
  Time per iter (min):           1
- Iteration:          12  Distance:   9.8595324364752157E-006
+ Iteration:          12  Distance:   9.8595386188595897E-006
  Test for time of next iteration:
  Time provided (min):   5.0000000000000000     
  Time used     (min):           1

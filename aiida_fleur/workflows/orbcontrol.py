@@ -139,7 +139,7 @@ class FleurOrbControlWorkChain(WorkChain):
     :param inpgen: (Code)
     :param fleur: (Code)
     """
-    _workflowversion = '0.4.0'
+    _workflowversion = '0.5.1'
 
     _default_options = {
         'resources': {
@@ -315,22 +315,21 @@ class FleurOrbControlWorkChain(WorkChain):
                         error = f'ERROR: Invalid input: {species} defined in fixed_occupations but not in ldau_dict'
                         self.report(error)
                         return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+                    missing = False
+                    if isinstance(ldau_dict[species], dict):
+                        if int(orbital) != ldau_dict[species]['l']:
+                            missing = True
                     else:
-                        missing = False
-                        if isinstance(ldau_dict[species], dict):
-                            if int(orbital) != ldau_dict[species]['l']:
+                        for index, current_dict in enumerate(ldau_dict[species]):
+                            if int(orbital) == current_dict['l']:
+                                break
+                            if index == len(ldau_dict) - 1:
                                 missing = True
-                        else:
-                            for index, current_dict in enumerate(ldau_dict[species]):
-                                if int(orbital) == current_dict['l']:
-                                    break
-                                if index == len(ldau_dict) - 1:
-                                    missing = True
-                        if missing:
-                            error = f'ERROR: Invalid input: Orbital {orbital} is given in fixed_occupations for {species}, ' \
-                                     ' but it is not defined in ldau_dict'
-                            self.report(error)
-                            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+                    if missing:
+                        error = f'ERROR: Invalid input: Orbital {orbital} is given in fixed_occupations for {species}, ' \
+                                    ' but it is not defined in ldau_dict'
+                        self.report(error)
+                        return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
                     if not isinstance(occ, list):
                         error = f'ERROR: Invalid input: {species} defined in fixed_occupations invalid type'
@@ -347,22 +346,22 @@ class FleurOrbControlWorkChain(WorkChain):
                             error = f'ERROR: Invalid input: {species} defined in fixed_configurations but not in ldau_dict'
                             self.report(error)
                             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
+                        missing = False
+                        if isinstance(ldau_dict[species], dict):
+                            if int(orbital) != ldau_dict[species]['l']:
+                                missing = True
                         else:
-                            missing = False
-                            if isinstance(ldau_dict[species], dict):
-                                if int(orbital) != ldau_dict[species]['l']:
+                            for index, current_dict in enumerate(ldau_dict[species]):
+                                if int(orbital) == current_dict['l']:
+                                    break
+                                if index == len(ldau_dict) - 1:
                                     missing = True
-                            else:
-                                for index, current_dict in enumerate(ldau_dict[species]):
-                                    if int(orbital) == current_dict['l']:
-                                        break
-                                    if index == len(ldau_dict) - 1:
-                                        missing = True
-                            if missing:
-                                error = f'ERROR: Invalid input: Orbital {orbital} is given in fixed_configurations for {species}, ' \
-                                         ' but it is not defined in ldau_dict'
-                                self.report(error)
-                                return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+                        if missing:
+                            error = f'ERROR: Invalid input: Orbital {orbital} is given in fixed_configurations for {species}, ' \
+                                        ' but it is not defined in ldau_dict'
+                            self.report(error)
+                            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
                         if not isinstance(occ, list):
                             error = f'ERROR: Invalid input: {species} defined in fixed_configurations invalid type'
@@ -377,16 +376,18 @@ class FleurOrbControlWorkChain(WorkChain):
         inputs = self.inputs
         if 'fleur' in inputs:
             try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur')
             except ValueError:
-                error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
+                error = 'The code you provided for FLEUR does not use the plugin fleur.fleur'
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         if 'inpgen' in inputs:
             try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen')
             except ValueError:
-                error = ('The code you provided for INPGEN does not use the plugin fleur.inpgen')
+                error = 'The code you provided for INPGEN does not use the plugin fleur.inpgen'
+                self.report(error)
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
 
         fleurinp = None
@@ -647,6 +648,16 @@ class FleurOrbControlWorkChain(WorkChain):
 
         fm.set_inpchanges({'itmax': self.ctx.wf_dict['iterations_fixed'], 'l_linMix': True, 'mixParam': 0.0})
 
+        fchanges = self.ctx.wf_dict['inpxml_changes']
+        if fchanges:
+            try:
+                fm.add_task_list(fchanges)
+            except (ValueError, TypeError) as exc:
+                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
+                         f', which failed with {exc}. I abort, good luck next time!')
+                self.control_end_wc(error)
+                return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
+
         for atom_species, ldau_dict in self.ctx.wf_dict['ldau_dict'].items():
             fm.set_species(species_name=atom_species, attributedict={'ldaU': ldau_dict})
 
@@ -670,16 +681,6 @@ class FleurOrbControlWorkChain(WorkChain):
                                    orbital=int(orbital),
                                    spin=spin + 1,
                                    state_occupations=config_spin)
-
-        fchanges = self.ctx.wf_dict['inpxml_changes']
-        if fchanges:
-            try:
-                fm.add_task_list(fchanges)
-            except (ValueError, TypeError) as exc:
-                error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
-                         f', which failed with {exc}. I abort, good luck next time!')
-                self.control_end_wc(error)
-                return {}, self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         try:
             fm.show(display=False, validate=True)
@@ -850,6 +851,7 @@ class FleurOrbControlWorkChain(WorkChain):
             t_energylist.append(t_e)
             distancelist.append(dis)
             configs_list.append(index)
+        converged_configs = [index for index in configs_list if index not in non_converged_configs]
 
         out = {
             'workflow_name': self.__class__.__name__,
@@ -860,6 +862,7 @@ class FleurOrbControlWorkChain(WorkChain):
             'distance_charge': distancelist,
             'distance_charge_units': dis_u,
             'successful_configs': configs_list,
+            'converged_configs': converged_configs,
             'non_converged_configs': non_converged_configs,
             'failed_configs': failed_configs,
             'groundstate_configuration': None,
@@ -879,7 +882,25 @@ class FleurOrbControlWorkChain(WorkChain):
 
         #Find the minimal total energy in the list
         if any(e is not None for e in t_energylist):
-            groundstate_index = np.nanargmin(np.array(t_energylist, dtype=np.float))
+            energy = np.array(t_energylist, dtype=float)
+
+            converged_mask = np.ones(energy.size, dtype=bool)
+            converged_mask[non_converged_configs] = False
+
+            converged_minimum_energy = np.nanmin(energy[converged_mask])
+            if len(energy[~converged_mask]) != 0:
+                if np.nanmin(energy[~converged_mask]) < converged_minimum_energy:
+                    lower_non_converged = np.array(non_converged_configs)[
+                        energy[~converged_mask] < converged_minimum_energy]
+                    out['warnings'].extend(f"Configuration 'Relaxed_{index}' did not converge "
+                                           'but is lower in energy than the lowest converged configuration'
+                                           for index in lower_non_converged)
+
+            #Replace the non-converged calculations with NaN
+            #If we were to simply do np.nanargmin(energy[converged_mask])
+            #The index will no longer match up with the complete list
+            energy[~converged_mask] = np.nan
+            groundstate_index = np.nanargmin(energy)
             out['groundstate_configuration'] = groundstate_index
 
             if f'Relaxed_{groundstate_index}' in self.ctx:
@@ -915,7 +936,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
         if all(e is None for e in t_energylist):
             return self.exit_codes.ERROR_ALL_CONFIGS_FAILED
-        elif not self.ctx.successful:
+        if not self.ctx.successful:
             return self.exit_codes.ERROR_SOME_CONFIGS_FAILED
 
     def control_end_wc(self, errormsg):

@@ -394,7 +394,7 @@ class FleurCoreholeWorkChain(WorkChain):
         # 1. Find out what atoms to put coreholes on
         self.report(f'Atoms to calculate : {atoms_toc}')
         for atom_info in atoms_toc:
-            if isinstance(atom_info, str):  # , six.text_type)):  #basestring):
+            if isinstance(atom_info, str):
                 if atom_info == 'all':
                     # add all symmetry equivivalent atoms of structure to create coreholes
                     #coreholes_atoms = base_atoms_sites
@@ -450,7 +450,7 @@ class FleurCoreholeWorkChain(WorkChain):
         # 2. now check what type of corelevel shall we create on those atoms
         self.report(f'Corelevels to calculate : {corelevels_toc}')
         for corel in corelevels_toc:
-            if isinstance(corel, str):  # , six.text_type)):  #basestring):
+            if isinstance(corel, str):
                 # split string (Be1s) s.replace(';',' ')... could get rid of re
                 elm_cl = re.split('[, ;:-]', corel)
                 #print(elm_cl)

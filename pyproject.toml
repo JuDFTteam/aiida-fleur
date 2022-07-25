@@ -39,7 +39,6 @@ disable = [
     "line-too-long",
     "locally-disabled",
     "wildcard-import",
-    "locally-enabled",
     "too-many-instance-attributes",
     "fixme",
     "len-as-condition",
@@ -53,7 +52,6 @@ disable = [
     "missing-function-docstring",
     "too-many-locals",
     "too-many-branches",
-    "no-self-use",
     "c-extension-no-member",
     "too-many-statements",
     "too-many-nested-blocks",
@@ -66,11 +64,9 @@ disable = [
     "no-else-raise", # FIXME ?
     "no-else-return", # FIXME ?
     "inconsistent-return-statements",
-    "unspecified-encoding",
     "protected-access",
     "unexpected-keyword-arg",
     "missing-module-docstring",
-    "consider-using-with",
 ]
 
 [tool.pytest.ini_options]

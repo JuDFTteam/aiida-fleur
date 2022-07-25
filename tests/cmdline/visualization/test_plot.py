@@ -40,7 +40,7 @@ def test_cmd_plot(run_cli_command, temp_dir, import_with_migrate):
 
     # provide a file with ids
     tempfile_name = os.path.join(temp_dir, 'test_uuids.txt')
-    with open(tempfile_name, 'w') as file1:
+    with open(tempfile_name, 'w', encoding='utf-8') as file1:
         file1.write('7f9f4cfb-4170-48ea-801d-4269f88792e0\n7f9f4cfb-4170-48ea-801d-4269f88792e0')
     options = [process_uuid, '--no-show', '-f', tempfile_name]
     result = run_cli_command(cmd_plot, options=options)

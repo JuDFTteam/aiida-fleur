@@ -4,17 +4,11 @@ prob works only under linux. cleans data_dir, workflows/caches
 '''
 import os
 import shutil
-#import subprocess
+import subprocess
 
-#base = '/home/broeder/aiida/github/judft/aiida-fleur/aiida_fleur/tests/'
 data_dirs = ['data_dir/', 'workflows/caches/']
 
-for dirs in data_dirs:
-    listing = os.listdir(dirs)
-    for infile in listing:
-        print('migrating aiida export file: ' + dirs + infile)
-        infile_old = 'old_' + infile
-        shutil.move(dirs + infile, dirs + infile_old)
-        #subprocess.run(["", "])
-        os.system(f'verdi export migrate {dirs + infile_old} {dirs + infile}')
-        #os.system("ls {} {}".format(dirs+infile_old, dirs+infile))
+for folder in data_dirs:
+    for infile in os.listdir(folder):
+        print('migrating aiida export file: ' + folder + infile)
+        subprocess.run(['verdi', 'archive', 'migrate', folder + infile, '--in-place'], check=True)

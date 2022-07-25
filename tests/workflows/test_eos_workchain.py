@@ -79,9 +79,8 @@ def test_fleur_eos_structure_Si(with_export_cache, fleur_local_code, inpgen_loca
         'calc_parameters': orm.Dict(dict=calc_parameters).store()
     }
     print(builder)
-    # now run calculation
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_eos_si_structure.tar.gz')
-    with with_export_cache(data_dir_abspath=data_dir_path):
+
+    with with_export_cache('fleur_eos_si_structure.tar.gz'):
         out, node = run_get_node(builder)
 
     print(out)

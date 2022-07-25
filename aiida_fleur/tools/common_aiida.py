@@ -23,8 +23,6 @@ create_group
 # TODO import, export of descriptions, and labels...?
 import json
 
-from six.moves import input as input_six
-
 from aiida.orm import load_node
 from aiida.orm.querybuilder import QueryBuilder
 from aiida.orm import Group, Node
@@ -58,7 +56,7 @@ def export_extras(nodes, filename='node_extras.txt'):
         extras_dict = node.extras
         outdict[uuid] = extras_dict
 
-    with open(filename, 'w') as file:
+    with open(filename, 'w', encoding='utf-8') as file:
         json.dump(outdict, file, sort_keys=True, indent=4, separators=(',', ': '))
 
 
@@ -77,7 +75,7 @@ def import_extras(filename):
     """
 
     all_extras = {}
-    with open(filename) as file1:
+    with open(filename, encoding='utf-8') as file1:
         try:
             all_extras = json.load(file1)
         except json.JSONDecodeError:

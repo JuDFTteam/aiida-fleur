@@ -55,17 +55,17 @@ def pytest_collection_modifyitems(session, config, items):
 
     skip_regression = pytest.mark.skip(
         reason='Workflow regression test is skipped, because aiida-testing is not available')
-    aiida_version_skip = pytest.mark.skipif(
-        aiida.get_version().startswith('2.'),
-        reason='Workflow regression test is skipped, because aiida-testing is not compatible with AiiDA 2.0')
+    # aiida_version_skip = pytest.mark.skipif(
+    #     aiida.get_version().startswith('2.'),
+    #     reason='Workflow regression test is skipped, because aiida-testing is not compatible with AiiDA 2.0')
 
     regression_items = [item for item in items if 'regression_test' in item.keywords]
     if not RUN_REGRESSION_TESTS:
         for item in regression_items:
             item.add_marker(skip_regression)
 
-    for item in regression_items:
-        item.add_marker(aiida_version_skip)
+    # for item in regression_items:
+    #     item.add_marker(aiida_version_skip)
 
 
 @pytest.fixture(scope='function')
@@ -362,17 +362,11 @@ def create_fleurinp():
 def inpxml_etree():
     """Returns the etree generator"""
 
-    def _get_etree(path, return_schema=False):
+    def _get_etree(path):
         from lxml import etree
-        from masci_tools.io.parsers.fleur_schema import InputSchemaDict
-        with open(path) as inpxmlfile:
+        with open(path, encoding='utf-8') as inpxmlfile:
             tree = etree.parse(inpxmlfile)
-            version = tree.getroot().attrib['fleurInputVersion']
-            schema_dict = InputSchemaDict.fromVersion(version)
-        if return_schema:
-            return tree, schema_dict
-        else:
-            return tree
+        return tree
 
     return _get_etree
 
@@ -582,7 +576,7 @@ def read_dict_from_file():
         import json
 
         node_dict = {}
-        with open(jsonfilepath) as jfile:
+        with open(jsonfilepath, encoding='utf-8') as jfile:
             node_dict = json.load(jfile)
 
         return node_dict
@@ -597,22 +591,7 @@ def generate_structure2():
     def _generate_structure2():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
-
-        def rel_to_abs(vector, cell):
-            """
-            converts interal coordinates to absolut coordinates in Angstroem.
-            """
-            if len(vector) == 3:
-                postionR = vector
-                row1 = cell[0]
-                row2 = cell[1]
-                row3 = cell[2]
-                new_abs_pos = [
-                    postionR[0] * row1[0] + postionR[1] * row2[0] + postionR[2] * row3[0],
-                    postionR[0] * row1[1] + postionR[1] * row2[1] + postionR[2] * row3[1],
-                    postionR[0] * row1[2] + postionR[1] * row2[2] + postionR[2] * row3[2]
-                ]
-                return new_abs_pos
+        from masci_tools.io.common_functions import rel_to_abs
 
         bohr_a_0 = 0.52917721092  # A
         a = 5.167355275190 * bohr_a_0
@@ -681,7 +660,7 @@ def inpgen_local_code(mock_code_factory, request):
     InpgenCode = mock_code_factory(label='inpgen',
                                    data_dir_abspath=data_dir,
                                    entry_point='fleur.inpgen',
-                                   ignore_files=[
+                                   ignore_paths=[
                                        '_aiidasubmit.sh', 'FleurInputSchema.xsd', 'scratch', 'usage.json', '*.config',
                                        '*.econfig', 'struct.xsf'
                                    ])
@@ -703,7 +682,7 @@ def fleur_local_code(mock_code_factory, pytestconfig, request):
     FleurCode = mock_code_factory(label='fleur',
                                   data_dir_abspath=data_dir,
                                   entry_point='fleur.fleur',
-                                  ignore_files=[
+                                  ignore_paths=[
                                       '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'FleurOutputSchema.xsd',
                                       'cdn.hdf', 'usage.json', 'cdn*', 'mixing_history*', 'juDFT_times.json',
                                       '*.config', '*.econfig', 'struct*.xsf', 'band.gnu'

@@ -198,7 +198,7 @@ class FleurCalculation(CalcJob):
     def define(cls, spec):
         super().define(spec)
 
-        # spec.input('metadata.options.input_filename', valid_type=six.string_types,
+        # spec.input('metadata.options.input_filename', valid_type=str,
         #            default=cls._INPXML_FILE_NAME)
         spec.input('metadata.options.output_filename', valid_type=str, default=cls._OUTXML_FILE_NAME)
         spec.input('metadata.options.use_kpoints', valid_type=bool, default=cls._use_kpoints)
@@ -439,13 +439,10 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_scf
                 for file_orig, file_dest in copylist:
                     if file_orig not in outfolder_filenames:
+                        message = f'File {file_orig} not found in parent folder but needed to start calculation.\n'
                         if file_orig in (self._CDN1_FILE_NAME, self._CDN_LAST_HDF5_FILE_NAME):
-                            raise InputValidationError(
-                                f'File {file_orig} not found in parent folder but needed to start calculation'
-                                'Make sure that the given Fleur code is correctly labelled with/without HDF5')
-                        else:
-                            raise InputValidationError(
-                                f'File {file_orig} not found in parent folder but needed to start calculation')
+                            message += 'Make sure that the given Fleur code is correctly labelled with/without HDF5'
+                        raise InputValidationError(message)
                     local_copy_list.append((outfolder_uuid, file_orig, file_dest))
                 # TODO: get inp.xml from parent fleurinpdata; otherwise it will be doubled in rep
             elif not fleurinpgen and has_fleurinp:
@@ -458,13 +455,10 @@ class FleurCalculation(CalcJob):
                     copylist = self._copy_scf_noinp
                 for file_orig, file_dest in copylist:
                     if file_orig not in outfolder_filenames:
+                        message = f'File {file_orig} not found in parent folder but needed to start calculation.\n'
                         if file_orig in (self._CDN1_FILE_NAME, self._CDN_LAST_HDF5_FILE_NAME):
-                            raise InputValidationError(
-                                f'File {file_orig} not found in parent folder but needed to start calculation'
-                                'Make sure that the given Fleur code is correctly labelled with/without HDF5')
-                        else:
-                            raise InputValidationError(
-                                f'File {file_orig} not found in parent folder but needed to start calculation')
+                            message += 'Make sure that the given Fleur code is correctly labelled with/without HDF5'
+                        raise InputValidationError(message)
                     local_copy_list.append((outfolder_uuid, file_orig, file_dest))
 
             # TODO: not on same computer -> copy needed files from repository

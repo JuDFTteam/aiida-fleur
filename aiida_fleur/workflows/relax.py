@@ -33,7 +33,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = '0.4.0'
+    _workflowversion = '0.4.1'
 
     _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
@@ -184,8 +184,7 @@ class FleurRelaxWorkChain(WorkChain):
         if relaxtype is None:
             self.ctx.reached_relax = True
             return False
-        else:
-            return True
+        return True
 
     def converge_scf(self):
         """
@@ -310,7 +309,7 @@ class FleurRelaxWorkChain(WorkChain):
                 if fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to atom and vacuum overlap')
                     return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-                elif fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
+                if fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to MT overlap')
                     return self.exit_codes.ERROR_MT_RADII_RELAX
             return self.exit_codes.ERROR_SCF_FAILED
@@ -341,12 +340,19 @@ class FleurRelaxWorkChain(WorkChain):
 
         largest_now = self.ctx.forces[-1]
 
+        # get force mixing (straight or BFGS) setting
+        # defaults to stright mixing if not set in scf.wf_parameters
+        if 'wf_parameters' in self.inputs.scf:
+            force_dict = self.inputs.scf.wf_parameters.get_dict().get('force_dict', {})
+            force_strmix = force_dict.get('forcemix', 'straight') == 'straight'
+        else:
+            force_strmix = True
+
         if largest_now < self.ctx.wf_dict['force_criterion']:
             self.report(f'INFO: Structure is converged to the largest force {self.ctx.forces[-1]}')
             self.ctx.reached_relax = True
             return False
-        elif largest_now < self.ctx.wf_dict['change_mixing_criterion'] and self.inputs.scf.wf_parameters['force_dict'][
-                'forcemix'] == 'straight':
+        if largest_now < self.ctx.wf_dict['change_mixing_criterion'] and force_strmix:
             self.report(f'INFO: Seems it is safe to switch to BFGS. Current largest force: {self.ctx.forces[-1]}')
             self.ctx.switch_bfgs = True
             return False

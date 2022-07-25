@@ -3,7 +3,7 @@ fleurinpData:
   - force:
       calculate: true
       relaxXYZ: TTT
-    labels:
+    label:
       '                   1':
       - 0.0
       - 0.0

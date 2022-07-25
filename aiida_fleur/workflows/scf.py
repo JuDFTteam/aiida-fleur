@@ -30,6 +30,7 @@ from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
 from aiida_fleur.tools.create_kpoints_from_distance import create_kpoints_from_distance_parameter
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
+from aiida_fleur.calculation.fleur import FleurCalculation
 
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 
@@ -281,7 +282,7 @@ class FleurScfWorkChain(WorkChain):
 
         if 'inpgen' in inputs:
             try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen')
             except ValueError:
                 error = 'The code you provided for inpgen of FLEUR does not use the plugin fleur.inpgen'
                 self.report(error)
@@ -289,7 +290,7 @@ class FleurScfWorkChain(WorkChain):
 
         if 'fleur' in inputs:
             try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur')
             except ValueError:
                 error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
                 return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
@@ -452,7 +453,8 @@ class FleurScfWorkChain(WorkChain):
         # Has to never crash because corresponding check was done in validate function
         if self.ctx.fleurinp:  # something was already changed
             return
-        elif 'fleurinp' in inputs:
+
+        if 'fleurinp' in inputs:
             fleurin = self.inputs.fleurinp
         elif 'structure' in inputs:
             if not self.ctx['inpgen'].is_finished_ok:
@@ -634,8 +636,8 @@ class FleurScfWorkChain(WorkChain):
             error = f'ERROR: Last Fleur calculation failed with exit status {exit_status}'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_FLEUR_CALCULATION_FAILED
-        else:
-            self.ctx.parse_last = True
+
+        self.ctx.parse_last = True
 
     def get_res(self):
         """
@@ -647,13 +649,12 @@ class FleurScfWorkChain(WorkChain):
         mode = self.ctx.wf_dict.get('mode')
         if self.ctx.parse_last:
             last_base_wc = self.ctx.last_base_wc
-            fleur_calcjob = load_node(find_last_submitted_calcjob(last_base_wc))
-            walltime = last_base_wc.outputs.output_parameters.dict.walltime
 
+            walltime = last_base_wc.outputs.output_parameters['walltime']
             if isinstance(walltime, int):
                 self.ctx.total_wall_time = self.ctx.total_wall_time + walltime
-            with fleur_calcjob.outputs.retrieved.open(fleur_calcjob.process_class._OUTXML_FILE_NAME,
-                                                      'rb') as outxmlfile:
+
+            with last_base_wc.outputs.retrieved.open(FleurCalculation._OUTXML_FILE_NAME, 'rb') as outxmlfile:
                 output_dict = outxml_parser(outxmlfile,
                                             minimal_mode=True,
                                             list_return=True,
@@ -706,6 +707,10 @@ class FleurScfWorkChain(WorkChain):
                 self.ctx.last_nmmp_distance = max(self.ctx.nmmp_distance[-1])
             else:
                 self.ctx.last_nmmp_distance = self.ctx.nmmp_distance[-1]
+            if self.ctx.last_nmmp_distance is None:
+                self.report('No LDA+U distance found but only one iteration performed\n'
+                            'Assuming that the calculatin should be continued')
+                self.ctx.last_nmmp_distance = self.ctx.wf_dict.get('nmmp_converged') + 1
 
     def condition(self):
         """

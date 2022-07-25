@@ -33,7 +33,7 @@
         "lxml~=4.8",
         "numpy~=1.16,>=1.16.4",
         "sympy",
-        "masci-tools~=0.10",
+        "masci-tools~=0.11,>=0.11.3",
         "future",
         "pyhull",
         "more_itertools",
@@ -70,8 +70,7 @@
             "fleur.inpgen = aiida_fleur.calculation.fleurinputgen:FleurinputgenCalculation"
         ],
         "aiida.data": [
-            "fleur.fleurinp = aiida_fleur.data.fleurinp:FleurinpData",
-            "fleur.fleurinpmodifier = aiida_fleur.data.fleurinpmodifier:FleurinpModifier"
+            "fleur.fleurinp = aiida_fleur.data.fleurinp:FleurinpData"
         ],
         "aiida.parsers": [
             "fleur.fleurparser = aiida_fleur.parsers.fleur:FleurParser",

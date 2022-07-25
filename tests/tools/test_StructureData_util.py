@@ -119,8 +119,11 @@ def test_abs_to_rel(generate_structure):
     cell = structure.cell
 
     vector = [1.3575, 1.3575, 1.3575]
-    assert np.isclose(abs_to_rel(vector, cell), np.array([0.25, 0.25, 0.25])).all()
-    assert not abs_to_rel([1], cell)
+    with pytest.deprecated_call():
+        assert np.isclose(abs_to_rel(vector, cell), np.array([0.25, 0.25, 0.25])).all()
+    with pytest.deprecated_call():
+        with pytest.raises(ValueError):
+            assert not abs_to_rel([1], cell)
 
 
 def test_abs_to_rel_f(generate_film_structure):
@@ -130,8 +133,11 @@ def test_abs_to_rel_f(generate_film_structure):
     cell = structure.cell
 
     vector = [1.4026317387183, 1.9836207751336, 0.25]
-    assert np.isclose(abs_to_rel_f(vector, cell, pbc=structure.pbc), np.array([0.5, 0.5, 0.25])).all()
-    assert not abs_to_rel_f([1], cell, pbc=structure.pbc)
+    with pytest.deprecated_call():
+        assert np.isclose(abs_to_rel_f(vector, cell, pbc=structure.pbc), np.array([0.5, 0.5, 0.25])).all()
+    with pytest.deprecated_call():
+        with pytest.raises(ValueError):
+            abs_to_rel_f([1], cell, pbc=structure.pbc)
 
 
 def test_rel_to_abs(generate_structure):
@@ -142,8 +148,11 @@ def test_rel_to_abs(generate_structure):
     cell = structure.cell
 
     vector = [0.25, 0.25, 0.25]
-    assert np.isclose(rel_to_abs(vector, cell), np.array([1.3575, 1.3575, 1.3575])).all()
-    assert not rel_to_abs([1], cell)
+    with pytest.deprecated_call():
+        assert np.isclose(rel_to_abs(vector, cell), np.array([1.3575, 1.3575, 1.3575])).all()
+    with pytest.deprecated_call():
+        with pytest.raises(ValueError):
+            assert not rel_to_abs([1], cell)
 
 
 def test_rel_to_abs_f(generate_film_structure):
@@ -154,8 +163,11 @@ def test_rel_to_abs_f(generate_film_structure):
     cell = structure.cell
 
     vector = [0.5, 0.5, 0.25]
-    assert np.isclose(rel_to_abs_f(vector, cell), np.array([1.4026317387183, 1.9836207751336, 0.25])).all()
-    assert not rel_to_abs_f([1], cell)
+    with pytest.deprecated_call():
+        assert np.isclose(rel_to_abs_f(vector, cell), np.array([1.4026317387183, 1.9836207751336, 0.25])).all()
+    with pytest.deprecated_call():
+        with pytest.raises(ValueError):
+            assert not rel_to_abs_f([1], cell)
 
 
 def test_break_symmetry_wf_film_structure_only(generate_film_structure):

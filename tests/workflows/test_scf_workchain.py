@@ -11,13 +11,11 @@
 ''' Contains various tests for the scf workchain '''
 import pytest
 import os
-from aiida.orm import Code, load_node, Dict, StructureData
+from aiida.orm import load_node, Dict
 from aiida.engine import run_get_node
-from aiida.orm import CalcJobNode
 from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
 import aiida_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
-from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
@@ -49,10 +47,7 @@ def test_fleur_scf_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
     builder.fleur = fleur_local_code
     #print(builder)
 
-    # now run calculation
-    #run_with_cache(builder)
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_scf_fleurinp_Si.tar.gz')
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with with_export_cache('fleur_scf_fleurinp_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
@@ -74,7 +69,7 @@ def test_fleur_scf_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_structure_Si(run_with_cache, with_export_cache, clear_database, fleur_local_code, inpgen_local_code,
+def test_fleur_scf_structure_Si(with_export_cache, clear_database, fleur_local_code, inpgen_local_code,
                                 generate_structure2):
     """
     Full regression test of FleurScfWorkchain starting with a crystal structure and parameters
@@ -129,9 +124,7 @@ def test_fleur_scf_structure_Si(run_with_cache, with_export_cache, clear_databas
     builder.inpgen = inpgen_local_code
     print(builder)
 
-    # now run scf with cache fixture
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_scf_structure_Si.tar.gz')
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with with_export_cache('fleur_scf_structure_Si.tar.gz'):
         out, node = run_get_node(builder)
 
     print(out)
@@ -260,11 +253,7 @@ def test_fleur_scf_fleurinp_Si_modifications(with_export_cache, fleur_local_code
     builder.fleur = fleur_local_code
     #print(builder)
 
-    # now run calculation
-    #run_with_cache(builder)
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_scf_fleurinp_Si_mod.tar.gz')
-
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with with_export_cache('fleur_scf_fleurinp_Si_mod.tar.gz'):
         out, node = run_get_node(builder)
     print(out)
     #print(node)

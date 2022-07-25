@@ -530,6 +530,5 @@ def find_substrate(remote=None, structure=None):
 
     if isinstance(inputs, FleurinpData):
         raise ValueError('Did not expect to find Relax WC started from FleurinpData')
-    else:
-        orig_structure = inputs[0]
-        return orig_structure.get_incoming().all()[0].node.get_outgoing().get_node_by_label('substrate').uuid
+    orig_structure = inputs[0]
+    return orig_structure.get_incoming().all()[0].node.get_outgoing().get_node_by_label('substrate').uuid

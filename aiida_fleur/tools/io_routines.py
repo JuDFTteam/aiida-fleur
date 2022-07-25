@@ -23,7 +23,7 @@ def write_results_to_file(headerstring, data, destination='./outputfile', sepera
     param data: 2D array (numpy,scipy) with data [colum1 colum2, ...]
     """
 
-    with open(destination, 'w') as thefile:
+    with open(destination, 'w', encoding='utf-8') as thefile:
         thefile.write(headerstring)
         datastring = ''
         #seperator = seperator  # '\t'
