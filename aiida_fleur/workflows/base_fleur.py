@@ -28,7 +28,7 @@ from aiida_fleur.data.fleurinp import get_fleurinp_from_remote_data
 
 class FleurBaseWorkChain(BaseRestartWorkChain):
     """Workchain to run a FLEUR calculation with automated error handling and restarts"""
-    _workflowversion = '0.2.0'
+    _workflowversion = '0.2.1'
     _process_class = FleurCalculation
 
     @classmethod
@@ -44,6 +44,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             valid_type=orm.Dict,
             default=lambda: orm.Dict(dict={
                 'only_even_MPI': False,
+                'forbid_single_mpi': False,
                 'max_queue_nodes': 20,
                 'max_queue_wallclock_sec': 86400
             }),
@@ -125,12 +126,12 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                 self.ctx.use_omp = False
                 self.ctx.suggest_mpi_omp_ratio = 1
 
-            try:
-                self.check_kpts()
+            status = self.check_kpts()
+            if status is None:
                 self.ctx.can_be_optimised = True
-            except Warning:
+            else:
                 self.report('ERROR: Not optimal computational resources.')
-                return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES
+                return status
 
     def check_kpts(self):
         """
@@ -144,32 +145,31 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             fleurinp = self.ctx.inputs.fleurinpdata
         else:
             fleurinp = get_fleurinp_from_remote_data(self.ctx.inputs.parent_folder)
-        machines = self.ctx.num_machines
-        mpi_proc = self.ctx.num_mpiprocs_per_machine
-        omp_per_mpi = self.ctx.num_cores_per_mpiproc
+
         only_even_MPI = self.inputs.add_comp_para['only_even_MPI']
+        forbid_single_mpi = self.inputs.add_comp_para['forbid_single_mpi']
         try:
-            adv_nodes, adv_mpi_tasks, adv_omp_per_mpi, message = optimize_calc_options(machines,
-                                                                                       mpi_proc,
-                                                                                       omp_per_mpi,
-                                                                                       self.ctx.use_omp,
-                                                                                       self.ctx.suggest_mpi_omp_ratio,
-                                                                                       fleurinp,
-                                                                                       only_even_MPI=only_even_MPI)
+            machines, mpi_tasks, omp_threads, message = optimize_calc_options(self.ctx.num_machines,
+                                                                              self.ctx.num_mpiprocs_per_machine,
+                                                                              self.ctx.num_cores_per_mpiproc,
+                                                                              self.ctx.use_omp,
+                                                                              self.ctx.suggest_mpi_omp_ratio,
+                                                                              fleurinp,
+                                                                              only_even_MPI=only_even_MPI,
+                                                                              forbid_single_mpi=forbid_single_mpi)
         except ValueError as exc:
-            raise Warning('Not optimal computational resources, load less than 60%') from exc
+            self.report(exc)
+            return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES
 
         self.report(message)
 
-        self.ctx.inputs.metadata.options['resources']['num_machines'] = adv_nodes
-        self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_mpi_tasks
+        self.ctx.inputs.metadata.options['resources']['num_machines'] = machines
+        self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = mpi_tasks
         if self.ctx.use_omp:
-            self.ctx.inputs.metadata.options['resources']['num_cores_per_mpiproc'] = adv_omp_per_mpi
-            if 'environment_variables' in self.ctx.inputs.metadata.options:
-                self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(adv_omp_per_mpi)
-            else:
+            self.ctx.inputs.metadata.options['resources']['num_cores_per_mpiproc'] = omp_threads
+            if 'environment_variables' not in self.ctx.inputs.metadata.options:
                 self.ctx.inputs.metadata.options['environment_variables'] = {}
-                self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(adv_omp_per_mpi)
+            self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(omp_threads)
 
     @process_handler(priority=1,
                      exit_codes=[
@@ -270,7 +270,12 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         self.ctx.num_machines = propose_nodes
 
         self.ctx.suggest_mpi_omp_ratio = self.ctx.suggest_mpi_omp_ratio / 2
-        self.check_kpts()
+
+        status = self.check_kpts()
+        if status is not None:
+            self.ctx.is_finished = True
+            self.results()
+            return ProcessHandlerReport(True, self.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES)
 
         if 'settings' not in self.ctx.inputs:
             settings = {}

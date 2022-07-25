@@ -392,6 +392,17 @@ def test_optimize_calc_options(inputs, result_correct):
     assert result == result_correct
 
 
+def test_optimize_calc_options_forbid_single_mpi():
+    from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
+
+    nodes, mpi, omp, _ = optimize_calc_options(10, 4, 6, True, 1, None, 1033, forbid_single_mpi=False)
+    assert nodes == 1
+    assert mpi == 1
+    assert omp == 24
+    with pytest.raises(ValueError):
+        optimize_calc_options(10, 4, 6, True, 1, None, 1033, forbid_single_mpi=True)
+
+
 def test_find_last_submitted_calcjob(fixture_localhost, generate_calc_job_node, generate_work_chain_node):
     from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
     from aiida.common.links import LinkType

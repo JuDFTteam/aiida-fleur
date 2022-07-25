@@ -45,7 +45,12 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     Dict = DataFactory('dict')
     inputs = {}
 
-    add_comp_para_default = {'only_even_MPI': False, 'max_queue_nodes': 20, 'max_queue_wallclock_sec': 86400}
+    add_comp_para_default = {
+        'only_even_MPI': False,
+        'forbid_single_mpi': False,
+        'max_queue_nodes': 20,
+        'max_queue_wallclock_sec': 86400
+    }
     if add_comp_para is None:
         add_comp_para = {}
     add_comp_para = {**add_comp_para_default, **add_comp_para}
@@ -461,7 +466,8 @@ def optimize_calc_options(nodes,
                           fleurinpData=None,
                           kpts=None,
                           sacrifice_level=0.9,
-                          only_even_MPI=False):
+                          only_even_MPI=False,
+                          forbid_single_mpi=False):
     """
     Makes a suggestion on parallelisation setup for a particular fleurinpData.
     Only the total number of k-points is analysed: the function suggests ideal k-point
@@ -483,7 +489,8 @@ def optimize_calc_options(nodes,
     :param kpts: the total number of kpts
     :param sacrifice_level: sets a level of performance sacrifice that a user can afford for better
                             MPI/OMP ratio.
-    :parm only_even_MPI: if set to True, the function does not set MPI to an odd number (if possible)
+    :param only_even_MPI: if set to True, the function does not set MPI to an odd number (if possible)
+    :param forbid_single_mpi: if set to True, the configuration 1 node 1 MPI per node will be forbidden
     :returns nodes, MPI_tasks, OMP_per_MPI, message: first three are parallelisation info and
                                                      the last one is an exit message.
     """
@@ -526,6 +533,13 @@ def optimize_calc_options(nodes,
 
     best_resources = max(np.prod(suggestions, axis=1))
     top_suggestions = suggestions[np.prod(suggestions, axis=1) > sacrifice_level * best_resources]
+
+    if forbid_single_mpi:
+        top_suggestions = [s for s in top_suggestions if s[0] * s[1] != 1]
+
+    if len(top_suggestions) == 0:
+        raise ValueError('A Parallelization meeting the requirements could not be determined'
+                         f'for the given number k-points ({kpts})')
 
     def best_criterion(suggestion):
         if use_omp:
