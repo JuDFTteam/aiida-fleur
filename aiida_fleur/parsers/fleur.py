@@ -27,6 +27,14 @@ from aiida.common.exceptions import NotExistent
 from masci_tools.io.parsers.fleur import outxml_parser
 from masci_tools.io.parsers.fleur_schema import InputSchemaDict
 
+#Phrases in this list are used to detect out of
+#memory errors
+OUT_OF_MEMORY_PHRASES = [
+    'cgroup out-of-memory handler',
+    'Out Of Memory',
+    'Allocation of array for communication failed'  #from io/eig66_mpi
+]
+
 
 class FleurParser(Parser):
     """
@@ -168,8 +176,8 @@ class FleurParser(Parser):
                     except KeyError:
                         pass
 
-                    if (kb_used * mpiprocs / mem_kb_avail > 0.93 or
-                            'cgroup out-of-memory handler' in error_file_lines or 'Out Of Memory' in error_file_lines):
+                    if kb_used * mpiprocs / mem_kb_avail > 0.93 or \
+                        any(phrase in error_file_lines for phrase in OUT_OF_MEMORY_PHRASES):
                         return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
                     if 'TIME LIMIT' in error_file_lines or 'time limit' in error_file_lines:
                         return self.exit_codes.ERROR_TIME_LIMIT
