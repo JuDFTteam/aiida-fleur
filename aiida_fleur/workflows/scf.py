@@ -297,8 +297,8 @@ class FleurScfWorkChain(WorkChain):
 
         # check the mode in wf_dict
         mode = self.ctx.wf_dict.get('mode')
-        if mode not in ['force', 'density', 'energy', 'gw']:
-            error = "ERROR: Wrong mode of convergence: one of 'force', 'density', 'energy' or 'gw' was expected."
+        if mode not in ['force', 'density', 'energy', 'spex']:
+            error = "ERROR: Wrong mode of convergence: one of 'force', 'density', 'energy' or 'spex' was expected."
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -510,9 +510,9 @@ class FleurScfWorkChain(WorkChain):
             dist = 0.0
             fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': dist})
 
-        elif converge_mode == 'gw':
+        elif converge_mode == 'spex':
             dist = 0.0
-            fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': dist, 'gw': 1})
+            fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': dist, 'spex': 1})
             if 'settings' in self.inputs:
                 self.inputs.settings.append({'additional_retrieve_list': ['basis.hdf', 'pot.hdf', 'ecore']})
                 self.inputs.settings.append({'additional_remotecopy_list': ['basis.hdf', 'pot.hdf', 'ecore']})
@@ -740,7 +740,7 @@ class FleurScfWorkChain(WorkChain):
             if self.ctx.wf_dict.get('density_converged') >= self.ctx.last_charge_density:
                 if not ldau_notconverged:
                     return False
-        elif mode in ('energy', 'gw'):
+        elif mode in ('energy', 'spex'):
             if self.ctx.wf_dict.get('energy_converged') >= self.ctx.energydiff:
                 if not ldau_notconverged:
                     return False

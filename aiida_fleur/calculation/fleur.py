@@ -402,7 +402,7 @@ class FleurCalculation(CalcJob):
                 cdn_file = self._CDN_LAST_HDF5_FILE_NAME if with_hdf5 else self._CDN1_FILE_NAME
                 settings_dict.setdefault('remove_from_retrieve_list', []).append(cdn_file)
 
-            # if noco, ldau, gw...
+            # if noco, ldau, spex...
             # TODO: check from where it was copied, and copy files of its parent
             # if needed
 
