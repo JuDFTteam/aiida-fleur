@@ -59,7 +59,7 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.5.1'
+    _workflowversion = '0.5.2'
     _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
