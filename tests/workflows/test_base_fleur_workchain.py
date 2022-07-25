@@ -377,6 +377,42 @@ def test_handle_time_limits_previous_calculation_error(generate_workchain_base, 
     assert result.status == 0
 
 
+def test_base_fleur_worlchain_forbid_single_mpi(generate_workchain_base, create_fleurinp, fixture_code):
+
+    from aiida_fleur.common.defaults import default_options
+    from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+
+    INPXML_PATH = os.path.abspath(os.path.join(aiida_path, '../tests/files/inpxml/CuDOSXML/files/inp.xml'))
+    fleurinp = create_fleurinp(INPXML_PATH)
+    fm = FleurinpModifier(fleurinp)
+    fm.set_nkpts(1033)  #set to bad number to make the only parallelization 1 node 1 MPI
+    fleurinp = fm.freeze()
+
+    fleur = fixture_code('fleur.fleur')
+
+    inputs = {
+        'code':
+        fleur,
+        'fleurinpdata':
+        fleurinp,
+        'add_comp_para':
+        Dict(dict={
+            'only_even_MPI': False,
+            'forbid_single_mpi': True,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        }),
+        'options':
+        Dict(dict=default_options)
+    }
+
+    process = generate_workchain_base(inputs=inputs)
+    process.setup()
+    status = process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
+
+    assert status == FleurBaseWorkChain.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES
+
+
 # tests
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_FleurBaseWorkChain():
