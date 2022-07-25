@@ -985,7 +985,7 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
 
     y_names, y_arrays = zip(*potentials.items())
     y_units = ['htr'] * len(y_names)
-    pot_data.set_y(y_arrays, y_names, y_units=y_units)
+    pot_data.set_y([d.real for d in y_arrays], y_names, y_units=y_units)
 
     pot_data.label = 'cfcoeff_pot_data'
     pot_data.description = ('Contains XyData for the Poteintials used in the crystal field calculation')
