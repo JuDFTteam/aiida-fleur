@@ -507,7 +507,7 @@ class FleurScfWorkChain(WorkChain):
             fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0})
 
         elif converge_mode == 'spex':
-            if fleurin.inp_version >= (0,34):
+            if fleurin.inp_version >= (0, 34):
                 fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'spex': 1})
             else:
                 fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'gw': 1})

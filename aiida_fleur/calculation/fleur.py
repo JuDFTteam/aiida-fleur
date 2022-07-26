@@ -185,7 +185,7 @@ class FleurCalculation(CalcJob):
 
     _copy_filelist_band = [_INPXML_FILE_NAME, _POT_FILE_NAME, _CDN1_FILE_NAME]
 
-    _copy_filelist_spex = ["basis.hdf", "pot.hdf", "ecore"]
+    _copy_filelist_spex = ['basis.hdf', 'pot.hdf', 'ecore']
 
     _copy_filelist_hybrid = []
     _copy_filelist_jij = []
