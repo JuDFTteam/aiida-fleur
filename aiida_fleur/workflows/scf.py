@@ -507,15 +507,10 @@ class FleurScfWorkChain(WorkChain):
             fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0})
 
         elif converge_mode == 'spex':
-            fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'spex': 1})
-            if 'settings' in self.inputs:
-                self.inputs.settings.append({'additional_retrieve_list': ['basis.hdf', 'pot.hdf', 'ecore']})
-                self.inputs.settings.append({'additional_remotecopy_list': ['basis.hdf', 'pot.hdf', 'ecore']})
+            if fleurin.inp_version >= (0,34):
+                fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'spex': 1})
             else:
-                self.inputs.settings = {
-                    'additional_retrieve_list': ['basis.hdf', 'pot.hdf', 'ecore'],
-                    'additional_remotecopy_list': ['basis.hdf', 'pot.hdf', 'ecore']
-                }
+                fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'gw': 1})
 
         # apply further user dependend changes
         if fchanges:
