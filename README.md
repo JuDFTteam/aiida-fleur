@@ -20,10 +20,10 @@ Developed at [Forschungszentrum Jülich GmbH](http://www.fz-juelich.de/pgi/pgi-1
 
 | FLEUR Plugin | AiiDA CORE | Python | FLEUR/XML file version | 
 |-|-|-|-|
-| `v2.0.0 < v3.0.0` | ![Compatibility for v2.0][AiiDA v2.0] |  [![PyPI pyversions](https://img.shields.io/badge/python-3.8_\|_3.9_\|_3.10-blue)](https://pypi.org/project/aiida-fleur.svg) |![Fleur Compatibility][Fleur v2.0]/`<0.35` |
-| `v1.2.0 < v2.0.0` | ![Compatibility for v1.2][AiiDA v1.2] |  [![PyPI pyversions](https://img.shields.io/pypi/pyversions/aiida-fleur.svg)](https://pypi.org/project/aiida-fleur) | ![Fleur Compatibility][Fleur v1.2]/`<0.35` |
-| `v1.0.0 < v1.2.0` | ![Compatibility for v1.0][AiiDA v1.0] |  [![PyPI pyversions](https://img.shields.io/badge/python-3.6_\|_3.7_\|_3.8_\|_3.9-blue)](https://pypi.org/project/aiida-fleur/1.2.0) | ![Fleur Compatibility][Fleur v1.0]/`<0.33` |
-| `< v0.6.3` | ![Compatibility for v0.6.3][AiiDA v0.6.3] | [![PyPI pyversions](https://img.shields.io/badge/python-2.7-blue)](https://pypi.python.org/pypi/aiida-fleur/0.6.3/) | ![Fleur Compatibility][Fleur v0.6.3]/`<0.31` |
+| `v2.0.0 < v3.0.0` | ![Compatibility for v2.0][AiiDA v2.0] |  [![PyPI pyversions](https://img.shields.io/badge/python-3.8_\|_3.9_\|_3.10-blue)](https://pypi.org/project/aiida-fleur.svg) |![Fleur Compatibility][Fleur v2.0]/`<=0.35` |
+| `v1.2.0 < v2.0.0` | ![Compatibility for v1.2][AiiDA v1.2] |  [![PyPI pyversions](https://img.shields.io/pypi/pyversions/aiida-fleur.svg)](https://pypi.org/project/aiida-fleur) | ![Fleur Compatibility][Fleur v1.2]/`<=0.35` |
+| `v1.0.0 < v1.2.0` | ![Compatibility for v1.0][AiiDA v1.0] |  [![PyPI pyversions](https://img.shields.io/badge/python-3.6_\|_3.7_\|_3.8_\|_3.9-blue)](https://pypi.org/project/aiida-fleur/1.2.0) | ![Fleur Compatibility][Fleur v1.0]/`<=0.33` |
+| `< v0.6.3` | ![Compatibility for v0.6.3][AiiDA v0.6.3] | [![PyPI pyversions](https://img.shields.io/badge/python-2.7-blue)](https://pypi.python.org/pypi/aiida-fleur/0.6.3/) | ![Fleur Compatibility][Fleur v0.6.3]/`<=0.31` |
 
 ### Documentation and User Support
 
