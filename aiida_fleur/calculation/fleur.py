@@ -185,6 +185,8 @@ class FleurCalculation(CalcJob):
 
     _copy_filelist_band = [_INPXML_FILE_NAME, _POT_FILE_NAME, _CDN1_FILE_NAME]
 
+    _copy_filelist_spex = ['basis.hdf', 'pot.hdf', 'ecore']
+
     _copy_filelist_hybrid = []
     _copy_filelist_jij = []
 
@@ -401,6 +403,11 @@ class FleurCalculation(CalcJob):
             if modes['force_theorem'] or modes['cf_coeff']:
                 cdn_file = self._CDN_LAST_HDF5_FILE_NAME if with_hdf5 else self._CDN1_FILE_NAME
                 settings_dict.setdefault('remove_from_retrieve_list', []).append(cdn_file)
+
+            #This construct is to avoid problems with masci-tools versions where the mode is still called gw
+            if modes.get('spex', modes.get('gw', False)):
+                mode_retrieved_filelist.extend(self._copy_filelist_spex)
+                settings_dict.setdefault('additional_remotecopy_list', []).extend(self._copy_filelist_spex)
 
             # if noco, ldau, spex...
             # TODO: check from where it was copied, and copy files of its parent
