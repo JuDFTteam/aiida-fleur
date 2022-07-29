@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -12,17 +11,16 @@
 """
 Workflow for calculating Green's functions
 """
+from __future__ import annotations
 
 import copy
 from collections import defaultdict
 
 from lxml import etree
 
-from aiida.engine import WorkChain, ToContext, if_
+from aiida.engine import WorkChain, ToContext, if_, ExitCode
 from aiida.engine import calcfunction as cf
 from aiida import orm
-from aiida.orm import Code, load_node, CalcJobNode
-from aiida.orm import RemoteData, Dict, FolderData
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
@@ -32,6 +30,8 @@ from aiida_fleur.workflows.orbcontrol import FleurOrbControlWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
+
+import numpy as np
 
 
 class FleurGreensfWorkChain(WorkChain):
@@ -64,7 +64,18 @@ class FleurGreensfWorkChain(WorkChain):
             'elup': 1.0,
             'n': 5400
         },
-        'calculations': None,
+        'orbitals': None,
+        'integration_cutoff': 'calc',
+        'jij_shells': 0,
+        'jij_shell_element': None,
+        'species': None,
+        'torque': False,
+        'calculate_spinoffdiagonal': False,
+        'contour_label': 'default',
+        'jij_postprocess': True,
+        'jij_full_tensor': False,
+        'jij_onsite_exchange_splitting': 'bxc',  #or band-method
+        'calculations_explicit': {},
         'add_comp_para': {
             'only_even_MPI': False,
             'max_queue_nodes': 20,
@@ -82,7 +93,7 @@ class FleurGreensfWorkChain(WorkChain):
             namespace_options={
                 'required':
                 False,
-                'popuplate_defaults':
+                'populate_defaults':
                 False,
                 'help':
                 "Inputs for an SCF workchain to run before calculating Green's functions. If not specified the SCF workchain is not run"
@@ -93,13 +104,13 @@ class FleurGreensfWorkChain(WorkChain):
             namespace_options={
                 'required':
                 False,
-                'popuplate_defaults':
+                'populate_defaults':
                 False,
                 'help':
                 "Inputs for an Orbital occupation control workchain to run before calculating Green's functions. If not specified the Orbcontrol workchain is not run"
             })
         spec.input('remote',
-                   valid_type=RemoteData,
+                   valid_type=orm.RemoteData,
                    required=False,
                    help='Remote Folder data to start the calculation from')
         spec.input('fleurinp',
@@ -107,19 +118,19 @@ class FleurGreensfWorkChain(WorkChain):
                    required=False,
                    help='Fleurinpdata to start the calculation from')
         spec.input('fleur',
-                   valid_type=Code,
+                   valid_type=orm.Code,
                    required=True,
                    help="Fleur code to use for the Green's function calculation")
         spec.input('wf_parameters',
-                   valid_type=Dict,
+                   valid_type=orm.Dict,
                    required=False,
                    help="Parameters to control the calculation of Green's functions")
         spec.input('options',
-                   valid_type=Dict,
+                   valid_type=orm.Dict,
                    required=False,
                    help="Submission options for the Green's function calculation")
         spec.input('settings',
-                   valid_type=Dict,
+                   valid_type=orm.Dict,
                    required=False,
                    help="Additional settings for the Green's function calculation")
 
@@ -131,8 +142,9 @@ class FleurGreensfWorkChain(WorkChain):
                          cls.greensf_wo_scf,
                      ), cls.return_results)
 
-        spec.output('output_greensf_wc_para', valid_type=Dict)
-        spec.output('last_calc_retrieved', valid_type=FolderData)
+        spec.output('output_greensf_wc_para', valid_type=orm.Dict)
+        spec.expose_outputs(FleurBaseWorkChain, namespace='greensf_calc')
+        spec.output_namespace('jijs', valid_type=orm.Dict, required=False, dynamic=True)
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
@@ -142,6 +154,9 @@ class FleurGreensfWorkChain(WorkChain):
         spec.exit_code(235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message='Input file modification failed.')
         spec.exit_code(236, 'ERROR_INVALID_INPUT_FILE', message="Input file was corrupted after user's modifications.")
         spec.exit_code(342, 'ERROR_GREENSF_CALC_FAILED', message="Green's function calculation failed.")
+        spec.exit_code(345,
+                       'ERROR_JIJ_POSTPROCESSING_FAILED',
+                       message="Post processing of intersite Green's functions failed.")
         spec.exit_code(450, 'ERROR_SCF_FAILED', message='SCF Convergence workflow failed.')
         spec.exit_code(451, 'ERROR_ORBCONTROL_FAILED', message='Orbital occupation control workflow failed.')
 
@@ -161,7 +176,10 @@ class FleurGreensfWorkChain(WorkChain):
             wf_dict = wf_default
 
         for key, val in wf_default.items():
-            wf_dict[key] = wf_dict.get(key, val)
+            if isinstance(val, dict):
+                wf_dict[key] = {**val, **wf_dict.get(key, {})}
+            else:
+                wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
         # initialize the dictionary using defaults if no options are given
@@ -297,26 +315,24 @@ class FleurGreensfWorkChain(WorkChain):
 
         fleurin = self.ctx.fleurinp_greensf
         if fleurin is None:
-            error = ('ERROR: Creating BandDOS Fleurinp failed for an unknown reason')
+            error = ("ERROR: Creating Green's function Fleurinp failed for an unknown reason")
             self.control_end_wc(error)
             return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
         if 'scf' in self.inputs:
             try:
-                remote_data = orm.load_node(
-                    self.ctx.scf.outputs.output_scf_wc_para['last_calc_uuid']).outputs.remote_folder
+                remote_data = self.ctx.scf.outputs.last_calc.remote_folder
             except NotExistent:
                 error = 'Remote generated in the SCF calculation is not found.'
                 self.control_end_wc(error)
-                return self.exit_codes.ERROR_SCF_CALCULATION_FAILED
+                return self.exit_codes.ERROR_SCF_FAILED
         else:
             try:
-                gs_scf_para = self.ctx.rare_earth_orbcontrol.outputs.output_orbcontrol_wc_gs_scf
-                remote_data = orm.load_node(gs_scf_para['last_calc_uuid']).outputs.remote_folder
+                gs_scf_para = self.ctx.orbcontrol.outputs.groundstate_scf.last_calc.remote_folder
             except NotExistent:
                 error = 'Fleurinp generated in the Orbcontrol calculation is not found.'
                 self.control_end_wc(error)
-                return self.exit_codes.ERROR_ORBCONTROL_CALCULATION_FAILED
+                return self.exit_codes.ERROR_ORBCONTROL_FAILED
 
         inputs = self.inputs
         if 'settings' in inputs:
@@ -352,14 +368,14 @@ class FleurGreensfWorkChain(WorkChain):
                 except NotExistent:
                     error = 'Fleurinp generated in the SCF calculation is not found.'
                     self.control_end_wc(error)
-                    return self.exit_codes.ERROR_SCF_CALCULATION_FAILED
+                    return self.exit_codes.ERROR_SCF_FAILED
             else:
                 try:
                     fleurin = self.ctx.orbcontrol.outputs.output_orbcontrol_wc_gs_fleurinp
                 except NotExistent:
                     error = 'Fleurinp generated in the Orbcontrol calculation is not found.'
                     self.control_end_wc(error)
-                    return self.exit_codes.ERROR_ORBCONTROL_CALCULATION_FAILED
+                    return self.exit_codes.ERROR_ORBCONTROL_FAILED
         else:
             if 'fleurinp' not in self.inputs:
                 fleurin = get_fleurinp_from_remote_data(self.inputs.remote)
@@ -388,10 +404,56 @@ class FleurGreensfWorkChain(WorkChain):
             elif shape.lower() == 'rectangle':
                 contour_tags['contourRectangle'].append(contour)
 
+        if self.ctx.wf_dict['torque'] or self.ctx.wf_dict['calculate_spinoffdiagonal']:
+            fleurmode.set_inpchanges({
+                'ctail': False,
+                'l_noco': True,
+                'l_mperp': True
+            },
+                                     path_spec={'l_mperp': {
+                                         'contains': 'magnetism'
+                                     }})
+            contour_tags['l_mperp'] = True
+
         fleurmode.set_complex_tag('greensFunction', dict(contour_tags))
 
+        calculations = wf_dict['calculations_explicit'].copy()
+
+        if self.ctx.wf_dict['species'] is not None:
+
+            orbitals = self.ctx.wf_dict['orbitals']
+            if not isinstance(orbitals, list):
+                orbitals = [orbitals]
+
+            if all(len(o) == 1 for o in orbitals):
+                orbital_tag = {'diagelements': {orb: True for orb in orbitals}}
+            else:
+                orbital_tag = {}
+                for orb in orbitals:
+                    if len(orb) == 2:
+                        l, lp = orb[0], orb[1]
+                    elif len(orb) == 1:
+                        l, lp = orb
+
+                    orbital_tag.setdefault(l, np.zeros((4,), dtype=bool))['spdf'.index(lp)] = True
+                orbital_tag = {'matrixelements': orbital_tag}
+
+            calculation = {
+                'kkintgrCutoff': self.ctx.wf_dict['integration_cutoff'],
+                'label': self.ctx.wf_dict['contour_label'],
+                **orbital_tag
+            }
+            if self.ctx.wf_dict['torque']:
+                calculation['torque'] = True
+            else:
+                calculation['nshells'] = self.ctx.wf_dict['jij_shells']
+                if self.ctx.wf_dict['jij_shell_element'] is not None:
+                    calculation['shellElement'] = self.ctx.wf_dict['jij_shell_element']
+
+            calculations.append(calculation)
+
         calc_tags = defaultdict(defaultdict(list))
-        for species_name, calc in wf_dict['calculations'].items():
+        for species_name, calc in calculations.items():
 
             torque_calc = calc.pop('torque', False)
 
@@ -438,7 +500,78 @@ class FleurGreensfWorkChain(WorkChain):
         self.ctx.fleurinp_greensf = fleurmode.freeze()
 
     def return_results(self):
-        pass
+        """
+        Return the results of the workchain
+        """
+        self.report("Green's function calculation done")
+
+        if self.ctx.greensf:
+            self.report(f"Green's functions were calculated. The calculation is found under pk={self.ctx.greensf.pk}, "
+                        f'calculation {self.ctx.greensf}')
+
+        try:  # if something failed, we still might be able to retrieve something
+            last_calc_out = self.ctx.greensf.outputs.output_parameters
+            retrieved = self.ctx.greensf.outputs.retrieved
+            if 'fleurinpdata' in self.ctx.greensf.inputs:
+                fleurinp = self.ctx.greensf.inputs.fleurinpdata
+            else:
+                fleurinp = get_fleurinp_from_remote_data(self.ctx.greensf.inputs.parent_folder)
+            last_calc_out_dict = last_calc_out.get_dict()
+        except (NotExistent, AttributeError):
+            last_calc_out = None
+            last_calc_out_dict = {}
+            retrieved = None
+            fleurinp = None
+
+        greensf_files = []
+        if retrieved:
+            greensf_files = retrieved.list_object_names()
+
+        if 'greensf.hdf' in greensf_files:
+            self.ctx.successful = True
+
+        if not self.ctx.successful:
+            self.report("!NO Green's function file was found, something went wrong!")
+
+        outputnode_dict = {}
+
+        outputnode_dict['workflow_name'] = self.__class__.__name__
+        outputnode_dict['workflow_version'] = self._workflowversion
+        outputnode_dict['errors'] = self.ctx.errors
+        outputnode_dict['warnings'] = self.ctx.warnings
+        outputnode_dict['successful'] = self.ctx.successful
+
+        jij_calculation_failed = False
+        if self.ctx.successful and self.ctx.wf_dict['jij_shells'] > 0 and self.ctx.wf_dict['jij_postprocess']:
+            self.report(f"Calculating Jij constants for atom species '{self.ctx.wf_dict['species']}'")
+
+            result = calculate_jij(retrieved, orm.Str(self.ctx.wf_dict['species']),
+                                   orm.Str(self.ctx.wf_dict['jij_onsite_exchange_splitting']),
+                                   orm.Bool(self.ctx.wf_dict['jij_full_tensor']))
+
+            if isinstance(result, ExitCode):
+                jij_calculation_failed = True
+            else:
+                self.out_many(result, namespace='jijs')
+
+        outputnode_t = orm.Dict(dict=outputnode_dict)
+        outdict = {}
+        if last_calc_out:
+            outdict = create_greensf_result_node(outpara=outputnode_t,
+                                                 last_calc_out=last_calc_out,
+                                                 last_calc_retrieved=retrieved)
+
+        for link_name, node in outdict.items():
+            self.out(link_name, node)
+
+        if self.ctx.greensf:
+            self.out_many(self.exposed_outputs(self.ctx.greensf, FleurBaseWorkChain, namespace='greensf_calc'))
+
+        if jij_calculation_failed:
+            return self.exit_codes.ERROR_JIJ_POSTPROCESSING_FAILED
+
+        if not self.ctx.successful:
+            return self.exit_codes.ERROR_GREENSF_CALC_FAILED
 
     def control_end_wc(self, errormsg):
         """
@@ -448,3 +581,104 @@ class FleurGreensfWorkChain(WorkChain):
         self.report(errormsg)  # because return_results still fails somewhen
         self.ctx.errors.append(errormsg)
         self.return_results()
+
+
+@cf
+def create_greensf_result_node(**kwargs):
+    """
+    This is a pseudo wf, to create the right graph structure of AiiDA.
+    This wokfunction will create the output node in the database.
+    It also connects the output_node to all nodes the information commes from.
+    So far it is just also parsed in as argument, because so far we are to lazy
+    to put most of the code overworked from return_results in here.
+    """
+    for key, val in kwargs.items():
+        if key == 'outpara':  # should be always there
+            outpara = val
+    outdict = {}
+    outputnode = outpara.clone()
+    outputnode.label = 'output_greensf_wc_para'
+    outputnode.description = ('Contains results and information of an FleurGreensfWorkChain run.')
+
+    outdict['output_greensf_wc_para'] = outputnode
+    return outdict
+
+
+@cf
+def calculate_jij(retrieved: orm.FolderData,
+                  species: orm.Str,
+                  onsite_exchange_splitting_mode: orm.Str | None = None,
+                  calculate_full_tensor: orm.Bool | None = None) -> orm.Dict:
+    """
+    Calculate the Heisenberg Jij calculations for the given
+    Calculation results
+
+    :param retrieved: FolderData of the Calculation containing a greensf.hdf file
+    :param onsite_exchange_splitting: Str What method to use for the onsite exhcnage splitting
+                                      either 'bxc' or 'band-delta'
+
+    :returns: Jij constant array
+    """
+    from masci_tools.io.fleur_xml import load_outxml, FleurXMLContext
+    from masci_tools.tools.greensf_calculations import calculate_heisenberg_jij, calculate_heisenberg_tensor
+    from masci_tools.util.constants import ATOMIC_NUMBERS
+
+    if 'greensf.hdf' not in retrieved.list_object_names():
+        return ExitCode(100, message="Given retrieved folder does not contain a 'greensf.hdf' file")
+
+    if 'out.xml' not in retrieved.list_object_names():
+        return ExitCode(100, message="Given retrieved folder does not contain a 'out.xml' file")
+
+    if onsite_exchange_splitting_mode is None:
+        onsite_exchange_splitting_mode = orm.Str('bxc')
+    if calculate_full_tensor is None:
+        calculate_full_tensor = orm.Bool(False)
+
+    if onsite_exchange_splitting_mode.value not in ['bxc', 'band-delta']:
+        return ExitCode(100, message="Invalid input for onsite_exchange_splitting_mode. Either 'bxc' or 'band-method'")
+
+    with retrieved.open('out.xml', 'rb') as file:
+        xmltree, schema_dict = load_outxml(file)
+
+    with FleurXMLContext(xmltree, schema_dict) as root:
+
+        n_atomgroups = root.number_nodes('atomgroup')
+
+        species_to_element = {}
+        for species_node in root.iter('species'):
+            nz = species_node.attribute('atomicNumber')
+            species_to_element[species_node.attribute('name')] = ATOMIC_NUMBERS[nz]
+
+        atomtypes_to_calculate = []
+        species_names = root.attribute('species', contains='atomGroup', list_return=True)
+        for index, species_name in enumerate(species_names):
+            if species.value == 'all':
+                atomtypes_to_calculate.append(index)
+            elif species.value[:4] == 'all-' and species.value[4:] in species_name:
+                atomtypes_to_calculate.append(index)
+            elif species.value == species_name:
+                atomtypes_to_calculate.append(index)
+
+        if onsite_exchange_splitting_mode.value == 'bxc':
+            delta = root.all_attributes('bxcIntegral', filters={'iteration': {'index': -1}}, iteration_path=True)
+            delta_atomtypes = [
+                delta['Delta'][delta['atomType'].index(index + 1)] if index + 1 in delta['atomType'] else None
+                for index in range(n_atomgroups)
+            ]
+            delta_arr = np.array([[d] * 4 for d in delta_atomtypes])
+        else:
+            return ExitCode(999, message='Not implemented')
+            #delta = evaluate_tag(xmltree, schema_dict, 'bxcIntegral', filters={'iteration': {'index': -1}}, iteration_path=True)
+
+    result = {}
+    with retrieved.open('greensf.hdf', 'rb') as file:
+        for reference_atom in atomtypes_to_calculate:
+            if calculate_full_tensor:
+                jij_df = calculate_heisenberg_tensor(file, reference_atom, delta_arr)
+            else:
+                jij_df = calculate_heisenberg_jij(file, reference_atom, delta_arr)
+
+            name = f'{species_to_element[species_names[reference_atom]]}_{reference_atom}'
+            result[name] = jij_df.to_dict()
+
+    return result
