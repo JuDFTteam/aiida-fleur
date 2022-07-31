@@ -89,7 +89,7 @@ class FleurGreensfWorkChain(WorkChain):
 
     @classmethod
     def define(cls, spec):
-
+        super().define(spec)
         spec.expose_inputs(
             FleurScfWorkChain,
             namespace='scf',
