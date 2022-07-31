@@ -512,7 +512,7 @@ class FleurGreensfWorkChain(WorkChain):
         self.report("Green's function calculation done")
 
         outnodedict = {}
-        retrieved_nodes = []
+        retrieved_nodes = {}
         if self.split_up_jij_calculations():
             for block in range(self.ctx.num_jij_blocks):
                 label = f'greensf_jij_block_{block}'
@@ -559,7 +559,7 @@ class FleurGreensfWorkChain(WorkChain):
                 retrieved_label = f'retrieved_{label}'
                 outnodedict[link_label] = para
                 outnodedict[retrieved_label] = retrieved
-                retrieved_nodes.append(retrieved)
+                retrieved_nodes[f'retrieved_{label}'] = retrieved
 
         else:
             if self.ctx.greensf:
@@ -578,7 +578,7 @@ class FleurGreensfWorkChain(WorkChain):
                 outnodedict['para_greensf'] = last_calc_out
             if retrieved is not None:
                 outnodedict['retrieved_greensf'] = retrieved
-                retrieved_nodes.append(retrieved)
+                retrieved_nodes['retrieved_greensf'] = retrieved
 
             greensf_files = []
             if retrieved:
@@ -602,11 +602,11 @@ class FleurGreensfWorkChain(WorkChain):
         if self.ctx.successful and self.ctx.wf_dict['jij_shells'] > 0 and self.ctx.wf_dict['jij_postprocess']:
             self.report(f"Calculating Jij constants for atom species '{self.ctx.wf_dict['species']}'")
 
-            result = calculate_jij(*retrieved_nodes,
-                                   species=orm.Str(self.ctx.wf_dict['species']),
+            result = calculate_jij(species=orm.Str(self.ctx.wf_dict['species']),
                                    onsite_exchange_splitting_mode=orm.Str(
                                        self.ctx.wf_dict['jij_onsite_exchange_splitting']),
-                                   calculate_full_tensor=orm.Bool(self.ctx.wf_dict['jij_full_tensor']))
+                                   calculate_full_tensor=orm.Bool(self.ctx.wf_dict['jij_full_tensor']),
+                                   **retrieved_nodes)
 
             if isinstance(result, ExitCode):
                 jij_calculation_failed = True
@@ -621,7 +621,10 @@ class FleurGreensfWorkChain(WorkChain):
         for link_name, node in outdict.items():
             self.out(link_name, node)
 
-        if self.ctx.greensf:
+        if self.split_up_jij_calculations() and 'greensf_jij_block_0' in self.ctx:
+            self.out_many(
+                self.exposed_outputs(self.ctx.greensf_jij_block_0, FleurBaseWorkChain, namespace='greensf_calc'))
+        elif self.ctx.greensf:
             self.out_many(self.exposed_outputs(self.ctx.greensf, FleurBaseWorkChain, namespace='greensf_calc'))
 
         if jij_calculation_failed:
@@ -662,10 +665,12 @@ def create_greensf_result_node(**kwargs):
 
 
 @cf
-def calculate_jij(*retrieved: orm.FolderData,
-                  species: orm.Str,
-                  onsite_exchange_splitting_mode: orm.Str | None = None,
-                  calculate_full_tensor: orm.Bool | None = None) -> dict[str, orm.Dict]:
+def calculate_jij(
+    species: orm.Str,
+    onsite_exchange_splitting_mode: orm.Str | None = None,
+    calculate_full_tensor: orm.Bool | None = None,
+    **retrieved: orm.FolderData,
+) -> dict[str, orm.Dict]:
     """
     Calculate the Heisenberg Jij calculations for the given
     Calculation results (multiple possible)
@@ -682,7 +687,7 @@ def calculate_jij(*retrieved: orm.FolderData,
     """
 
     result = defaultdict(list)
-    for node in retrieved:
+    for node in retrieved.values():
         single_result = calculate_jij_single_calc(node,
                                                   species=species,
                                                   onsite_exchange_splitting_mode=onsite_exchange_splitting_mode,
