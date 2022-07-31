@@ -14,9 +14,11 @@ Workflow for calculating Green's functions
 from __future__ import annotations
 
 import copy
+import math
 from collections import defaultdict
 
 from lxml import etree
+import pandas as pd
 
 from aiida.engine import WorkChain, ToContext, if_, ExitCode
 from aiida.engine import calcfunction as cf
@@ -67,6 +69,7 @@ class FleurGreensfWorkChain(WorkChain):
         'orbitals': None,
         'integration_cutoff': 'calc',
         'jij_shells': 0,
+        'jij_shells_per_calc': None,
         'jij_shell_element': None,
         'species': None,
         'torque': False,
@@ -135,12 +138,9 @@ class FleurGreensfWorkChain(WorkChain):
                    help="Additional settings for the Green's function calculation")
 
         spec.outline(cls.start,
-                     if_(cls.scf_needed)(
-                         cls.converge_scf,
-                         cls.greensf_after_scf,
-                     ).else_(
-                         cls.greensf_wo_scf,
-                     ), cls.return_results)
+                     if_(cls.scf_needed)(cls.converge_scf,),
+                     if_(cls.split_up_jij_calculations)(cls.run_blocked_jij_calcs).else_(cls.run_greensf_calc),
+                     cls.return_results)
 
         spec.output('output_greensf_wc_para', valid_type=orm.Dict)
         spec.expose_outputs(FleurBaseWorkChain, namespace='greensf_calc')
@@ -166,6 +166,7 @@ class FleurGreensfWorkChain(WorkChain):
         """
         self.ctx.scf_needed = False
         self.ctx.fleurinp_greensf = None
+        self.ctx.num_jij_blocks = 0
 
         inputs = self.inputs
 
@@ -260,56 +261,12 @@ class FleurGreensfWorkChain(WorkChain):
         """
         return AttributeDict(self.exposed_inputs(FleurOrbControlWorkChain, namespace='orbcontrol'))
 
-    def greensf_after_scf(self):
+    def get_inputs_greensf_calc(self, jij_block=None):
         """
-        Submit greens function calculation without previous scf
-        """
-
-        self.report("INFO: run Green's function calculations after SCF/OrbControl")
-
-        status = self.change_fleurinp()
-        if status:
-            return status
-
-        fleurin = self.ctx.fleurinp_greensf
-        if fleurin is None:
-            error = ('ERROR: Creating BandDOS Fleurinp failed for an unknown reason')
-            self.control_end_wc(error)
-            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
-
-        inputs = self.inputs
-        if 'remote' in inputs:
-            remote_data = inputs.remote
-        else:
-            remote_data = None
-
-        if 'settings' in inputs:
-            settings = inputs.settings
-        else:
-            settings = None
-
-        label = "Green's function calculation"
-        description = "Fleur Green's function calculation without previous SCF calculation"
-
-        input_fixed = get_inputs_fleur(inputs.fleur,
-                                       remote_data,
-                                       fleurin,
-                                       self.ctx.options,
-                                       label,
-                                       description,
-                                       settings=settings)
-
-        result_greensf = self.submit(FleurBaseWorkChain, **input_fixed)
-        return ToContext(greensf=result_greensf)
-
-    def greensf_wo_scf(self):
-        """
-        Submit greens function calculation without previous scf
+        Get inputs for the Green's function calculation workchain
         """
 
-        self.report("INFO: run Green's function calculations")
-
-        status = self.change_fleurinp()
+        status = self.change_fleurinp(jij_block=jij_block)
         if status:
             return status
 
@@ -319,20 +276,27 @@ class FleurGreensfWorkChain(WorkChain):
             self.control_end_wc(error)
             return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-        if 'scf' in self.inputs:
-            try:
-                remote_data = self.ctx.scf.outputs.last_calc.remote_folder
-            except NotExistent:
-                error = 'Remote generated in the SCF calculation is not found.'
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_SCF_FAILED
+        if self.ctx.scf_needed:
+            if 'scf' in self.inputs:
+                try:
+                    remote_data = self.ctx.scf.outputs.last_calc.remote_folder
+                except NotExistent:
+                    error = 'Remote generated in the SCF calculation is not found.'
+                    self.control_end_wc(error)
+                    return self.exit_codes.ERROR_SCF_FAILED
+            else:
+                try:
+                    remote_data = self.ctx.orbcontrol.outputs.groundstate_scf.last_calc.remote_folder
+                except NotExistent:
+                    error = 'Remote generated in the Orbcontrol calculation is not found.'
+                    self.control_end_wc(error)
+                    return self.exit_codes.ERROR_ORBCONTROL_FAILED
         else:
-            try:
-                gs_scf_para = self.ctx.orbcontrol.outputs.groundstate_scf.last_calc.remote_folder
-            except NotExistent:
-                error = 'Fleurinp generated in the Orbcontrol calculation is not found.'
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_ORBCONTROL_FAILED
+            inputs = self.inputs
+            if 'remote' in inputs:
+                remote_data = inputs.remote
+            else:
+                remote_data = None
 
         inputs = self.inputs
         if 'settings' in inputs:
@@ -340,21 +304,56 @@ class FleurGreensfWorkChain(WorkChain):
         else:
             settings = None
 
-        label = "Green's function calculation"
-        description = "Fleur Green's function calculation without previous SCF calculation"
+        label = 'greensf_calc'
+        description = f"Fleur Green's function calculation with{'out' if not self.ctx.scf_needed else ''} previous SCF calculation"
 
-        input_fixed = get_inputs_fleur(inputs.fleur,
-                                       remote_data,
-                                       fleurin,
-                                       self.ctx.options,
-                                       label,
-                                       description,
-                                       settings=settings)
+        input_greensf = get_inputs_fleur(inputs.fleur,
+                                         remote_data,
+                                         fleurin,
+                                         self.ctx.options,
+                                         label,
+                                         description,
+                                         settings=settings)
 
-        result_greensf = self.submit(FleurBaseWorkChain, **input_fixed)
+        return input_greensf
+
+    def run_greensf_calc(self):
+        """
+        Submit greens function calculation without previous scf
+        """
+        self.report(f"INFO: run Green's function calculations{' after SCF/OrbControl' if self.ctx.scf_needed else ''}")
+        inputs = self.get_inputs_greensf_calc()
+        result_greensf = self.submit(FleurBaseWorkChain, **inputs)
         return ToContext(greensf=result_greensf)
 
-    def change_fleurinp(self):
+    def split_up_jij_calculations(self):
+        """
+        Return whether the Jij calculations are to be done in multiple steps
+        """
+        return self.ctx.wf_dict['jij_shells'] != 0 and self.ctx.wf_dict['jij_shells_per_calc'] is not None
+
+    def run_blocked_jij_calcs(self):
+        """
+        Run multiple Jij calculations with jij_shells_per_calc each
+        """
+        self.report(
+            f"INFO: run Jij Green's function calculations{' after SCF/OrbControl' if self.ctx.scf_needed else ''}")
+
+        self.ctx.num_jij_blocks = math.ceil(self.ctx.wf_dict['jij_shells'] / self.ctx.wf_dict['jij_shells_per_calc'])
+        self.report(f"INFO: Submitting {self.ctx.num_jij_blocks} calculations for Intersite Green's functions")
+        calculations = {}
+        for jij_block in range(self.ctx.num_jij_blocks):
+            inputs = self.get_inputs_greensf_calc(jij_block=jij_block)
+            label = f'greensf_jij_block_{jij_block}'
+
+            inputs.setdefault('metadata', {})['call_link_label'] = label
+            self.report(f"INFO: Submitting  Green's functions calculation: block {jij_block}")
+            res = self.submit(FleurBaseWorkChain, **inputs)
+            res.label = label
+            calculations[label] = self.submit(FleurBaseWorkChain, **inputs)
+        return ToContext(**calculations)
+
+    def change_fleurinp(self, jij_block=None):
         """
         Create FleurinpData for the Green's function calculation
         """
@@ -446,7 +445,14 @@ class FleurGreensfWorkChain(WorkChain):
             if self.ctx.wf_dict['torque']:
                 calculation['torque'] = True
             else:
-                calculation['nshells'] = self.ctx.wf_dict['jij_shells']
+                if jij_block is not None:
+                    shells_per_calc = self.ctx.wf_dict['jij_shells_per_calc']
+                    start = jij_block * shells_per_calc + 1
+                    end = min((jij_block + 1) * shells_per_calc, self.ctx.wf_dict['jij_shells'])
+                    calculation['startFromShell'] = start
+                    calculation['nshells'] = end
+                else:
+                    calculation['nshells'] = self.ctx.wf_dict['jij_shells']
                 if self.ctx.wf_dict['jij_shell_element'] is not None:
                     calculation['shellElement'] = self.ctx.wf_dict['jij_shell_element']
 
@@ -505,33 +511,84 @@ class FleurGreensfWorkChain(WorkChain):
         """
         self.report("Green's function calculation done")
 
-        if self.ctx.greensf:
-            self.report(f"Green's functions were calculated. The calculation is found under pk={self.ctx.greensf.pk}, "
-                        f'calculation {self.ctx.greensf}')
+        outnodedict = {}
+        retrieved_nodes = []
+        if self.split_up_jij_calculations():
+            for block in range(self.ctx.num_jij_blocks):
+                label = f'greensf_jij_block_{block}'
+                if label in self.ctx:
+                    calc = self.ctx[label]
+                else:
+                    message = (
+                        f"Green's function calculation was not run because the previous calculation failed: {label}")
+                    self.ctx.warnings.append(message)
+                    self.ctx.successful = False
+                    continue
 
-        try:  # if something failed, we still might be able to retrieve something
-            last_calc_out = self.ctx.greensf.outputs.output_parameters
-            retrieved = self.ctx.greensf.outputs.retrieved
-            if 'fleurinpdata' in self.ctx.greensf.inputs:
-                fleurinp = self.ctx.greensf.inputs.fleurinpdata
-            else:
-                fleurinp = get_fleurinp_from_remote_data(self.ctx.greensf.inputs.parent_folder)
-            last_calc_out_dict = last_calc_out.get_dict()
-        except (NotExistent, AttributeError):
-            last_calc_out = None
-            last_calc_out_dict = {}
-            retrieved = None
-            fleurinp = None
+                if not calc.is_finished_ok:
+                    message = f"One Green's function calculation was not successful: {label}"
+                    self.ctx.warnings.append(message)
+                    self.ctx.successful = False
+                    continue
 
-        greensf_files = []
-        if retrieved:
-            greensf_files = retrieved.list_object_names()
+                try:
+                    para = calc.outputs.output_parameters
+                except NotExistent:
+                    message = f"One Green's function calculation failed, no output node: {label}. I skip this one."
+                    self.ctx.errors.append(message)
+                    self.ctx.successful = False
+                    continue
 
-        if 'greensf.hdf' in greensf_files:
-            self.ctx.successful = True
+                try:
+                    retrieved = calc.outputs.retrieved
+                except NotExistent:
+                    message = f"One Green's function calculation failed, no retrieved output node: {label}. I skip this one."
+                    self.ctx.errors.append(message)
+                    self.ctx.successful = False
+                    continue
 
-        if not self.ctx.successful:
-            self.report("!NO Green's function file was found, something went wrong!")
+                if 'greensf.hdf' not in retrieved.list_object_names():
+                    message = f"One Green's function calculation failed, no greensf.hdf file: {label}. I skip this one."
+                    self.ctx.errors.append(message)
+                    self.ctx.successful = False
+                    continue
+
+                # we loose the connection of the failed calcs here.
+                # link labels cannot contain '.'
+                link_label = f'parameters_{label}'
+                retrieved_label = f'retrieved_{label}'
+                outnodedict[link_label] = para
+                outnodedict[retrieved_label] = retrieved
+                retrieved_nodes.append(retrieved)
+
+        else:
+            if self.ctx.greensf:
+                self.report(
+                    f"Green's functions were calculated. The calculation is found under pk={self.ctx.greensf.pk}, "
+                    f'calculation {self.ctx.greensf}')
+
+            try:  # if something failed, we still might be able to retrieve something
+                last_calc_out = self.ctx.greensf.outputs.output_parameters
+                retrieved = self.ctx.greensf.outputs.retrieved
+            except (NotExistent, AttributeError):
+                last_calc_out = None
+                retrieved = None
+
+            if last_calc_out is not None:
+                outnodedict['para_greensf'] = last_calc_out
+            if retrieved is not None:
+                outnodedict['retrieved_greensf'] = retrieved
+                retrieved_nodes.append(retrieved)
+
+            greensf_files = []
+            if retrieved:
+                greensf_files = retrieved.list_object_names()
+
+            if 'greensf.hdf' in greensf_files:
+                self.ctx.successful = True
+
+            if not self.ctx.successful:
+                self.report("!NO Green's function file was found, something went wrong!")
 
         outputnode_dict = {}
 
@@ -545,9 +602,11 @@ class FleurGreensfWorkChain(WorkChain):
         if self.ctx.successful and self.ctx.wf_dict['jij_shells'] > 0 and self.ctx.wf_dict['jij_postprocess']:
             self.report(f"Calculating Jij constants for atom species '{self.ctx.wf_dict['species']}'")
 
-            result = calculate_jij(retrieved, orm.Str(self.ctx.wf_dict['species']),
-                                   orm.Str(self.ctx.wf_dict['jij_onsite_exchange_splitting']),
-                                   orm.Bool(self.ctx.wf_dict['jij_full_tensor']))
+            result = calculate_jij(*retrieved_nodes,
+                                   species=orm.Str(self.ctx.wf_dict['species']),
+                                   onsite_exchange_splitting_mode=orm.Str(
+                                       self.ctx.wf_dict['jij_onsite_exchange_splitting']),
+                                   calculate_full_tensor=orm.Bool(self.ctx.wf_dict['jij_full_tensor']))
 
             if isinstance(result, ExitCode):
                 jij_calculation_failed = True
@@ -557,9 +616,7 @@ class FleurGreensfWorkChain(WorkChain):
         outputnode_t = orm.Dict(dict=outputnode_dict)
         outdict = {}
         if last_calc_out:
-            outdict = create_greensf_result_node(outpara=outputnode_t,
-                                                 last_calc_out=last_calc_out,
-                                                 last_calc_retrieved=retrieved)
+            outdict = create_greensf_result_node(outpara=outputnode_t, **outnodedict)
 
         for link_name, node in outdict.items():
             self.out(link_name, node)
@@ -605,10 +662,50 @@ def create_greensf_result_node(**kwargs):
 
 
 @cf
-def calculate_jij(retrieved: orm.FolderData,
+def calculate_jij(*retrieved: orm.FolderData,
                   species: orm.Str,
                   onsite_exchange_splitting_mode: orm.Str | None = None,
-                  calculate_full_tensor: orm.Bool | None = None) -> orm.Dict:
+                  calculate_full_tensor: orm.Bool | None = None) -> dict[str, orm.Dict]:
+    """
+    Calculate the Heisenberg Jij calculations for the given
+    Calculation results (multiple possible)
+
+    If multiple are given they are assumed to calculate different shells
+    and the results are concatenated
+    ATM no checks are done that multiple calculations actually come from the same system
+
+    :param retrieved: FolderData of the Calculation containing a greensf.hdf file
+    :param onsite_exchange_splitting: Str What method to use for the onsite exhcnage splitting
+                                      either 'bxc' or 'band-delta'
+
+    :returns: dictionary with Jij constants
+    """
+
+    result = defaultdict(list)
+    for node in retrieved:
+        single_result = calculate_jij_single_calc(node,
+                                                  species=species,
+                                                  onsite_exchange_splitting_mode=onsite_exchange_splitting_mode,
+                                                  calculate_full_tensor=calculate_full_tensor)
+
+        if isinstance(single_result, ExitCode):
+            return single_result
+
+        for key, value in single_result.items():
+            result[key].append(value)
+
+    for key, jij_list in result.items():
+        result[key] = pd.concat(jij_list, ignore_index=True)
+        result[key] = result[key].sort_values(by=['R'])
+        result[key] = orm.Dict(dict=result[key].to_dict())
+
+    return dict(result)
+
+
+def calculate_jij_single_calc(retrieved: orm.FolderData,
+                              species: orm.Str,
+                              onsite_exchange_splitting_mode: orm.Str | None = None,
+                              calculate_full_tensor: orm.Bool | None = None) -> dict[str, pd.DataFrame]:
     """
     Calculate the Heisenberg Jij calculations for the given
     Calculation results
@@ -679,6 +776,6 @@ def calculate_jij(retrieved: orm.FolderData,
                 jij_df = calculate_heisenberg_jij(file, reference_atom, delta_arr)
 
             name = f'{species_to_element[species_names[reference_atom]]}_{reference_atom}'
-            result[name] = jij_df.to_dict()
+            result[name] = jij_df
 
     return result
