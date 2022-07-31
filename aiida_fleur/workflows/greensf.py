@@ -559,7 +559,7 @@ class FleurGreensfWorkChain(WorkChain):
                 retrieved_label = f'retrieved_{label}'
                 outnodedict[link_label] = para
                 outnodedict[retrieved_label] = retrieved
-                retrieved_nodes[f'retrieved_{label}'] = retrieved
+                retrieved_nodes[retrieved_label] = retrieved
 
         else:
             if self.ctx.greensf:
