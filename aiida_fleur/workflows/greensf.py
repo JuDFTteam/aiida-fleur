@@ -701,7 +701,9 @@ def calculate_jij(
 
     for key, jij_list in result.items():
         result[key] = pd.concat(jij_list, ignore_index=True)
-        result[key] = result[key].sort_values(by=['R'])
+        #Sort by R first to get the shells separate
+        #The order inside shells is determined with the vectors
+        result[key] = result[key].sort_values(by=['R', 'R_ij_x', 'R_ij_y','R_ij_z'])
         result[key] = orm.Dict(dict=result[key].to_dict())
 
     return dict(result)
