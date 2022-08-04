@@ -127,6 +127,78 @@ def cat_file(node, filename):
     echo.echo(node.get_content(filename=filename))
 
 
+@cmd_fleurinp.command('open')
+@arguments.NODE('node', type=DataParamType(sub_classes=('aiida.data:fleur.fleurinp',)))
+@click.option('-f',
+              '--filename',
+              'filename',
+              default='inp.xml',
+              show_default=True,
+              help='Open the file of the given filename.')
+@click.option('-s', '--save', is_flag=True, help='Write out the changed content')
+@click.option('-o', '--output-filename', default='', show_default=True, help='Filename of the outpu.t')
+def open_inp(node, filename, save, output_filename):
+    """
+    opens the inp.xml in some editor, readonly.
+    inp.xml this way looking at xml might be more convenient.
+    """
+    if not save:
+        echo.echo_info('Any changes you make in the editor will not be stored in the node')
+    if not output_filename:
+        output_filename = filename
+    content = click.edit(node.get_content(filename=filename), extension='.xml')
+
+    if save:
+        with open(output_filename, 'w', encoding='utf-8') as file:
+            file.write(content)
+        echo.echo_success(f'Saved edited content to {output_filename}')
+
+
+@cmd_fleurinp.command('extract-inpgen')
+@arguments.NODE('node', type=DataParamType(sub_classes=('aiida.data:fleur.fleurinp',)))
+@click.option('-o',
+              '--output-filename',
+              'output_filename',
+              default='',
+              show_default=True,
+              help='Name of the file to write out.')
+@click.option('--para/--no-para', default=True, show_default=True, help='Add additional LAPW parameters to output file')
+def extract_inpgen_file(node, output_filename, para):
+    """
+    Write out a inpgen input file, that most closely
+    reproduces the input file in the node when run through the
+    inpgen
+    """
+    from aiida_fleur.calculation.fleurinputgen import write_inpgen_file_aiida_struct
+    from aiida import orm
+    import tempfile
+    from pathlib import Path
+
+    structure = node.get_structuredata()
+    lapw_parameters = {}
+    if para:
+        lapw_parameters = node.get_parameterdata(write_ids=orm.Bool(False)).get_dict()
+
+    if 'inpgen' not in lapw_parameters.get('title'):
+        echo.echo_info("Added 'inpgen file' to file title")
+        if 'title' in lapw_parameters:
+            lapw_parameters['title'] = f"{lapw_parameters['title']} (inpgen file)"
+        else:
+            lapw_parameters['title'] = 'File for the inpgen executable'
+
+    if output_filename:
+        with open(output_filename, 'w', encoding='utf-8') as file:
+            write_inpgen_file_aiida_struct(structure, file, input_params=lapw_parameters)
+        echo.echo_success(f'Inpgen file written to: {output_filename}')
+    else:
+        with tempfile.TemporaryDirectory() as td:
+            write_inpgen_file_aiida_struct(structure, Path(td) / 'aiida.in', input_params=lapw_parameters)
+
+            with open(Path(td) / 'aiida.in', encoding='utf-8') as file:
+                echo.echo(file.read())
+        echo.echo_success('Inpgen file extracted')
+
+
 '''
 @cmd_fleurinp.command('info')
 def info():
@@ -141,15 +213,6 @@ def info():
 def cmd_show():
     """
     Shows the content of a certain file
-    """
-    click.echo('Not implemented yet, sorry. Please implement me!')
-
-
-@cmd_fleurinp.command('open')
-def open_inp():
-    """
-    opens the inp.xml in some editor, readonly.
-    inp.xml this way looking at xml might be more convenient.
     """
     click.echo('Not implemented yet, sorry. Please implement me!')
 
