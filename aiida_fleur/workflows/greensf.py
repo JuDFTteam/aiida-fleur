@@ -672,7 +672,7 @@ def calculate_jij(
     onsite_exchange_splitting_mode: orm.Str | None = None,
     calculate_full_tensor: orm.Bool | None = None,
     **retrieved: orm.FolderData,
-) -> dict[str, orm.Dict]:
+) -> dict[str, PandasFrameData]:
     """
     Calculate the Heisenberg Jij calculations for the given
     Calculation results (multiple possible)
