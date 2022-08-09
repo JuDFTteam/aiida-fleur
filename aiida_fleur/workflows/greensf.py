@@ -33,6 +33,8 @@ from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 
+from aiida_dataframe.data import PandasFrameData
+
 import numpy as np
 
 
@@ -144,7 +146,7 @@ class FleurGreensfWorkChain(WorkChain):
 
         spec.output('output_greensf_wc_para', valid_type=orm.Dict)
         spec.expose_outputs(FleurBaseWorkChain, namespace='greensf_calc')
-        spec.output_namespace('jijs', valid_type=orm.Dict, required=False, dynamic=True)
+        spec.output_namespace('jijs', valid_type=PandasFrameData, required=False, dynamic=True)
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
@@ -704,7 +706,7 @@ def calculate_jij(
         #Sort by R first to get the shells separate
         #The order inside shells is determined with the vectors
         result[key] = result[key].sort_values(by=['R', 'R_ij_x', 'R_ij_y', 'R_ij_z'])
-        result[key] = orm.Dict(dict=result[key].to_dict())
+        result[key] = PandasFrameData(result[key])
 
     return dict(result)
 

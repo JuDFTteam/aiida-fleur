@@ -30,6 +30,7 @@
     "reentry_register": true,
     "install_requires": [
         "aiida-core[atomic_tools]>=1.3.0,<2.0.0",
+        "aiida-dataframe",
         "lxml~=4.8",
         "numpy~=1.16,>=1.16.4",
         "sympy",
