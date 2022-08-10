@@ -11,6 +11,7 @@
 """
 Workflow for calculating Green's functions
 """
+#TODO: transformation functions
 from __future__ import annotations
 
 import copy
@@ -146,7 +147,7 @@ class FleurGreensfWorkChain(WorkChain):
 
         spec.output('output_greensf_wc_para', valid_type=orm.Dict)
         spec.expose_outputs(FleurBaseWorkChain, namespace='greensf_calc')
-        spec.output_namespace('jijs', valid_type=PandasFrameData, required=False, dynamic=True)
+        spec.output_namespace('jij', valid_type=PandasFrameData, required=False, dynamic=True)
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
         spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
@@ -166,6 +167,7 @@ class FleurGreensfWorkChain(WorkChain):
         """
         Intitialize context and defaults
         """
+        self.report(f"Started Green's function workflow version {self._workflowversion}")
         self.ctx.scf_needed = False
         self.ctx.fleurinp_greensf = None
         self.ctx.num_jij_blocks = 0
@@ -613,7 +615,7 @@ class FleurGreensfWorkChain(WorkChain):
             if isinstance(result, ExitCode):
                 jij_calculation_failed = True
             else:
-                self.out_many(result, namespace='jijs')
+                self.out_many({f'jijs__{key}': node for key, node in result.items()})
 
         outputnode_t = orm.Dict(dict=outputnode_dict)
         outdict = {}
