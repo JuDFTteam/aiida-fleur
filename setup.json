@@ -98,7 +98,7 @@
             "fleur.base_relax = aiida_fleur.workflows.base_relax:FleurBaseRelaxWorkChain",
             "fleur.base = aiida_fleur.workflows.base_fleur:FleurBaseWorkChain",
             "fleur.greensf = aiida_fleur.workflows.greensf:FleurGreensfWorkChain",
-            "fleur.greensf_dmi = aiida_fleur.workflows.greensf:FleurGreensfDMIWorkChain"
+            "fleur.greensf_dmi = aiida_fleur.workflows.greensf_dmi:FleurGreensfDMIWorkChain"
         ],
         "console_scripts": [
             "aiida-fleur = aiida_fleur.cmdline:cmd_root"
