@@ -241,7 +241,9 @@ class FleurRelaxWorkChain(WorkChain):
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
         if 'structure' in input_scf:
             del input_scf.structure
+        if 'inpgen' in input_scf:
             del input_scf.inpgen
+        if 'calc_parameters' in input_scf:
             del input_scf.calc_parameters
 
         if 'wf_parameters' not in input_scf:
