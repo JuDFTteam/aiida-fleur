@@ -25,7 +25,7 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
+def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -69,14 +69,12 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_banddos_wc_para']
     n = n.get_dict()
-
-    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
     #print(n)
     efermi = 0.2034799610
@@ -94,7 +92,7 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
+def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -143,14 +141,12 @@ def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_banddos_wc_para']
     n = n.get_dict()
-
-    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
     #print(n)
     efermi = 0.2034799610
@@ -169,7 +165,7 @@ def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, create_fleurinp, clear_database,
-                                         aiida_caplog):
+                                         aiida_caplog, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Uses seekpath to determine the path for the bandstructure
@@ -217,14 +213,12 @@ def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, cr
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_banddos_wc_para']
     n = n.get_dict()
-
-    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
     #print(n)
     efermi = 0.2034799610
@@ -242,7 +236,7 @@ def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, cr
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
+def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Uses ase bandpath to determine the path through the briloouin zone
@@ -290,14 +284,12 @@ def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_banddos_wc_para']
     n = n.get_dict()
-
-    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
     #print(n)
     efermi = 0.2034799610
@@ -316,7 +308,7 @@ def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_band_remote_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
-                              get_remote_data_si):
+                              get_remote_data_si, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -358,14 +350,12 @@ def test_fleur_band_remote_Si(with_export_cache, fleur_local_code, create_fleuri
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_banddos_wc_para']
     n = n.get_dict()
-
-    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
     #print(n)
     efermi = 0.2034799610
@@ -384,7 +374,7 @@ def test_fleur_band_remote_Si(with_export_cache, fleur_local_code, create_fleuri
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
 def test_fleur_dos_remote_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
-                             get_remote_data_si):
+                             get_remote_data_si, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -431,14 +421,12 @@ def test_fleur_dos_remote_Si(with_export_cache, fleur_local_code, create_fleurin
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_banddos_wc_para']
     n = n.get_dict()
-
-    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
     #print(n)
     efermi = 0.2034799610

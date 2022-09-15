@@ -1128,7 +1128,7 @@ def extract_results_corehole(calcs):
         print(calc.exit_status, calc.exit_message)
         print(calc.get_outgoing().all())
         try:
-            calc_uuid = calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
+            calc_uuid = calc.outputs.last_calc.remote_folder.creator.uuid
         except (KeyError, AttributeError):
             print('continue')
             continue

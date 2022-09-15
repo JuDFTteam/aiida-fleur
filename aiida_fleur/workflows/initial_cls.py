@@ -942,13 +942,11 @@ def extract_results(calcs):
         try:
             calc_uuid = calc.outputs.last_calc.remote_folder.creator.uuid
         except (NotExistent, MultipleObjectsError, ValueError, TypeError, KeyError):  #TODO which error
-            logmsg = ('ERROR: No output_scf_wc_para node found or no "last_calc_uuid" '
-                      'key in it for calculation: {}'.format(calc))
+            logmsg = f'ERROR: No FleurCalculation node found in SCF workchain: {calc.uuid}'
             log.append(logmsg)
             continue
         if calc_uuid is not None:
             calc_uuids.append(calc_uuid)
-        #calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
 
     all_corelevels = {}
     fermi_energies = {}

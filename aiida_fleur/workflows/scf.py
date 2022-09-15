@@ -27,7 +27,6 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
 from aiida_fleur.tools.create_kpoints_from_distance import create_kpoints_from_distance_parameter
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.calculation.fleur import FleurCalculation
@@ -765,13 +764,6 @@ class FleurScfWorkChain(WorkChain):
         This should run through and produce output nodes even if everything failed,
         therefore it only uses results from context.
         """
-        if self.ctx.last_base_wc:
-            try:
-                last_calc_uuid = find_last_submitted_calcjob(self.ctx.last_base_wc)
-            except NotExistent:
-                last_calc_uuid = None
-        else:
-            last_calc_uuid = None
 
         try:  # if something failed, we still might be able to retrieve something
             last_calc_out = self.ctx.last_base_wc.outputs.output_parameters
@@ -803,7 +795,6 @@ class FleurScfWorkChain(WorkChain):
         outputnode_dict['total_energy_units'] = 'Htr'
         outputnode_dict['nmmp_distance'] = last_nmmp_distance
         outputnode_dict['nmmp_distance_all'] = self.ctx.nmmp_distance
-        outputnode_dict['last_calc_uuid'] = last_calc_uuid
         outputnode_dict['total_wall_time'] = self.ctx.total_wall_time
         outputnode_dict['total_wall_time_units'] = 's'
         outputnode_dict['info'] = self.ctx.info

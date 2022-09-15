@@ -58,8 +58,6 @@ def test_fleur_scf_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
     n = out['output_scf_wc_para']
     n = n.get_dict()
 
-    print(get_calcjob_report(load_node(n['last_calc_uuid'])))
-
     #print(n)
     assert abs(n.get('distance_charge') - 9.8993e-06) < 2.0e-6
     assert n.get('errors') == []
