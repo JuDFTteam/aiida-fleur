@@ -274,7 +274,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
         xmltree, schema_dict = calculation.outputs.last_scf.fleurinp.load_inpxml()
         mixing = evaluate_attribute(xmltree, schema_dict, 'forcemix', optional=True)
         if not mixing:
-            mixing = "BFGS"
+            mixing = 'BFGS'
 
         if value < -0.2 and error_params['iteration_number'] >= 3 and mixing == 'BFGS':
             self.ctx.initial_mixing = 'straight'
