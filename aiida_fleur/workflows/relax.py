@@ -525,9 +525,6 @@ class FleurRelaxWorkChain(WorkChain):
             'errors': self.ctx.errors,
             'force': self.ctx.forces,
             'force_iter_done': self.ctx.loop_count,
-            # uuids in the output are bad for caching should be avoided,
-            # instead better return the node.
-            'last_scf_wc_uuid': self.ctx.scf_res.uuid,
             'total_magnetic_moment_cell': self.ctx.total_magnetic_moment,
             'total_magnetic_moment_cell_units': 'muBohr'
         }

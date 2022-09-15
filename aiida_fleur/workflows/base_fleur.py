@@ -66,7 +66,6 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         )
 
         spec.expose_outputs(FleurCalculation)
-        spec.output('final_calc_uuid', valid_type=orm.Str, required=False)
 
         spec.exit_code(311,
                        'ERROR_VACUUM_SPILL_RELAX',
