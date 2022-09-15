@@ -487,7 +487,6 @@ class FleurBandDosWorkChain(WorkChain):
         # TODO more here
         self.report('BandDOS workflow Done')
 
-        from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
         if self.ctx.banddos_calc:
             self.report(f'A bandstructure/DOS was calculated and is found under pk={self.ctx.banddos_calc.pk}, '
                         f'calculation {self.ctx.banddos_calc}')

@@ -27,7 +27,7 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, create_fleurinp, clear_database):
+def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, create_fleurinp, clear_database, show_workchain_summary):
     """
     full example using FleurRelaxWorkChain with just a fleurinp data as input.
     Several fleur runs needed till convergence
@@ -58,14 +58,12 @@ def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, creat
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_relax_wc_para']
     n = n.get_dict()
-
-    print(get_workchain_report(orm.load_node(n['last_scf_wc_uuid']), 'REPORT'))
 
     print(n)
     #Dummy checks

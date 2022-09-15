@@ -19,13 +19,12 @@ automatic way if an expected failure occurred.
 from aiida.common import AttributeDict
 from aiida.common.exceptions import ValidationError
 from aiida.engine import while_
-from aiida.orm import load_node, Dict, WorkChainNode
+from aiida.orm import Dict, WorkChainNode
 from aiida.plugins import WorkflowFactory, DataFactory
 from aiida.engine.processes.workchains import BaseRestartWorkChain
 from aiida.engine.processes.workchains.utils import process_handler, ProcessHandlerReport
 
-from aiida_fleur.data.fleurinpmodifier import modify_fleurinpdata
-from aiida_fleur.tools.common_fleur_wf import find_last_submitted_workchain
+from masci_tools.util.schema_dict_util import evaluate_attribute
 
 # pylint: disable=invalid-name
 RelaxProcess = WorkflowFactory('fleur.relax')
@@ -171,8 +170,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
         self.ctx.is_finished = False
         self.report('It is time to switch from straight to BFGS relaxation')
-        last_scf_calc = load_node(calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid'])
-        remote = last_scf_calc.outputs.last_calc.remote_folder
+        remote = calculation.outputs.last_scf.last_calc.remote_folder
         if 'wf_parameters' in self.ctx.inputs:
             parameters = self.ctx.inputs.wf_parameters
             run_final = parameters.get_dict().get('run_final_scf', False)
@@ -264,9 +262,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
                 if len(inputs) == 3:
                     self.ctx.inputs.scf.calc_parameters = inputs[2]
 
-        last_scf_wc_uuid = calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid']
-        last_scf = load_node(last_scf_wc_uuid)
-        error_params = last_scf.outputs.last_calc.error_params.get_dict()
+        error_params = calculation.outputs.last_scf.last_calc.error_params.get_dict()
         label1 = int(error_params['overlapped_indices'][0])
         label2 = int(error_params['overlapped_indices'][1])
         value = -(float(error_params['overlaping_value']) + 0.01) / 2
@@ -275,20 +271,10 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
         self.report('Relax WC failed because MT overlapped during relaxation. Try to fix this')
         wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
 
-        relax_wc = load_node(find_last_submitted_workchain(self.node))
-        scf_wc = load_node(find_last_submitted_workchain(relax_wc))
-        mixing = ''
-        for link in scf_wc.get_outgoing().all():
-            try:
-                if link.node.process_class is modify_fleurinpdata:
-                    tasks = link.node.inputs.modifications.get_dict()['tasks']
-                    for task in tasks:
-                        try:
-                            mixing = task[1][0]['forcemix']
-                        except (IndexError, KeyError):
-                            pass
-            except AttributeError:
-                pass
+        xmltree, schema_dict = calculation.outputs.last_scf.fleurinp.load_inpxml()
+        mixing = evaluate_attribute(xmltree, schema_dict, 'forcemix', optional=True)
+        if not mixing:
+            mixing = "BFGS"
 
         if value < -0.2 and error_params['iteration_number'] >= 3 and mixing == 'BFGS':
             self.ctx.initial_mixing = 'straight'
