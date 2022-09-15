@@ -940,7 +940,7 @@ def extract_results(calcs):
     for calc in calcs:
         #print(calc)
         try:
-            calc_uuid = calc.get_outgoing().get_node_by_label('output_scf_wc_para').get_dict()['last_calc_uuid']
+            calc_uuid = calc.outputs.last_calc.remote_folder.creator.uuid
         except (NotExistent, MultipleObjectsError, ValueError, TypeError, KeyError):  #TODO which error
             logmsg = ('ERROR: No output_scf_wc_para node found or no "last_calc_uuid" '
                       'key in it for calculation: {}'.format(calc))

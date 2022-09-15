@@ -491,12 +491,6 @@ class FleurBandDosWorkChain(WorkChain):
         if self.ctx.banddos_calc:
             self.report(f'A bandstructure/DOS was calculated and is found under pk={self.ctx.banddos_calc.pk}, '
                         f'calculation {self.ctx.banddos_calc}')
-            try:
-                last_calc_uuid = find_last_submitted_calcjob(self.ctx.banddos_calc)
-            except NotExistent:
-                last_calc_uuid = None
-        else:
-            last_calc_uuid = None
 
         try:  # if something failed, we still might be able to retrieve something
             last_calc_out = self.ctx.banddos_calc.outputs.output_parameters
@@ -556,7 +550,6 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['Warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['last_calc_uuid'] = last_calc_uuid
         outputnode_dict['mode'] = self.ctx.wf_dict.get('mode')
         outputnode_dict['fermi_energy_band'] = efermi_band
         outputnode_dict['bandgap_band'] = bandgap_band
