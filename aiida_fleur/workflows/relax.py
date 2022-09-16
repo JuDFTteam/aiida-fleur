@@ -32,7 +32,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = '0.4.1'
+    _workflowversion = '0.5.0'
 
     _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
