@@ -104,6 +104,9 @@ class FleurCalculation(CalcJob):
     #files for greensfunctions
     _GREENSF_HDF5_FILE_NAME = 'greensf.hdf'
 
+    #Name of the folder containing the hubbard1 results
+    _HUBBARD1_FOLDER_NAME = 'Hubbard1'
+
     # files for hybrid functionals
     _COULOMB1_FILE_NAME = 'coulomb1'
     _MIXBAS_FILE_NAME = 'mixbas'
@@ -388,11 +391,13 @@ class FleurCalculation(CalcJob):
             if modes['relax']:
                 # if l_f="T" retrieve relax.xml
                 mode_retrieved_filelist.append(self._RELAX_FILE_NAME)
-            if modes['ldau']:
+            if modes['ldau'] or modes['ldahia']:
                 if with_hdf5:
                     mode_retrieved_filelist.append(self._NMMPMAT_HDF5_FILE_NAME)
                 else:
                     mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
+            if modes['ldahia']:
+                mode_retrieved_filelist.append(self._HUBBARD1_FOLDER_NAME)
             if with_hdf5 and modes['greensf']:
                 mode_retrieved_filelist.append(self._GREENSF_HDF5_FILE_NAME)
             if modes['cf_coeff']:
