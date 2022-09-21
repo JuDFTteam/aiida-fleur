@@ -159,7 +159,15 @@ class FleurinpModifier(FleurXMLModifier):
         #The fleurinp file modifying function signatures are taken from teh FleruinpModifier directly
         sig = signature(getattr(self, name))
         bound = sig.bind(*args, **kwargs)
-        return dict(bound.arguments)
+
+        kwargs_complete = dict(bound.arguments)
+
+        #Fix if the function has an explicit kwargs
+        if 'kwargs' in kwargs_complete:
+            kwargs_explicit = kwargs_complete.pop('kwargs')
+            kwargs_complete = {**kwargs_complete, **kwargs_explicit}
+
+        return kwargs_complete
 
     @classmethod
     def apply_fleurinp_modifications(cls, new_fleurinp, modification_tasks):
