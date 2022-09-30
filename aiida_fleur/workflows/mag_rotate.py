@@ -1,4 +1,5 @@
 import copy
+import re
 
 from aiida.engine import WorkChain, ToContext, if_, while_
 from aiida.engine import calcfunction as cf
@@ -16,7 +17,7 @@ class FleurMagRotateWorkChain(WorkChain):
     Workchain for calculating different magnetic directions
     both for second variation SOC and noco
     """
-    _workflowversion = '0.0.1'
+    _workflowversion = '0.0.2'
 
     _wf_default = {
         'angles': [],  #[(0.0,0.0), (np.pi/4, 0.0), ...]
@@ -31,6 +32,7 @@ class FleurMagRotateWorkChain(WorkChain):
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input('wf_parameters_first_scf', valid_type=orm.Dict, required=False)
         spec.input('wf_parameters', valid_type=orm.Dict)
+        spec.input_namespace('remotes', valid_type=orm.RemoteData, dynamic=True, required=False)
 
         spec.outline(
             cls.start,
@@ -40,6 +42,21 @@ class FleurMagRotateWorkChain(WorkChain):
         spec.output('output_mag_rotate_wc_para', valid_type=orm.Dict, required=True)
 
         spec.exit_code(400, 'ERROR_SUBPROCESS_FAILED', message='Some configurations failed')
+
+    def get_builder_continue(self):
+        """
+        Get a Builder prepared with inputs to continue from the charge densities of
+        a already finished MagRotateWorkChain
+        """
+        builder = super().get_builder_restart()
+        scf_nodes = self.get_outgoing(node_class=FleurScfWorkChain).all()
+        for link in scf_nodes:
+            if not link.node.is_finished_ok:
+                continue
+            if not re.fullmatch(r'scf\_[0-9]+', link.link_label):
+                continue
+            builder.remotes[link.link_label] = link.node.outputs.last_calc.remote_folder
+        return builder
 
     def start(self):
         '''
@@ -156,6 +173,11 @@ class FleurMagRotateWorkChain(WorkChain):
         inputs_scf.wf_parameters = orm.Dict(dict=wf_parameters)
         label = f'scf_{self.ctx.current_configuration}'
         inputs_scf.metadata.call_link_label = label
+
+        if 'remotes' in self.inputs:
+            current_label =  f'scf_{self.ctx.current_configuration}'
+            if current_label in self.inputs.remotes:
+                inputs_scf.remote_data = self.inputs.remotes[current_label]
 
         self.ctx.current_configuration += 1
         return label, inputs_scf
