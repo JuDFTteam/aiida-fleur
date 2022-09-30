@@ -175,7 +175,7 @@ class FleurMagRotateWorkChain(WorkChain):
         inputs_scf.metadata.call_link_label = label
 
         if 'remotes' in self.inputs:
-            current_label =  f'scf_{self.ctx.current_configuration}'
+            current_label = f'scf_{self.ctx.current_configuration}'
             if current_label in self.inputs.remotes:
                 inputs_scf.remote_data = self.inputs.remotes[current_label]
 
