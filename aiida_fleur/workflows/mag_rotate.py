@@ -43,13 +43,16 @@ class FleurMagRotateWorkChain(WorkChain):
 
         spec.exit_code(400, 'ERROR_SUBPROCESS_FAILED', message='Some configurations failed')
 
-    def get_builder_continue(self):
+    @classmethod
+    def get_builder_continue(cls, node):
         """
         Get a Builder prepared with inputs to continue from the charge densities of
         a already finished MagRotateWorkChain
+
+        :param node: Instance, from which the calculation should be continued
         """
-        builder = super().get_builder_restart()
-        scf_nodes = self.get_outgoing(node_class=FleurScfWorkChain).all()
+        builder = node.get_builder_restart()
+        scf_nodes = node.get_outgoing(node_class=FleurScfWorkChain).all()
         for link in scf_nodes:
             if not link.node.is_finished_ok:
                 continue
