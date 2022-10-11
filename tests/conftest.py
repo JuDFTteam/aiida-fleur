@@ -798,7 +798,7 @@ def show_workchain_summary():
             return f'{calc_info_string} | {caching_string}'
 
         echo.echo('Call Graph:')
-        echo.echo(format_call_graph(calc_node, calc_and_caching_info))
+        echo.echo(format_call_graph(calc_node, info_fn=calc_and_caching_info))
         echo.echo('Workchain report:')
         echo.echo(get_workchain_report(calc_node, 'REPORT'))
 
