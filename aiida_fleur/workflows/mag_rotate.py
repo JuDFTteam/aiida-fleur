@@ -260,12 +260,14 @@ class FleurMagRotateWorkChain(WorkChain):
 
             t_e = outpara.get('total_energy', None)
             e_u = outpara.get('total_energy_units', 'eV')
-            if e_u in ['Htr', 'htr']:
+            if e_u.lower() == 'htr' and t_e is not None:
                 t_e = t_e * HTR_TO_EV
             dis = outpara.get('distance_charge', None)
             dis_u = outpara.get('distance_charge_units', 'me/bohr^3')
             if calc.is_finished_ok:
                 t_energylist.append(t_e)
+            else:
+                t_energylist.append(None)
             t_energylist_all.append(t_e)
             distancelist.append(dis)
 
