@@ -277,7 +277,7 @@ class FleurMagRotateWorkChain(WorkChain):
             'angles': self.ctx.wf_dict['angles'],
             'total_energy_including_non_converged': t_energylist_all,
             'total_energy': t_energylist,
-            'total_energy_units': e_u,
+            'total_energy_units': 'eV',
             'distance_charge': distancelist,
             'distance_charge_units': dis_u,
             'number_configurations': n_configurations,
