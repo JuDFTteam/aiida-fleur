@@ -60,7 +60,7 @@ class FleurMagRotateWorkChain(WorkChain):
             if not re.fullmatch(r'scf\_[0-9]+', link.link_label):
                 continue
             builder.remotes[link.link_label] = link.node.outputs.last_calc.remote_folder
-        
+
         #Remove all the different starting configurations
         #to start from the remote folders
         if 'fleurinp' in builder.scf:
@@ -313,6 +313,7 @@ class FleurMagRotateWorkChain(WorkChain):
             return self.exit_codes.ERROR_ALL_DIRECTIONS_FAILED
         if not self.ctx.successful:
             return self.exit_codes.ERROR_SOME_DIRECTIONS_FAILED
+
 
 @cf
 def create_mag_rotate_result_node(**kwargs):
