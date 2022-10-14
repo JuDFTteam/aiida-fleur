@@ -878,33 +878,35 @@ class FleurOrbControlWorkChain(WorkChain):
             converged_mask = np.ones(energy.size, dtype=bool)
             converged_mask[non_converged_configs] = False
 
-            converged_minimum_energy = np.nanmin(energy[converged_mask])
-            if len(energy[~converged_mask]) != 0:
-                if np.nanmin(energy[~converged_mask]) < converged_minimum_energy:
-                    lower_non_converged = np.array(non_converged_configs)[
-                        energy[~converged_mask] < converged_minimum_energy]
-                    out['warnings'].extend(f"Configuration 'Relaxed_{index}' did not converge "
-                                           'but is lower in energy than the lowest converged configuration'
-                                           for index in lower_non_converged)
+            if len(energy[converged_mask]) != 0:
+                converged_minimum_energy = np.nanmin(energy[converged_mask])
+                if len(energy[~converged_mask]) != 0:
+                    if np.nanmin(energy[~converged_mask]) < converged_minimum_energy:
+                        lower_non_converged = np.array(non_converged_configs)[
+                            energy[~converged_mask] < converged_minimum_energy]
+                        out['warnings'].extend(f"Configuration 'Relaxed_{index}' did not converge "
+                                               'but is lower in energy than the lowest converged configuration'
+                                               for index in lower_non_converged)
 
-            #Replace the non-converged calculations with NaN
-            #If we were to simply do np.nanargmin(energy[converged_mask])
-            #The index will no longer match up with the complete list
-            energy[~converged_mask] = np.nan
-            groundstate_index = np.nanargmin(energy)
-            out['groundstate_configuration'] = groundstate_index
+                #Replace the non-converged calculations with NaN
+                #If we were to simply do np.nanargmin(energy[converged_mask])
+                #The index will no longer match up with the complete list
+                energy[~converged_mask] = np.nan
+                groundstate_index = np.nanargmin(energy)
+                out['groundstate_configuration'] = groundstate_index
 
-            if f'Relaxed_{groundstate_index}' in self.ctx:
-                groundstate_scf = self.ctx[f'Relaxed_{groundstate_index}']
-                self.out_many(self.exposed_outputs(groundstate_scf, FleurScfWorkChain, namespace='groundstate_scf'))
+                if f'Relaxed_{groundstate_index}' in self.ctx:
+                    groundstate_scf = self.ctx[f'Relaxed_{groundstate_index}']
+                    self.out_many(self.exposed_outputs(groundstate_scf, FleurScfWorkChain, namespace='groundstate_scf'))
 
-                #Retrieve the nmmpmat file and provide it as an singlefiledata output
-                retrieved = groundstate_scf.outputs.last_calc.retrieved
-                nmmp_node = extract_nmmp_file(retrieved)
-                if not isinstance(nmmp_node, ExitCode):
-                    self.out('groundstate_denmat', nmmp_node)
-                else:
-                    self.report('Something went wrong. The groundstate SCF calculation contains no density matrix file')
+                    #Retrieve the nmmpmat file and provide it as an singlefiledata output
+                    retrieved = groundstate_scf.outputs.last_calc.retrieved
+                    nmmp_node = extract_nmmp_file(retrieved)
+                    if not isinstance(nmmp_node, ExitCode):
+                        self.out('groundstate_denmat', nmmp_node)
+                    else:
+                        self.report(
+                            'Something went wrong. The groundstate SCF calculation contains no density matrix file')
 
         outnode = Dict(dict=out)
         outnodedict['results_node'] = outnode
@@ -925,7 +927,7 @@ class FleurOrbControlWorkChain(WorkChain):
             outputscf.description = ('SCF output from the run with the lowest total '
                                      'energy extracted from FleurOrbControlWorkChain')
 
-        if all(e is None for e in t_energylist):
+        if all(e is None for e in t_energylist) or out.get('groundstate_configuration') is None:
             return self.exit_codes.ERROR_ALL_CONFIGS_FAILED
         if not self.ctx.successful:
             return self.exit_codes.ERROR_SOME_CONFIGS_FAILED
