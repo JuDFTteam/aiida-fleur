@@ -139,7 +139,7 @@ class FleurOrbControlWorkChain(WorkChain):
     :param inpgen: (Code)
     :param fleur: (Code)
     """
-    _workflowversion = '0.5.1'
+    _workflowversion = '0.6.0'
 
     _default_options = {
         'resources': {
@@ -155,6 +155,7 @@ class FleurOrbControlWorkChain(WorkChain):
 
     _wf_default = {
         'iterations_fixed': 30,
+        'distance_cutoff_relaxed': 5,
         'ldau_dict': None,
         'use_orbital_occupation': False,
         'fixed_occupations': None,
@@ -759,10 +760,17 @@ class FleurOrbControlWorkChain(WorkChain):
         else:
             settings = input_scf.settings.get_dict()
         settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
+        input_scf.settings = Dict(dict=settings)
 
-        with inpxml_changes(input_scf) as fm:
+        scf_wf_parameters = {}
+        if 'wf_parameters' in input_scf:
+            scf_wf_parameters = input_scf.wf_parameters.get_dict()
+        scf_wf_parameters['stop_if_last_distance_exceeds'] = self.ctx.wf_dict['distance_cutoff_relaxed']
+
+        with inpxml_changes(scf_wf_parameters) as fm:
             fm.set_inpchanges({'l_linmix': False})
 
+        input_scf.wf_parameters = Dict(scf_wf_parameters)
         input_scf.settings = Dict(settings)
 
         return input_scf
