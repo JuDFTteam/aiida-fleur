@@ -58,10 +58,11 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.6.2'
+    _workflowversion = '0.6.3'
     _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
+        'stop_if_last_distance_exceeds': None,
         'energy_converged': 0.002,
         'force_converged': 0.002,
         'kpoints_distance': None,  # in 1/A, usually 0.1
@@ -753,6 +754,26 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx.loop_count >= self.ctx.max_number_runs:
             self.ctx.reached_conv = False
             return False
+
+        if self.ctx.wf_dict['stop_if_last_distance_exceeds'] is not None:
+            if mode == 'density' and \
+               self.ctx.last_charge_density >= self.ctx.wf_dict['stop_if_last_distance_exceeds']:
+
+                self.report(
+                    f'Stopping because last charge density distance {self.ctx.last_charge_density} me/bohr^3'
+                    f' of the last calculation exceeded the given limit of {self.ctx.wf_dict["stop_if_last_distance_exceeds"]} me/bohr^3'
+                )
+                self.ctx.reached_conv = False
+                return False
+            if mode in ('energy', 'spex') and \
+               self.ctx.energydiff >= self.ctx.wf_dict['stop_if_last_distance_exceeds']:
+
+                self.report(
+                    f'Stopping because last energy difference {self.ctx.energydiff} htr'
+                    f' of the last calculation exceeded the given limit of {self.ctx.wf_dict["stop_if_last_distance_exceeds"]} htr'
+                )
+                self.ctx.reached_conv = False
+                return False
 
         return True
 
