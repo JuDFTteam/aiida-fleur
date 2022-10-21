@@ -17,13 +17,14 @@ class FleurMagRotateWorkChain(WorkChain):
     Workchain for calculating different magnetic directions
     both for second variation SOC and noco
     """
-    _workflowversion = '0.2.0'
+    _workflowversion = '0.3.0'
 
     _wf_default = {
         'angles': [],  #[(0.0,0.0), (np.pi/4, 0.0), ...]
         'reuse_charge_density': False,
         'noco': True,
-        'noco_species_name': 'all'
+        'noco_species_name': 'all',
+        'first_calculation_reference': False,
     }
 
     @classmethod
@@ -36,7 +37,8 @@ class FleurMagRotateWorkChain(WorkChain):
 
         spec.outline(
             cls.start,
-            if_(cls.run_all)(cls.submit_calculations).else_(
+            if_(cls.run_first)(cls.submit_next_calculation, cls.submit_calculations)
+            .elif_(cls.run_all)(cls.submit_calculations).else_(
                 while_(cls.configurations_left)(cls.submit_next_calculation)), cls.return_results)
 
         spec.output('output_mag_rotate_wc_para', valid_type=orm.Dict, required=True)
@@ -114,6 +116,9 @@ class FleurMagRotateWorkChain(WorkChain):
 
         self.ctx.run_sequentially = self.ctx.wf_dict['reuse_charge_density']
 
+    def run_first(self):
+        return self.ctx.wf_dict['first_calculation_reference']
+
     def run_all(self):
         return not self.ctx.run_sequentially
 
@@ -136,6 +141,23 @@ class FleurMagRotateWorkChain(WorkChain):
             inputs_scf.remote_data = last_scf.outputs.last_calc.remote_folder
             if 'fleurinp' in inputs_scf:
                 inputs_scf.pop('fleurinp')
+        
+        if self.ctx.wf_dict['first_calculation_reference'] and self.ctx.current_configuration > 0:
+            first_scf = self.ctx['scf_0']
+
+            if not first_scf.is_finished_ok:
+                message = 'Configuration 0 was not successful.'
+                self.report(message)
+                return self.exit_codes.ERROR_SUBPROCESS_FAILED
+
+            inputs_scf.remote_data = first_scf.outputs.last_calc.remote_folder
+            if 'fleurinp' in inputs_scf:
+                inputs_scf.pop('fleurinp')
+            if 'structure' in inputs_scf:
+                inputs_scf.pop('structure')
+                inputs_scf.pop('inpgen')
+            if 'calc_parameters' in inputs_scf:
+                inputs_scf.pop('calc_parameters')
 
         wf_parameters = {}
         if 'wf_parameters' in inputs_scf:
