@@ -196,7 +196,7 @@ class FleurCalculation(CalcJob):
     # possible settings_dict keys
     _settings_keys = [
         'additional_retrieve_list', 'remove_from_retrieve_list', 'additional_remotecopy_list',
-        'remove_from_remotecopy_list', 'cmdline'
+        'remove_from_remotecopy_list', 'cmdline', 'fleurinp_nmmpmat_priority'
     ]
 
     @classmethod
@@ -430,10 +430,17 @@ class FleurCalculation(CalcJob):
                 self._NMMPMAT_HDF5_FILE_NAME in outfolder_filenames):
                 if has_fleurinp:
                     if self._NMMPMAT_FILE_NAME in fleurinp.files:
-                        self.logger.warning('Ignoring {filename} from fleurinp. '
-                                            'There is already an {filename} file '
-                                            'for the parent calculation'.format(filename=self._NMMPMAT_FILE_NAME))
-                        local_copy_list.remove((fleurinp.uuid, self._NMMPMAT_FILE_NAME, self._NMMPMAT_FILE_NAME))
+                        if settings_dict.get('fleurinp_nmmpmat_priority', False):
+                            self.logger.warning('Ignoring {filename} from remote. '
+                                                'There is already an {filename} file '
+                                                'for the fleurinp node'.format(filename=self._NMMPMAT_FILE_NAME))
+                            has_nmmpmat_file = False
+                        else:
+                            self.logger.warning('Ignoring {filename} from fleurinp. '
+                                                'There is already an {filename} file '
+                                                'for the parent calculation'.format(filename=self._NMMPMAT_FILE_NAME))
+                            local_copy_list.remove((fleurinp.uuid, self._NMMPMAT_FILE_NAME, self._NMMPMAT_FILE_NAME))
+
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
