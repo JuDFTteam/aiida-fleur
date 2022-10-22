@@ -45,6 +45,7 @@ class FleurMagRotateWorkChain(WorkChain):
 
         spec.exit_code(400, 'ERROR_SOME_DIRECTIONS_FAILED', message='Some configurations failed')
         spec.exit_code(320, 'ERROR_ALL_DIRECTIONS_FAILED', message='All configurations failed')
+        spec.exit_code(401, 'ERROR_NEEDED_DIRECTION_FAILED', message='A required configuration failed')
 
     @classmethod
     def get_builder_continue(cls, node):
@@ -136,7 +137,7 @@ class FleurMagRotateWorkChain(WorkChain):
             if not last_scf.is_finished_ok:
                 message = f'The Configuration {self.ctx.current_configuration} was not successful.'
                 self.report(message)
-                return self.exit_codes.ERROR_SUBPROCESS_FAILED
+                return self.exit_codes.ERROR_NEEDED_DIRECTION_FAILED
 
             inputs_scf.remote_data = last_scf.outputs.last_calc.remote_folder
             if 'fleurinp' in inputs_scf:
@@ -148,7 +149,7 @@ class FleurMagRotateWorkChain(WorkChain):
             if not first_scf.is_finished_ok:
                 message = 'Configuration 0 was not successful.'
                 self.report(message)
-                return self.exit_codes.ERROR_SUBPROCESS_FAILED
+                return self.exit_codes.ERROR_NEEDED_DIRECTION_FAILED
 
             inputs_scf.remote_data = first_scf.outputs.last_calc.remote_folder
             if 'fleurinp' in inputs_scf:
