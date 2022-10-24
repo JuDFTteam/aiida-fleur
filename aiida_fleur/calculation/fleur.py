@@ -441,7 +441,6 @@ class FleurCalculation(CalcJob):
                                                 'for the parent calculation'.format(filename=self._NMMPMAT_FILE_NAME))
                             local_copy_list.remove((fleurinp.uuid, self._NMMPMAT_FILE_NAME, self._NMMPMAT_FILE_NAME))
 
-
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
                     if file1 not in outfolder_filenames:

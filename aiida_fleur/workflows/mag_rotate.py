@@ -37,9 +37,9 @@ class FleurMagRotateWorkChain(WorkChain):
 
         spec.outline(
             cls.start,
-            if_(cls.run_first)(cls.submit_next_calculation, cls.submit_calculations)
-            .elif_(cls.run_all)(cls.submit_calculations).else_(
-                while_(cls.configurations_left)(cls.submit_next_calculation)), cls.return_results)
+            if_(cls.run_first)(cls.submit_next_calculation,
+                               cls.submit_calculations).elif_(cls.run_all)(cls.submit_calculations).else_(
+                                   while_(cls.configurations_left)(cls.submit_next_calculation)), cls.return_results)
 
         spec.output('output_mag_rotate_wc_para', valid_type=orm.Dict, required=True)
 
@@ -147,7 +147,7 @@ class FleurMagRotateWorkChain(WorkChain):
             inputs_scf.remote_data = last_scf.outputs.last_calc.remote_folder
             if 'fleurinp' in inputs_scf:
                 inputs_scf.pop('fleurinp')
-        
+
         if self.ctx.wf_dict['first_calculation_reference'] and self.ctx.current_configuration > 0:
             first_scf = self.ctx['scf_0']
 
