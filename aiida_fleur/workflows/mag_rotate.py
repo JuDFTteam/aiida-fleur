@@ -74,6 +74,11 @@ class FleurMagRotateWorkChain(WorkChain):
         if 'calc_parameters' in builder.scf:
             del builder.scf.calc_parameters
 
+        if 'wf_parameters' in builder:
+            wf_parameters = builder.wf_parameters.get_dict()
+            wf_parameters['first_calculation_reference'] = False
+            builder.wf_parameters = orm.Dict(dict=wf_parameters)
+
         return builder
 
     def start(self):
