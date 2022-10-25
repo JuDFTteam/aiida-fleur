@@ -30,6 +30,7 @@ from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_dat
 
 import numpy as np
 from lxml import etree
+import re
 
 
 def generate_density_matrix_configurations(occupations=None, configurations=None):
@@ -198,9 +199,13 @@ class FleurOrbControlWorkChain(WorkChain):
         spec.input('settings', valid_type=Dict, required=False)
         spec.input('settings_inpgen', valid_type=Dict, required=False)
 
+        spec.input_namespace('fixed_remotes', valid_type=orm.RemoteData, dynamic=True, required=False)
+        spec.input_namespace('relaxed_remotes', valid_type=orm.RemoteData, dynamic=True, required=False)
+
         spec.outline(cls.start, cls.validate_input,
                      if_(cls.scf_no_ldau_needed)(cls.converge_scf_no_ldau).elif_(cls.inpgen_needed)(cls.run_inpgen),
-                     cls.create_configurations, cls.run_fleur_fixed, cls.converge_scf, cls.return_results)
+                     cls.create_configurations,
+                     if_(cls.run_fixed_calculations)(cls.run_fleur_fixed), cls.converge_scf, cls.return_results)
 
         spec.output('output_orbcontrol_wc_para', valid_type=Dict)
         spec.output('groundstate_denmat', valid_type=orm.SinglefileData, required=False)
@@ -222,6 +227,48 @@ class FleurOrbControlWorkChain(WorkChain):
         spec.exit_code(360, 'ERROR_INPGEN_CALCULATION_FAILED', message='Inpgen calculation failed.')
         spec.exit_code(450, 'ERROR_SCF_NOLDAU_FAILED', message='Convergence workflow without LDA+U failed.')
 
+    @classmethod
+    def get_builder_continue_fixed(cls, node):
+        """
+        Get a Builder prepared with inputs to continue from the charge densities of
+        a already finished MagRotateWorkChain
+
+        :param node: Instance, from which the calculation should be continued
+        """
+        builder = node.get_builder_restart()
+        scf_nodes = node.get_outgoing(node_class=FleurBaseWorkChain).all()
+        for link in scf_nodes:
+            if not link.node.is_finished_ok:
+                continue
+            if not re.fullmatch(r'Fixed\_[0-9]+', link.link_label):
+                continue
+            builder.fixed_remotes[link.link_label] = link.node.outputs.remote_folder
+
+        return builder
+
+    @classmethod
+    def get_builder_continue_relaxed(cls, node, allow_nonconverged=True):
+        """
+        Get a Builder prepared with inputs to continue from the charge densities of
+        a already finished MagRotateWorkChain
+
+        :param node: Instance, from which the calculation should be continued
+        """
+        builder = node.get_builder_restart()
+        scf_nodes = node.get_outgoing(node_class=FleurScfWorkChain).all()
+        for link in scf_nodes:
+            if not link.node.is_finished_ok:
+                if allow_nonconverged:
+                    if link.node.exit_status not in FleurScfWorkChain.get_exit_statuses(['ERROR_DID_NOT_CONVERGE']):
+                        continue
+                else:
+                    continue
+            if not re.fullmatch(r'Relaxed\_[0-9]+', link.link_label):
+                continue
+            builder.relaxed_remotes[link.link_label] = link.node.outputs.remote_folder
+
+        return builder
+
     def start(self):
         """
         init context and some parameters
@@ -233,6 +280,7 @@ class FleurOrbControlWorkChain(WorkChain):
         # internal para /control para
         self.ctx.scf_no_ldau = None
         self.ctx.scf_no_ldau_needed = False
+        self.ctx.skip_fixed_calculations = False
         self.ctx.inpgen_needed = False
         self.ctx.fixed_configurations = []
         self.ctx.successful = True
@@ -420,29 +468,51 @@ class FleurOrbControlWorkChain(WorkChain):
                 error = 'ERROR: you gave SCF input + inpgen for the Orbcontrol calculation'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'relaxed_remotes' in inputs:
+                error = 'ERROR: you gave SCF input + Charge densities for relaxation to start from'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         elif 'structure' in inputs:
             self.ctx.inpgen_needed = True
             if 'inpgen' not in inputs:
                 error = 'ERROR: you gave structure input but no inpgen code Orbcontrol calculation'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        elif 'remote' not in inputs and 'fleurinp' not in inputs:
+            if 'relaxed_remotes' in inputs:
+                error = 'ERROR: you gave structure input + Charge densities for relaxation to start from'
+                self.control_end_wc(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+        elif 'remote' not in inputs and 'fleurinp' not in inputs and 'relaxed_remotes' not in inputs:
             error = 'ERROR: you gave neither SCF input nor remote or fleurinp'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
             if 'calc_parameters' in inputs:
-                error = 'ERROR: you gave remote/fleurinp input + calc_parameters for the Orbcontrol calculation'
+                error = 'ERROR: you gave remote(s)/fleurinp input + calc_parameters for the Orbcontrol calculation'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'structure' in inputs:
-                error = 'ERROR: you gave remote/fleurinp input + structure for the Orbcontrol calculation'
+                error = 'ERROR: you gave remote(s)/fleurinp input + structure for the Orbcontrol calculation'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'inpgen' in inputs:
-                error = 'ERROR: you gave remote/fleurinp input + inpgen for the Orbcontrol calculation'
+                error = 'ERROR: you gave remote(s)/fleurinp input + inpgen for the Orbcontrol calculation'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            if 'relaxed_remotes' in inputs:
+                if 'fixed_remotes' in inputs:
+                    error = 'ERROR: you gave fixed and relaxed remotes for the Orbcontrol calculation'
+                    self.control_end_wc(error)
+                    return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                if 'remote' in inputs:
+                    error = 'ERROR: you gave relaxed remotes + remote for the Orbcontrol calculation'
+                    self.control_end_wc(error)
+                    return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                if 'fleurinp' in inputs:
+                    error = 'ERROR: you gave relaxed remotes + fleurinp for the Orbcontrol calculation'
+                    self.control_end_wc(error)
+                    return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+                self.ctx.skip_fixed_calculations = True
             if 'remote' in inputs:
                 remote = inputs.remote
             if 'fleurinp' in inputs:
@@ -468,6 +538,12 @@ class FleurOrbControlWorkChain(WorkChain):
         Returns whether to run an additional scf workchain before adding LDA+U
         """
         return self.ctx.scf_no_ldau_needed
+
+    def run_fixed_calculations(self):
+        """
+        Returns whether to run frozen density matrix calculations
+        """
+        return not self.ctx.skip_fixed_calculations
 
     def converge_scf_no_ldau(self):
         """
@@ -625,6 +701,11 @@ class FleurOrbControlWorkChain(WorkChain):
         else:
             if 'remote' in self.inputs:
                 remote_data = self.inputs.remote
+            if 'fixed_remotes' in self.inputs and \
+                f'Fixed_{index}' in self.inputs.fixed_remotes:
+                self.report(f'INFO: overwriting remote folder with given fixed remote for configuration {index}')
+                remote_data = self.inputs.fixed_remotes[f'Fixed_{index}']
+
             if 'fleurinp' not in self.inputs:
                 fleurinp = get_fleurinp_from_remote_data(remote_data, store=True)
                 self.report(
@@ -637,9 +718,8 @@ class FleurOrbControlWorkChain(WorkChain):
         label = f'Fixed_{index}'
         description = f'LDA+U with fixed nmmpmat for config {index}'
 
-        if 'settings' not in inputs:
-            settings = {}
-        else:
+        settings = {}
+        if 'settings' in inputs:
             settings = inputs.settings.get_dict()
         settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
 
@@ -715,22 +795,30 @@ class FleurOrbControlWorkChain(WorkChain):
         for index, config in enumerate(self.ctx.fixed_configurations):
 
             inputs = self.get_inputs_scf()
-            fixed_calc = self.ctx[f'Fixed_{index}']
 
-            if not fixed_calc.is_finished_ok:
-                message = f'One Base workflow (fixed nmmpmat) failed: {index}'
-                self.ctx.warnings.append(message)
-                continue
+            if self.ctx.skip_fixed_calculations:
+                if f'Relaxed_{index}' not in self.inputs.relaxed_remotes:
+                    self.report(f'INFO: Skipping configuration {index}')
+                    continue
+                inputs.remote_data = self.inputs.relaxed_remotes[f'Relaxed_{index}']
+            else:
 
-            try:
-                fixed_calc.outputs.output_parameters
-            except NotExistent:
-                message = f'One Base workflow (fixed nmmpmat) failed, no output node: {index}. I skip this one.'
-                self.ctx.errors.append(message)
-                continue
+                fixed_calc = self.ctx[f'Fixed_{index}']
 
-            inputs.fleurinp = fixed_calc.inputs.fleurinpdata
-            inputs.remote_data = fixed_calc.outputs.remote_folder
+                if not fixed_calc.is_finished_ok:
+                    message = f'One Base workflow (fixed nmmpmat) failed: {index}'
+                    self.ctx.warnings.append(message)
+                    continue
+
+                try:
+                    fixed_calc.outputs.output_parameters
+                except NotExistent:
+                    message = f'One Base workflow (fixed nmmpmat) failed, no output node: {index}. I skip this one.'
+                    self.ctx.errors.append(message)
+                    continue
+
+                inputs.fleurinp = fixed_calc.inputs.fleurinpdata
+                inputs.remote_data = fixed_calc.outputs.remote_folder
 
             label = f'Relaxed_{index}'
             inputs.setdefault('metadata', {})['call_link_label'] = label
@@ -780,6 +868,7 @@ class FleurOrbControlWorkChain(WorkChain):
         distancelist = []
         t_energylist = []
         failed_configs = []
+        skipped_configs = []
         non_converged_configs = []
         configs_list = []
         outnodedict = {}
@@ -788,11 +877,24 @@ class FleurOrbControlWorkChain(WorkChain):
         for index, config in enumerate(self.ctx.fixed_configurations):
             if f'Relaxed_{index}' in self.ctx:
                 calc = self.ctx[f'Relaxed_{index}']
-            else:
+            elif not self.ctx.skip_fixed_calculations:
                 message = (f'One SCF workflow was not run because the fixed calculation failed: Relaxed_{index}')
                 self.ctx.warnings.append(message)
                 self.ctx.successful = False
                 failed_configs.append(index)
+                t_energylist.append(None)
+                distancelist.append(None)
+                continue
+            elif f'Relaxed_{index}' in self.inputs.relaxed_remotes:
+                message = (f'One SCF workflow was not run for unknown reasons: Relaxed_{index}')
+                self.ctx.warnings.append(message)
+                self.ctx.successful = False
+                failed_configs.append(index)
+                t_energylist.append(None)
+                distancelist.append(None)
+                continue
+            else:
+                skipped_configs.append(index)
                 t_energylist.append(None)
                 distancelist.append(None)
                 continue
@@ -862,6 +964,7 @@ class FleurOrbControlWorkChain(WorkChain):
             'converged_configs': converged_configs,
             'non_converged_configs': non_converged_configs,
             'failed_configs': failed_configs,
+            'skipped_configs': skipped_configs,
             'groundstate_configuration': None,
             'info': self.ctx.info,
             'warnings': self.ctx.warnings,
