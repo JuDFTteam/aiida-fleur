@@ -987,10 +987,12 @@ class FleurOrbControlWorkChain(WorkChain):
             converged_mask = np.ones(energy.size, dtype=bool)
             converged_mask[non_converged_configs] = False
             converged_mask[failed_configs] = False
+            converged_mask[skipped_configs] = False
 
             non_converged_mask = np.ones(energy.size, dtype=bool)
             non_converged_mask[converged_configs] = False
             non_converged_mask[failed_configs] = False
+            non_converged_mask[skipped_configs] = False
 
             if len(energy[converged_mask]) != 0:
                 converged_minimum_energy = np.nanmin(energy[converged_mask])
