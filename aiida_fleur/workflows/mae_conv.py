@@ -54,7 +54,7 @@ class FleurMaeConvWorkChain(WorkChain):
 
         spec.outline(cls.start, cls.converge_scf, cls.get_results, cls.return_results)
 
-        spec.output('out', valid_type=Dict)
+        spec.output('output_mae_conv_wc_para', valid_type=Dict)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -205,7 +205,7 @@ class FleurMaeConvWorkChain(WorkChain):
 
         # create link to workchain node
         out = save_output_node(Dict(dict=out))
-        self.out('out', out)
+        self.out('output_mae_conv_wc_para', out)
 
         if not self.ctx.energydict:
             return self.exit_codes.ERROR_ALL_SQAS_FAILED

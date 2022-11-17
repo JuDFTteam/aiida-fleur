@@ -101,7 +101,7 @@ class FleurBandDosWorkChain(WorkChain):
                      ), cls.return_results)
 
         spec.output('output_banddos_wc_para', valid_type=Dict)
-        spec.output('last_calc_retrieved', valid_type=FolderData)
+        spec.expose_outputs(FleurBaseWorkChain, namespace='banddos_calc')
         spec.output('output_banddos_wc_bands', valid_type=BandsData, required=False)
         spec.output('output_banddos_wc_dos', valid_type=XyData, required=False)
 
@@ -577,8 +577,8 @@ class FleurBandDosWorkChain(WorkChain):
         else:
             outdict = create_band_result_node(outpara=outputnode_t)
 
-        if retrieved:
-            outdict['last_calc_retrieved'] = retrieved
+        if self.ctx.banddos_calc:
+            self.out_many(self.exposed_outputs(self.ctx.banddos_calc, FleurBaseWorkChain, namespace='banddos_calc'))
 
         #TODO parse Bandstructure
         for link_name, node in outdict.items():

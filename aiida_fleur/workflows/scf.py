@@ -122,7 +122,6 @@ class FleurScfWorkChain(WorkChain):
 
         spec.output('fleurinp', valid_type=FleurinpData)
         spec.output('output_scf_wc_para', valid_type=Dict)
-        spec.output('last_fleur_calc_output', valid_type=Dict)
         spec.expose_outputs(FleurBaseWorkChain, namespace='last_calc')
 
         # exit codes
