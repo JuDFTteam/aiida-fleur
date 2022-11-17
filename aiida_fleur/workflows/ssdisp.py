@@ -94,7 +94,7 @@ class FleurSSDispWorkChain(WorkChain):
                          cls.force_wo_scf,
                      ), cls.get_results, cls.return_results)
 
-        spec.output('out', valid_type=Dict)
+        spec.output('output_ssdisp_wc_para', valid_type=Dict)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -464,7 +464,7 @@ class FleurSSDispWorkChain(WorkChain):
         }
 
         out = save_output_node(Dict(dict=out))
-        self.out('out', out)
+        self.out('output_ssdisp_wc_para', out)
 
     def control_end_wc(self, errormsg):
         """
