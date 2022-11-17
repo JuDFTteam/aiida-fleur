@@ -24,12 +24,45 @@ import re
 import warnings
 
 from aiida import orm
-from aiida.orm import Data, Node, load_node, CalcJobNode
+from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import InputValidationError, ValidationError
-from aiida.engine.processes.functions import calcfunction as cf
 
 __all__ = ('FleurinpData', 'get_fleurinp_from_folder_data', 'get_fleurinp_from_remote_data', 'get_structuredata',
-           'get_kpointsdata', 'get_parameterdata', 'convert_inpxml')
+           'get_kpointsdata', 'get_parameterdata', 'convert_inpxml','get_fleurinp_from_folder_data_cf',
+           'get_fleurinp_from_remote_data_cf')
+
+
+@cf
+def get_fleurinp_from_folder_data_cf(folder_node, additional_files=None):
+    """
+    Create FleurinpData object from the given FolderData object
+
+    :param remote_node: FolderData to use for the generation of the FleurinpData
+
+    :returns: FleurinpData object with the input xml files from the FolderData
+    """
+
+    if additional_files is None:
+        additional_files = orm.List(list=[])
+
+    return get_fleurinp_from_folder_data(folder_node, additional_files=additional_files)
+
+@cf
+def get_fleurinp_from_remote_data_cf(remote_node, additional_files=None):
+    """
+    Create FleurinpData object from the given RemoteData object
+
+    :param remote_node: RemoteData to use for the generation of the FleurinpData
+    :param store: bool, if True the FleurinpData object will be stored after generation
+
+    :returns: FleurinpData object with the input xml files from the retrieved folder
+              of the calculation associated RemoteData
+    """
+
+    if additional_files is None:
+        additional_files = orm.List(list=[])
+
+    return get_fleurinp_from_remote_data(remote_node, additional_files=additional_files)
 
 
 def get_fleurinp_from_folder_data(folder_node, store=False, additional_files=None):
@@ -66,14 +99,14 @@ def get_fleurinp_from_remote_data(remote_node, store=False, additional_files=Non
     """
 
     for link in remote_node.get_incoming().all():
-        if isinstance(link.node, CalcJobNode):
+        if isinstance(link.node, orm.CalcJobNode):
             parent_calc_node = link.node
     retrieved = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
 
     return get_fleurinp_from_folder_data(retrieved, store=store, additional_files=additional_files)
 
 
-class FleurinpData(Data):
+class FleurinpData(orm.Data):
     """
     AiiDA data object representing everything a FLEUR calculation needs.
 
@@ -239,8 +272,8 @@ class FleurinpData(Data):
         #_list_of_allowed_files = ['inp.xml', 'enpara', 'cdn1', 'sym.out', 'kpts']
 
         if node:
-            if not isinstance(node, Node):
-                node = load_node(node)  # if this fails it will raise
+            if not isinstance(node, orm.Node):
+                node = orm.load_node(node)  # if this fails it will raise
             if file1 not in node.list_object_names():
                 # throw error, you try to add something that is not there
                 raise ValueError('file1 has to be in the specified node')
