@@ -31,7 +31,7 @@ from aiida_fleur.tools.create_kpoints_from_distance import create_kpoints_from_d
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.calculation.fleur import FleurCalculation
 
-from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
+from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data_cf
 
 from masci_tools.io.parsers.fleur import outxml_parser
 
@@ -58,7 +58,7 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.6.0'
+    _workflowversion = '0.6.1'
     _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
@@ -467,7 +467,7 @@ class FleurScfWorkChain(WorkChain):
         elif 'remote_data' in inputs:
             # In this case only remote_data for input structure is given
             # fleurinp data has to be generated from the remote inp.xml file to use change_fleurinp
-            fleurin = get_fleurinp_from_remote_data(self.inputs.remote_data, store=True)
+            fleurin = get_fleurinp_from_remote_data_cf(self.inputs.remote_data)
             self.report(
                 f'INFO: generated FleurinpData from files {fleurin.files} from remote folder pk={self.inputs.remote_data.pk}'
             )
