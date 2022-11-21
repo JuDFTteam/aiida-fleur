@@ -462,7 +462,7 @@ class FleurScfWorkChain(WorkChain):
                 error = 'Inpgen calculation failed'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
-            fleurin = self.ctx['inpgen'].outputs.fleurinpData
+            fleurin = self.ctx['inpgen'].outputs.fleurinp
         elif 'remote_data' in inputs:
             # In this case only remote_data for input structure is given
             # fleurinp data has to be generated from the remote inp.xml file to use change_fleurinp

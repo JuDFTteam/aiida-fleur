@@ -60,7 +60,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     if code:
         inputs['code'] = code
     if fleurinp:
-        inputs['fleurinpdata'] = fleurinp
+        inputs['fleurinp'] = fleurinp
 
     if description:
         inputs['description'] = description

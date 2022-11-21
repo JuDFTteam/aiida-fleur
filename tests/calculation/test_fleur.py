@@ -22,7 +22,7 @@ def test_fleur_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_jo
     fleurinp = create_fleurinp(TEST_INP_XML_PATH)
     inputs = {
         'code': fixture_code(CALC_ENTRY_POINT),
-        'fleurinpdata': fleurinp,
+        'fleurinp': fleurinp,
         # 'parameters': orm.Dict(dict=parameters),
         'metadata': {
             'options': {
@@ -65,7 +65,7 @@ def test_FleurJobCalc_full_mock(fleur_local_code, create_fleurinp, clear_databas
     """
 
     inputs = {
-        'fleurinpdata': create_fleurinp(TEST_INP_XML_PATH),
+        'fleurinp': create_fleurinp(TEST_INP_XML_PATH),
         #'parameters': orm.Dict(dict=parameters),
         'metadata': {
             'options': {

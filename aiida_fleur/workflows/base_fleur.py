@@ -140,8 +140,8 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         If suggested number of num_mpiprocs_per_machine is 60% smaller than
         requested, it throws an exit code and calculation stop withour submission.
         """
-        if 'fleurinpdata' in self.ctx.inputs:
-            fleurinp = self.ctx.inputs.fleurinpdata
+        if 'fleurinp' in self.ctx.inputs:
+            fleurinp = self.ctx.inputs.fleurinp
         else:
             fleurinp = get_fleurinp_from_remote_data(self.ctx.inputs.parent_folder)
 
@@ -200,8 +200,8 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         # try to drop remote folder and see if it helps
         is_fleurinp_from_relax = False
-        if 'fleurinpdata' in self.ctx.inputs:
-            if 'relax.xml' in self.ctx.inputs.fleurinpdata.files:
+        if 'fleurinp' in self.ctx.inputs:
+            if 'relax.xml' in self.ctx.inputs.fleurinp.files:
                 is_fleurinp_from_relax = True
 
         if 'parent_folder' in self.ctx.inputs and is_fleurinp_from_relax:
@@ -289,8 +289,8 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         #Out of memory can also occur after a couple of iterations if the mixing_history gets too large
         remote = calculation.get_outgoing().get_node_by_label('remote_folder')
         if _is_remote_reusable(self.ctx.inputs, calculation):
-            if 'fleurinpdata' in self.ctx.inputs:
-                del self.ctx.inputs.fleurinpdata
+            if 'fleurinp' in self.ctx.inputs:
+                del self.ctx.inputs.fleurinp
             self.ctx.inputs.parent_folder = remote
 
         return ProcessHandlerReport(True)
@@ -332,8 +332,8 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         # resubmit providing inp.xml and cdn from the remote folder
         self.ctx.is_finished = False
         if _is_remote_reusable(self.ctx.inputs, calculation):
-            if 'fleurinpdata' in self.ctx.inputs:
-                del self.ctx.inputs.fleurinpdata
+            if 'fleurinp' in self.ctx.inputs:
+                del self.ctx.inputs.fleurinp
             self.ctx.inputs.parent_folder = remote
 
         return ProcessHandlerReport(True)
@@ -354,8 +354,8 @@ def _is_remote_reusable(inputs, calculation):
     )):
         can_use_remote = True
 
-    if 'fleurinpdata' in inputs:
-        modes = inputs.fleurinpdata.get_fleur_modes()
+    if 'fleurinp' in inputs:
+        modes = inputs.fleurinp.get_fleur_modes()
         if modes['force_theorem'] or modes['dos'] or modes['band']:
             # in modes listed above it makes no sense copying cdn.hdf
             can_use_remote = False

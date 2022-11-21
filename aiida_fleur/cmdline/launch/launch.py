@@ -116,7 +116,7 @@ def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machi
 
     inputs = {
         'code': fleur,
-        'fleurinpdata': fleurinp,
+        'fleurinp': fleurinp,
         'parent_folder': parent_folder,
         'settings': settings,
         'metadata': {
@@ -142,7 +142,7 @@ def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machi
 
         inputs_base = {
             'code': fleur,
-            'fleurinpdata': fleurinp,
+            'fleurinp': fleurinp,
             'parent_folder': parent_folder,
             'settings': settings,
             'options': option_node

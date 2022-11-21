@@ -208,8 +208,8 @@ class FleurParser(Parser):
                         self.out('error_params', error_params)
                         return self.exit_codes.ERROR_MT_RADII_RELAX
                     if 'parent_folder' in calc.inputs:  # problem in reusing cdn for relaxations, drop cdn
-                        if 'fleurinpdata' in calc.inputs:
-                            if 'relax.xml' in calc.inputs.fleurinpdata.files:
+                        if 'fleurinp' in calc.inputs:
+                            if 'relax.xml' in calc.inputs.fleurinp.files:
                                 return self.exit_codes.ERROR_DROP_CDN
                         return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 
@@ -257,7 +257,7 @@ class FleurParser(Parser):
         if has_relax_file:
             relax_name = FleurCalculation._RELAX_FILE_NAME
             try:
-                fleurinp = calc.inputs.fleurinpdata
+                fleurinp = calc.inputs.fleurinp
             except NotExistent:
                 old_relax_text = ''
             else:

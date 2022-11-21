@@ -207,7 +207,7 @@ class FleurCalculation(CalcJob):
         spec.input('metadata.options.parser_name', valid_type=str, default='fleur.fleurparser')
 
         # inputs
-        spec.input('fleurinpdata',
+        spec.input('fleurinp',
                    valid_type=FleurinpData,
                    required=False,
                    help='Use a FleurinpData node that specifies the input parameters'
@@ -302,7 +302,7 @@ class FleurCalculation(CalcJob):
                 with_hdf5 = True
             else:
                 with_hdf5 = False
-        # a Fleur calc can be created from a fleurinpData alone
+        # a Fleur calc can be created from a FleurinpData alone
         # (then no parent is needed) all files are in the repo, but usually it is
         # a child of a inpgen calc or an other fleur calc (some or all files are
         # in a remote source). if the User has not changed something, the
@@ -310,15 +310,11 @@ class FleurCalculation(CalcJob):
         # the one from the parent, but the plug-in desgin is in a way that it has
         # to be there and it just copies files if changes occurred..
 
-        if 'fleurinpdata' in self.inputs:
-            fleurinp = self.inputs.fleurinpdata
+        has_fleurinp = 'fleurinp' in self.inputs
+        if has_fleurinp:
+            fleurinp = self.inputs.fleurinp
         else:
             fleurinp = None
-
-        if fleurinp is None:
-            has_fleurinp = False
-        else:
-            has_fleurinp = True
 
         if 'parent_folder' in self.inputs:
             parent_calc_folder = self.inputs.parent_folder
@@ -451,7 +447,7 @@ class FleurCalculation(CalcJob):
                             message += 'Make sure that the given Fleur code is correctly labelled with/without HDF5'
                         raise InputValidationError(message)
                     local_copy_list.append((outfolder_uuid, file_orig, file_dest))
-                # TODO: get inp.xml from parent fleurinpdata; otherwise it will be doubled in rep
+                # TODO: get inp.xml from parent FleurinpData; otherwise it will be doubled in rep
             elif not fleurinpgen and has_fleurinp:
                 # inp.xml will be copied from fleurinp
                 if with_hdf5:

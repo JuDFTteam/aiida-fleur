@@ -64,7 +64,7 @@ def test_get_inputs_fleur():
     out_settings = results['settings'].get_dict()
 
     assert results['code'] == 'code'
-    assert results['fleurinpdata'] == 'fleurinp'
+    assert results['fleurinp'] == 'fleurinp'
     assert results['parent_folder'] == 'remote'
     assert results['description'] == 'description'
     assert results['label'] == 'label'

@@ -26,7 +26,7 @@ The table below shows all possible inputs for the FleurCalculation:
 +==================+==============+======================================+==========+
 | code             | Code         | Fleur code                           | yes      |
 +------------------+--------------+--------------------------------------+----------+
-| fleurinpdata     | FleurinpData | Object representing inp.xml          | no       |
+| fleurinp         | FleurinpData | Object representing inp.xml          | no       |
 +------------------+--------------+--------------------------------------+----------+
 | parent_folder    | RemoteData   | Remote folder of another calculation | no       |
 +------------------+--------------+--------------------------------------+----------+
@@ -206,7 +206,7 @@ Additional advanced features
 
 In general see the FLEUR `documentation`_.
 
-While the input link with name **fleurinpdata** is used for the content of the
+While the input link with name **fleurinp** is used for the content of the
 inp.xml, additional parameters for changing the plugin behavior, can be specified in the
 **settings** input, also of type :py:class:`~aiida.orm.Dict`.
 

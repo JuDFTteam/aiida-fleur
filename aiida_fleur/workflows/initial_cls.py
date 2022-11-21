@@ -921,7 +921,7 @@ def fleur_calc_get_structure(calc_node):
     Get the AiiDA data structure from a fleur calculations
     """
     #get fleurinp
-    fleurinp = calc_node.inp.fleurinpdata
+    fleurinp = calc_node.inp.fleurinp
     structure = fleurinp.get_structuredata(fleurinp)
     return structure
 
@@ -1007,7 +1007,7 @@ def extract_results(calcs):
             #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
 
         # TODO: maybe different, because it is prob know from before
-        fleurinp = calc.inputs.fleurinpdata
+        fleurinp = calc.inputs.fleurinp
         structure = fleurinp.get_structuredata_ncf()
         compound = structure.get_formula()
         #print compound

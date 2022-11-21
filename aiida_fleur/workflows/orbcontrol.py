@@ -618,7 +618,7 @@ class FleurOrbControlWorkChain(WorkChain):
                 self.control_end_wc(error)
                 return {}, self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
             try:
-                fleurinp = self.ctx.inpgen.outputs.fleurinpData
+                fleurinp = self.ctx.inpgen.outputs.fleurinp
             except (AttributeError, NotExistent):
                 return {}, self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
         else:
@@ -728,7 +728,7 @@ class FleurOrbControlWorkChain(WorkChain):
                 self.ctx.errors.append(message)
                 continue
 
-            inputs.fleurinp = fixed_calc.inputs.fleurinpdata
+            inputs.fleurinp = fixed_calc.inputs.fleurinp
             inputs.remote_data = fixed_calc.outputs.remote_folder
 
             label = f'Relaxed_{index}'

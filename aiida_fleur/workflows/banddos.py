@@ -494,8 +494,8 @@ class FleurBandDosWorkChain(WorkChain):
         try:  # if something failed, we still might be able to retrieve something
             last_calc_out = self.ctx.banddos_calc.outputs.output_parameters
             retrieved = self.ctx.banddos_calc.outputs.retrieved
-            if 'fleurinpdata' in self.ctx.banddos_calc.inputs:
-                fleurinp = self.ctx.banddos_calc.inputs.fleurinpdata
+            if 'fleurinp' in self.ctx.banddos_calc.inputs:
+                fleurinp = self.ctx.banddos_calc.inputs.fleurinp
             else:
                 fleurinp = get_fleurinp_from_remote_data(self.ctx.banddos_calc.inputs.parent_folder)
             last_calc_out_dict = last_calc_out.get_dict()
