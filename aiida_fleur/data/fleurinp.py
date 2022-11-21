@@ -77,6 +77,8 @@ def get_fleurinp_from_folder_data(folder_node, store=False, additional_files=Non
     """
     if additional_files is None:
         additional_files = []
+    if isinstance(additional_files, orm.List):
+        additional_files = additional_files.get_list()
 
     input_xml_files = [file for file in folder_node.list_object_names() if file.endswith('.xml') and 'out' not in file]
 

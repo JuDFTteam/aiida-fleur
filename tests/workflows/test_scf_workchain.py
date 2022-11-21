@@ -413,6 +413,11 @@ def test_fleur_scf_continue_converged(with_export_cache, fleur_local_code, clear
     assert n.get('errors') == []
     assert len(n['distance_charge_all']) == 1
 
+    #Test that the provenance is being kept for the fleurinp output
+    assert 'fleurinp' in out
+    #This should be the calcfunction that creates the fleurinp from the remote data
+    assert out['fleurinp'].creator.inputs.original.creator is not None
+    assert out['fleurinp'].creator.inputs.original.creator.inputs.remote_node.uuid == builder.remote_data.uuid
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
