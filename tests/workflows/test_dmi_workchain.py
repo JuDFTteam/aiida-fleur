@@ -31,7 +31,7 @@ def test_fleur_dmi_FePt_film(
     from aiida.orm import Dict, StructureData
 
     options = Dict(
-        dict={
+        {
             'resources': {
                 'num_machines': 1,
                 'num_mpiprocs_per_machine': 1
@@ -44,10 +44,10 @@ def test_fleur_dmi_FePt_film(
 
     wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}
 
-    wf_para_scf = Dict(dict=wf_para_scf)
+    wf_para_scf = Dict(wf_para_scf)
 
     wf_para = Dict(
-        dict={
+        {
             'beta': {
                 'all': 1.57079
             },
@@ -70,7 +70,7 @@ def test_fleur_dmi_FePt_film(
     structure.pbc = (True, True, False)
 
     parameters = Dict(
-        dict={
+        {
             'atom': {
                 'element': 'Pt',
                 'lmax': 6

@@ -441,7 +441,7 @@ def test_fleur_scf_validation_wrong_inputs(fleur_local_code, inpgen_local_code, 
     }
     options = Dict(dict=options).store()
 
-    calc_parameters = Dict(dict={})
+    calc_parameters = Dict({})
     calc_parameters.store()
     structure = generate_structure2()
     structure.store()

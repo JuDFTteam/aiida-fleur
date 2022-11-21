@@ -10,7 +10,7 @@ def test_create_group(capsys, clear_database):
     from aiida_fleur.tools.common_aiida import create_group
     from aiida.orm import Group, Dict
 
-    para = Dict(dict={})
+    para = Dict({})
     para.store()
     group = create_group(name='test_group', nodes=[para.pk, 'not-existent-uuid'], description='test_description')
 
@@ -54,7 +54,7 @@ def test_export_extras(temp_dir):
 
     test_pk = []
     for i in range(3):
-        test_dict = Dict(dict={})
+        test_dict = Dict({})
         test_dict.store()
         test_dict.set_extra('test_extra', i)
         test_pk.append(test_dict.pk)
@@ -76,7 +76,7 @@ def test_import_extras(temp_dir, capsys):
     from aiida_fleur.tools.common_aiida import export_extras, import_extras
     from aiida.orm import Dict
 
-    test_dict = Dict(dict={})
+    test_dict = Dict({})
     test_dict.store()
 
     extra_filename = os.path.join(temp_dir, 'node_extras.txt')
@@ -143,7 +143,7 @@ def test_get_nodes_from_group():
 
     test_pk = []
     for i in range(3):
-        test_dict = Dict(dict={})
+        test_dict = Dict({})
         test_dict.store()
         test_pk.append(test_dict.pk)
 

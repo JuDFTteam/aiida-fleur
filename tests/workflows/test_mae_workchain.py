@@ -31,7 +31,7 @@ def test_fleur_mae_FePt_film(
     from aiida.orm import Dict, StructureData
 
     options = Dict(
-        dict={
+        {
             'resources': {
                 'num_machines': 1,
                 'num_mpiprocs_per_machine': 1
@@ -44,10 +44,10 @@ def test_fleur_mae_FePt_film(
 
     wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}
 
-    wf_para_scf = Dict(dict=wf_para_scf)
+    wf_para_scf = Dict(wf_para_scf)
 
     wf_para = Dict(
-        dict={
+        {
             'sqa_ref': [0.7, 0.7],
             'use_soc_ref': False,
             'sqas_theta': [0.0, 1.57079, 1.57079],
@@ -66,7 +66,7 @@ def test_fleur_mae_FePt_film(
     structure.pbc = (True, True, False)
 
     parameters = Dict(
-        dict={
+        {
             'atom': {
                 'element': 'Pt',
                 'lmax': 6
@@ -191,7 +191,7 @@ def test_fleur_mae_conv_FePt_film(
     from aiida.orm import Dict, StructureData
 
     options = Dict(
-        dict={
+        {
             'resources': {
                 'num_machines': 1,
                 'num_mpiprocs_per_machine': 1
@@ -204,9 +204,9 @@ def test_fleur_mae_conv_FePt_film(
 
     wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}
 
-    wf_para_scf = Dict(dict=wf_para_scf)
+    wf_para_scf = Dict(wf_para_scf)
 
-    wf_para = Dict(dict={'sqas': {
+    wf_para = Dict({'sqas': {
         'z': (0, 0),
         'label-1': (1.57079, 0),
         'label-2': (1.57079, 1.57079),
@@ -222,7 +222,7 @@ def test_fleur_mae_conv_FePt_film(
     structure.pbc = (True, True, False)
 
     parameters = Dict(
-        dict={
+        {
             'atom': {
                 'element': 'Pt',
                 'lmax': 6

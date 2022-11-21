@@ -36,7 +36,7 @@ class Test_FleurCoreholeWorkChain():
         """
         from aiida.engine import run_get_node
         options = Dict(
-            dict={
+            {
                 'resources': {
                     'num_machines': 1,
                     'num_mpiprocs_per_machine': 1
@@ -49,7 +49,7 @@ class Test_FleurCoreholeWorkChain():
         options.store()
 
         parameters = Dict(
-            dict={
+            {
                 'atom': {
                     'element': 'W',
                     'jri': 833,
@@ -78,7 +78,7 @@ class Test_FleurCoreholeWorkChain():
 
         structure.store()
         wf_para = Dict(
-            dict={
+            {
                 'method': 'valence',
                 'hole_charge': 0.5,
                 'atoms': ['all'],

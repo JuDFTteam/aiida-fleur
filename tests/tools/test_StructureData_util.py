@@ -18,7 +18,7 @@ def test_is_structure(generate_structure):
     from aiida_fleur.tools.StructureData_util import is_structure
     from aiida.orm import Dict
 
-    dict_test = Dict(dict={})
+    dict_test = Dict({})
     dict_test.store()
 
     structure = generate_structure()
@@ -77,7 +77,7 @@ def test_rescale_nowf(generate_structure):
     for position in positions_old:
         assert tuple(pos * 1.05**(1 / 3.) for pos in position) in positions_rescaled
 
-    no_struc = Dict(dict={})
+    no_struc = Dict({})
     no_rescaled = rescale_nowf(no_struc, 1.05)
     assert no_rescaled is None
 
@@ -293,7 +293,7 @@ def test_break_symmetry_film_parameters_only_simple(generate_film_structure):
 
     structure = generate_film_structure()
     para = Dict(
-        dict={
+        {
             'atom': {
                 'element': 'Fe',
                 'z': 26,
@@ -419,7 +419,7 @@ def test_break_symmetry_film_parameters_only_complex(generate_film_structure):
 
     structure = generate_film_structure()
     para = Dict(
-        dict={
+        {
             'atom': {
                 'element': 'Fe',
                 'id': 26.1,
