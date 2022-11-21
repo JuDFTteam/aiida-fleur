@@ -1,5 +1,18 @@
 # Changelog
 
+## v.2.0.0
+First release with official support for AiiDA version 2.0. Support for AiiDA 1.X is only
+available with releases from the 1.X series of aiida-fleur. Dropped python 3.7 support.
+
+### Breaking changes
+- The entries `last_calc_uuid` from output dictionary of `FleurSCFWorkChain` and `last_scf_wc_uuid` from `FleurRelaxWorkChain`. Reasoning for this is that having UUIDs in the output dictionary makes it impossible to take advantage of AiiDA's caching mechanism. Both workchains expose the relevant outputs of the under the namespaces `last_calc` and `last_scf` respectively
+- Several input/output port changes:
+  - `FleurBandDOSworkChain`: Removed `last_calc_retrieved`, replaced with namespace `banddos_calc`
+  - `FleurBaseWorkChain`: Removed `final_calc_uuid`
+  - Adjusted name of output dictionary to the naming schema `output_<wc_abbrev>_wc_para`: `FleurDMIWorkChain`, `FleurMAEConvWorkChain`, `FleurSSDispWorkChain`, `FleurSSDicpConvWorkChain`
+  - `FleurSCFWorkChain`: Removed `last_fleur_calc_output`. Is available under `last_calc.output_parameters`
+  - Ports for generic `FleurinpData` are renamed to consistently be `fleurinp`. Affects `FleurCalculation`, `FleurinputgenCalculation`, `FleurBaseWorkChain`
+
 ## v.1.3.1
 ### release compatible with AiiDA-core 1.3.0+
 - Fix for masci-tools dependency constraint. The constraint would previously reject the next minor version of masci-tools (i.e `0.10.0`)
