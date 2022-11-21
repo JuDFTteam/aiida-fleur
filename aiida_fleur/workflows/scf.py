@@ -368,14 +368,13 @@ class FleurScfWorkChain(WorkChain):
         # If given kpt_dist has prio over given calc_parameters
         kpt_dist = self.ctx.wf_dict['kpoints_distance']
         if kpt_dist is not None:
-            cf_para_kpt = Dict(
-                {
-                    'distance': kpt_dist,
-                    'force_parity': self.ctx.wf_dict['kpoints_force_parity'],
-                    'force_even': self.ctx.wf_dict['kpoints_force_even'],
-                    'force_odd': self.ctx.wf_dict['kpoints_force_odd'],
-                    'include_gamma': self.ctx.wf_dict['kpoints_force_gamma']
-                })
+            cf_para_kpt = Dict({
+                'distance': kpt_dist,
+                'force_parity': self.ctx.wf_dict['kpoints_force_parity'],
+                'force_even': self.ctx.wf_dict['kpoints_force_even'],
+                'force_odd': self.ctx.wf_dict['kpoints_force_odd'],
+                'include_gamma': self.ctx.wf_dict['kpoints_force_gamma']
+            })
             inputs = {
                 'structure': structure,
                 'calc_parameters': params,

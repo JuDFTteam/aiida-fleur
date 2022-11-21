@@ -130,15 +130,14 @@ def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machi
         builder.update(inputs)
     else:
         if option_node is None:
-            option_node = Dict(
-                {
-                    'withmpi': with_mpi,
-                    'max_wallclock_seconds': max_wallclock_seconds,
-                    'resources': {
-                        'num_machines': max_num_machines,
-                        'num_mpiprocs_per_machine': num_mpiprocs_per_machine
-                    }
-                })
+            option_node = Dict({
+                'withmpi': with_mpi,
+                'max_wallclock_seconds': max_wallclock_seconds,
+                'resources': {
+                    'num_machines': max_num_machines,
+                    'num_mpiprocs_per_machine': num_mpiprocs_per_machine
+                }
+            })
 
         inputs_base = {
             'code': fleur,
