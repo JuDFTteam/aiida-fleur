@@ -18,6 +18,7 @@ input manipulation plus methods for extration of AiiDA data structures.
 # TODO: 2D cell get kpoints and get structure also be carefull with tria = T!!!
 # TODO : maybe save when get_structure or get_kpoints was executed on fleurinp,
 # because otherwise return this node instead of creating a new one!
+from __future__ import annotations
 import os
 import io
 import re
@@ -26,6 +27,8 @@ import warnings
 from aiida import orm
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import InputValidationError, ValidationError
+
+from typing import Any
 
 __all__ = ('FleurinpData', 'get_fleurinp_from_folder_data', 'get_fleurinp_from_remote_data', 'get_structuredata',
            'get_kpointsdata', 'get_parameterdata', 'convert_inpxml', 'get_fleurinp_from_folder_data_cf',
@@ -66,7 +69,7 @@ def get_fleurinp_from_remote_data_cf(remote_node, additional_files=None):
     return get_fleurinp_from_remote_data(remote_node, additional_files=additional_files)
 
 
-def get_fleurinp_from_folder_data(folder_node, store=False, additional_files=None):
+def get_fleurinp_from_folder_data(folder_node: orm.FolderData, store: bool=False, additional_files: list[str] | None=None) -> FleurinpData:
     """
     Create FleurinpData object from the given RemoteData object
 
@@ -90,7 +93,7 @@ def get_fleurinp_from_folder_data(folder_node, store=False, additional_files=Non
     return fleurinp
 
 
-def get_fleurinp_from_remote_data(remote_node, store=False, additional_files=None):
+def get_fleurinp_from_remote_data(remote_node: orm.RemoteData, store: bool=False, additional_files: list[str] | None=None) -> FleurinpData:
     """
     Create FleurinpData object from the given RemoteData object
 
@@ -157,14 +160,14 @@ class FleurinpData(orm.Data):
                 self.set_files(files)
 
     @property
-    def parser_info(self):
+    def parser_info(self) -> dict[str,Any]:
         """
         Dict property, with the info and warnings from the inpxml_parser
         """
         return self.get_extra('_parser_info', {})
 
     @parser_info.setter
-    def parser_info(self, info_dict):
+    def parser_info(self, info_dict: dict[str,Any]) -> None:
         """
         Setter for has_schema
         """
@@ -172,7 +175,7 @@ class FleurinpData(orm.Data):
 
     # files
     @property
-    def files(self):
+    def files(self) -> list[str]:
         """
         Returns the list of the names of the files stored
         """

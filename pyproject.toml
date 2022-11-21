@@ -58,7 +58,9 @@ testing = [
 pre-commit = [
     "pre-commit>=2.6.0",
     "yapf~=0.30",
-    "pylint>=2.5"
+    "pylint>=2.5",
+    "mypy==0.990",
+    "types-PyYAML",
     ]
 dev = [
     'bumpver'
@@ -127,6 +129,7 @@ disallow_subclassing_any = true
 
 [[tool.mypy.overrides]]
 module = [
+    'ruamel.*',
 ]
 follow_imports = 'skip'
 ignore_missing_imports = true
