@@ -860,9 +860,6 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx.fleurinp is not None:
             outdict['fleurinp'] = self.ctx.fleurinp
 
-        if last_calc_out:
-            outdict['last_fleur_calc_output'] = last_calc_out
-
         if self.ctx.last_base_wc:
             self.out_many(self.exposed_outputs(self.ctx.last_base_wc, FleurBaseWorkChain, namespace='last_calc'))
 

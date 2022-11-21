@@ -454,7 +454,7 @@ class FleurRelaxWorkChain(WorkChain):
             return
 
         try:
-            relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
+            relax_out = self.ctx.scf_res.outputs.last_calc.output_parameters
             retrieved_node = self.ctx.scf_res.outputs.last_calc.retrieved
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT
@@ -483,7 +483,7 @@ class FleurRelaxWorkChain(WorkChain):
         """
 
         try:
-            scf_out = self.ctx.scf_final_res.outputs.last_fleur_calc_output
+            scf_out = self.ctx.scf_final_res.outputs.last_calc.output_parameters
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT
 
@@ -532,7 +532,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         con_nodes = {}
         try:
-            relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
+            relax_out = self.ctx.scf_res.outputs.last_calc.output_parameters
         except NotExistent:
             relax_out = None
         if relax_out is not None:
@@ -540,7 +540,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         if all([self.ctx.wf_dict.get('run_final_scf', False), self.ctx.reached_relax]):
             try:
-                scf_out = self.ctx.scf_final_res.outputs.last_fleur_calc_output
+                scf_out = self.ctx.scf_final_res.outputs.last_calc.output_parameters
             except NotExistent:
                 scf_out = None
             if relax_out is not None:

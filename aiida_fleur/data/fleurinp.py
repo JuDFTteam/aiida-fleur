@@ -28,7 +28,7 @@ from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import InputValidationError, ValidationError
 
 __all__ = ('FleurinpData', 'get_fleurinp_from_folder_data', 'get_fleurinp_from_remote_data', 'get_structuredata',
-           'get_kpointsdata', 'get_parameterdata', 'convert_inpxml','get_fleurinp_from_folder_data_cf',
+           'get_kpointsdata', 'get_parameterdata', 'convert_inpxml', 'get_fleurinp_from_folder_data_cf',
            'get_fleurinp_from_remote_data_cf')
 
 
@@ -46,6 +46,7 @@ def get_fleurinp_from_folder_data_cf(folder_node, additional_files=None):
         additional_files = orm.List(list=[])
 
     return get_fleurinp_from_folder_data(folder_node, additional_files=additional_files)
+
 
 @cf
 def get_fleurinp_from_remote_data_cf(remote_node, additional_files=None):

@@ -114,7 +114,7 @@ def test_fleur_dmi_FePt_film(
 
     assert node.is_finished_ok
 
-    outpara = out.get('out', None)
+    outpara = out.get('output_dmi_wc_para', None)
     assert outpara is not None
     outpara = outpara.get_dict()
     print(outpara)

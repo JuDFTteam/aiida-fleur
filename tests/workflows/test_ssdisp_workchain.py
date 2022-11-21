@@ -111,7 +111,7 @@ def test_fleur_ssdisp_FePt_film(
         show_workchain_summary(node)
     assert node.is_finished_ok
 
-    outpara = out.get('out', None)
+    outpara = out.get('output_ssdisp_wc_para', None)
     assert outpara is not None
     outpara = outpara.get_dict()
     from pprint import pprint
@@ -268,7 +268,7 @@ def test_fleur_ssdisp_conv_FePt_film(
         show_workchain_summary(node)
     assert node.is_finished_ok
 
-    outpara = out.get('out', None)
+    outpara = out.get('output_ssdisp_conv_wc_para', None)
     assert outpara is not None
     outpara = outpara.get_dict()
     from pprint import pprint

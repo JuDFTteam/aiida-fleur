@@ -255,7 +255,7 @@ def test_fleur_scf_fleurinp_Si_modifications(with_export_cache, fleur_local_code
     # check output
     n = out['output_scf_wc_para']
     n = n.get_dict()
-    lasto = out['last_fleur_calc_output']
+    lasto = out['last_calc']['output_parameters']
     calc = lasto.get_incoming().all()[0].node
     print(calc)
     print(calc.get_cache_source())
@@ -335,7 +335,7 @@ def test_fleur_scf_structure_kpoint_distance(with_export_cache, fleur_local_code
     # check output
     n = out['output_scf_wc_para']
     n = n.get_dict()
-    lasto = out['last_fleur_calc_output']
+    lasto = out['last_calc']['output_parameters']
     calc = lasto.get_incoming().all()[0].node
     print(calc)
     print(calc.get_cache_source())
@@ -401,7 +401,7 @@ def test_fleur_scf_continue_converged(with_export_cache, fleur_local_code, clear
     # check output
     n = out['output_scf_wc_para']
     n = n.get_dict()
-    lasto = out['last_fleur_calc_output']
+    lasto = out['last_calc']['output_parameters']
     calc = lasto.get_incoming().all()[0].node
     print(calc)
     print(calc.get_cache_source())
@@ -418,6 +418,7 @@ def test_fleur_scf_continue_converged(with_export_cache, fleur_local_code, clear
     #This should be the calcfunction that creates the fleurinp from the remote data
     assert out['fleurinp'].creator.inputs.original.creator is not None
     assert out['fleurinp'].creator.inputs.original.creator.inputs.remote_node.uuid == builder.remote_data.uuid
+
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')

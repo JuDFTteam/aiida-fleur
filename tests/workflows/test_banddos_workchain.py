@@ -85,8 +85,8 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
     assert n.get('mode') == 'band'
     if with_hdf5:
         assert 'output_banddos_wc_bands' in out
-    assert 'last_calc_retrieved' in out
-    res_files = out['last_calc_retrieved'].list_object_names()
+    assert 'banddos_calc' in out
+    res_files = out['banddos_calc'].retrieved.list_object_names()
     assert any(
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
@@ -158,8 +158,8 @@ def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
     assert n.get('mode') == 'dos'
     if with_hdf5:
         assert 'output_banddos_wc_dos' in out
-    assert 'last_calc_retrieved' in out
-    res_files = out['last_calc_retrieved'].list_object_names()
+    assert 'banddos_calc' in out
+    res_files = out['banddos_calc'].retrieved.list_object_names()
     assert any(
         file in res_files for file in ('banddos.hdf', 'Local.1', 'DOS.1')), f'No bands file retrieved: {res_files}'
 
@@ -230,8 +230,8 @@ def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, cr
     assert n.get('mode') == 'band'
     if with_hdf5:
         assert 'output_banddos_wc_bands' in out
-    assert 'last_calc_retrieved' in out
-    res_files = out['last_calc_retrieved'].list_object_names()
+    assert 'banddos_calc' in out
+    res_files = out['banddos_calc'].retrieved.list_object_names()
     assert any(
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
@@ -302,8 +302,8 @@ def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_
     assert n.get('mode') == 'band'
     if with_hdf5:
         assert 'output_banddos_wc_bands' in out
-    assert 'last_calc_retrieved' in out
-    res_files = out['last_calc_retrieved'].list_object_names()
+    assert 'banddos_calc' in out
+    res_files = out['banddos_calc'].retrieved.list_object_names()
     assert any(
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
@@ -368,8 +368,8 @@ def test_fleur_band_remote_Si(with_export_cache, fleur_local_code, create_fleuri
     assert n.get('mode') == 'band'
     if with_hdf5:
         assert 'output_banddos_wc_bands' in out
-    assert 'last_calc_retrieved' in out
-    res_files = out['last_calc_retrieved'].list_object_names()
+    assert 'banddos_calc' in out
+    res_files = out['banddos_calc'].retrieved.list_object_names()
     assert any(
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
@@ -439,8 +439,8 @@ def test_fleur_dos_remote_Si(with_export_cache, fleur_local_code, create_fleurin
     assert n.get('mode') == 'dos'
     if with_hdf5:
         assert 'output_banddos_wc_dos' in out
-    assert 'last_calc_retrieved' in out
-    res_files = out['last_calc_retrieved'].list_object_names()
+    assert 'banddos_calc' in out
+    res_files = out['banddos_calc'].retrieved.list_object_names()
     assert any(
         file in res_files for file in ('banddos.hdf', 'Local.1', 'DOS.1')), f'No bands file retrieved: {res_files}'
 

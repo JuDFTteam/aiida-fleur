@@ -265,7 +265,7 @@ def test_fleur_mae_conv_FePt_film(
         show_workchain_summary(node)
     assert node.is_finished_ok
 
-    outpara = out.get('out', None)
+    outpara = out.get('output_mae_conv_wc_para', None)
     assert outpara is not None
     outpara = outpara.get_dict()
     from pprint import pprint
