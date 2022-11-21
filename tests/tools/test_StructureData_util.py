@@ -292,23 +292,22 @@ def test_break_symmetry_film_parameters_only_simple(generate_film_structure):
     from aiida.orm import Dict
 
     structure = generate_film_structure()
-    para = Dict(
-        {
-            'atom': {
-                'element': 'Fe',
-                'z': 26,
-                'rmt': 2.1,
-                'bmu': -1
-            },
-            'atom1': {
-                'element': 'Pt',
-                'rmt': 2.2,
-                'bmu': 1
-            },
-            'comp': {
-                'kmax': 5.0,
-            }
-        })
+    para = Dict({
+        'atom': {
+            'element': 'Fe',
+            'z': 26,
+            'rmt': 2.1,
+            'bmu': -1
+        },
+        'atom1': {
+            'element': 'Pt',
+            'rmt': 2.2,
+            'bmu': 1
+        },
+        'comp': {
+            'kmax': 5.0,
+        }
+    })
 
     structure_broken, para_out = break_symmetry(structure, parameterdata=para)
     should1 = {
@@ -418,24 +417,23 @@ def test_break_symmetry_film_parameters_only_complex(generate_film_structure):
     from aiida.orm import Dict
 
     structure = generate_film_structure()
-    para = Dict(
-        {
-            'atom': {
-                'element': 'Fe',
-                'id': 26.1,
-                'rmt': 2.1,
-                'bmu': -1
-            },
-            'atom1': {
-                'element': 'Pt',
-                'id': 78.1,
-                'rmt': 2.2,
-                'bmu': 1
-            },
-            'comp': {
-                'kmax': 5.0,
-            }
-        })
+    para = Dict({
+        'atom': {
+            'element': 'Fe',
+            'id': 26.1,
+            'rmt': 2.1,
+            'bmu': -1
+        },
+        'atom1': {
+            'element': 'Pt',
+            'id': 78.1,
+            'rmt': 2.2,
+            'bmu': 1
+        },
+        'comp': {
+            'kmax': 5.0,
+        }
+    })
 
     structure_broken, para_out = break_symmetry(structure, parameterdata=para)
     struc_b_fe, para_new_fe = break_symmetry(structure, atoms=['Fe'], parameterdata=para)

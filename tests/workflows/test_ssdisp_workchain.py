@@ -31,32 +31,30 @@ def test_fleur_ssdisp_FePt_film(
     """
     from aiida.orm import Dict, StructureData
 
-    options = Dict(
-        {
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-            'max_wallclock_seconds': 60 * 60,
-            'queue_name': '',
-            'custom_scheduler_commands': '',
-            'withmpi': False,
-        })
+    options = Dict({
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 60 * 60,
+        'queue_name': '',
+        'custom_scheduler_commands': '',
+        'withmpi': False,
+    })
 
     wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}
 
     wf_para_scf = Dict(wf_para_scf)
 
-    wf_para = Dict(
-        {
-            'beta': {
-                'all': 1.57079
-            },
-            'prop_dir': [1.0, 0.0, 0.0],
-            'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
-            'ref_qss': [0.0, 0.0, 0.0],
-            'inpxml_changes': [],
-        })
+    wf_para = Dict({
+        'beta': {
+            'all': 1.57079
+        },
+        'prop_dir': [1.0, 0.0, 0.0],
+        'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
+        'ref_qss': [0.0, 0.0, 0.0],
+        'inpxml_changes': [],
+    })
 
     bohr_a_0 = 0.52917721092  # A
     a = 7.497 * bohr_a_0
@@ -67,25 +65,24 @@ def test_fleur_ssdisp_FePt_film(
     structure.append_atom(position=(0., 0., 2.65059 * bohr_a_0), symbols='Pt')
     structure.pbc = (True, True, False)
 
-    parameters = Dict(
-        {
-            'atom': {
-                'element': 'Pt',
-                'lmax': 6
-            },
-            'atom2': {
-                'element': 'Fe',
-                'lmax': 6,
-            },
-            'comp': {
-                'kmax': 3.2,
-            },
-            'kpt': {
-                'div1': 8,  #20,
-                'div2': 12,  #24,
-                'div3': 1
-            }
-        })
+    parameters = Dict({
+        'atom': {
+            'element': 'Pt',
+            'lmax': 6
+        },
+        'atom2': {
+            'element': 'Fe',
+            'lmax': 6,
+        },
+        'comp': {
+            'kmax': 3.2,
+        },
+        'kpt': {
+            'div1': 8,  #20,
+            'div2': 12,  #24,
+            'div3': 1
+        }
+    })
 
     FleurCode = fleur_local_code
     InpgenCode = inpgen_local_code
@@ -188,34 +185,32 @@ def test_fleur_ssdisp_conv_FePt_film(
     """
     from aiida.orm import Dict, StructureData
 
-    options = Dict(
-        {
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-            'max_wallclock_seconds': 60 * 60,
-            'queue_name': '',
-            'custom_scheduler_commands': '',
-            'withmpi': False,
-        })
+    options = Dict({
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 60 * 60,
+        'queue_name': '',
+        'custom_scheduler_commands': '',
+        'withmpi': False,
+    })
 
     wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}
 
     wf_para_scf = Dict(wf_para_scf)
 
-    wf_para = Dict(
-        {
-            'beta': {
-                'all': 1.57079
-            },
-            'q_vectors': {
-                'z': [0.0, 0.0, 0.0],
-                'label-1': [0.125, 0.0, 0.0],
-                'label-2': [0.250, 0.0, 0.0],
-                'label-3': [0.375, 0.0, 0.0]
-            },
-        })
+    wf_para = Dict({
+        'beta': {
+            'all': 1.57079
+        },
+        'q_vectors': {
+            'z': [0.0, 0.0, 0.0],
+            'label-1': [0.125, 0.0, 0.0],
+            'label-2': [0.250, 0.0, 0.0],
+            'label-3': [0.375, 0.0, 0.0]
+        },
+    })
 
     bohr_a_0 = 0.52917721092  # A
     a = 7.497 * bohr_a_0
@@ -226,25 +221,24 @@ def test_fleur_ssdisp_conv_FePt_film(
     structure.append_atom(position=(0., 0., 2.65059 * bohr_a_0), symbols='Pt')
     structure.pbc = (True, True, False)
 
-    parameters = Dict(
-        {
-            'atom': {
-                'element': 'Pt',
-                'lmax': 6
-            },
-            'atom2': {
-                'element': 'Fe',
-                'lmax': 6,
-            },
-            'comp': {
-                'kmax': 3.2,
-            },
-            'kpt': {
-                'div1': 8,  #20,
-                'div2': 12,  #24,
-                'div3': 1
-            }
-        })
+    parameters = Dict({
+        'atom': {
+            'element': 'Pt',
+            'lmax': 6
+        },
+        'atom2': {
+            'element': 'Fe',
+            'lmax': 6,
+        },
+        'comp': {
+            'kmax': 3.2,
+        },
+        'kpt': {
+            'div1': 8,  #20,
+            'div2': 12,  #24,
+            'div3': 1
+        }
+    })
 
     FleurCode = fleur_local_code
     InpgenCode = inpgen_local_code

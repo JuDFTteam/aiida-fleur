@@ -35,37 +35,35 @@ class Test_FleurCoreholeWorkChain():
         Several fleur runs needed, calculation of all only certain coreholes
         """
         from aiida.engine import run_get_node
-        options = Dict(
-            {
-                'resources': {
-                    'num_machines': 1,
-                    'num_mpiprocs_per_machine': 1
-                },
-                'max_wallclock_seconds': 60 * 60,
-                'queue_name': '',
-                'withmpi': False,
-            })
+        options = Dict({
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            },
+            'max_wallclock_seconds': 60 * 60,
+            'queue_name': '',
+            'withmpi': False,
+        })
         #'withmpi': False, 'custom_scheduler_commands': ''}
         options.store()
 
-        parameters = Dict(
-            {
-                'atom': {
-                    'element': 'W',
-                    'jri': 833,
-                    'rmt': 2.3,
-                    'dx': 0.015,
-                    'lmax': 8,
-                    'lo': '5p',
-                    'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
-                },
-                'comp': {
-                    'kmax': 3.0,
-                },
-                'kpt': {
-                    'nkpt': 100,
-                }
-            })
+        parameters = Dict({
+            'atom': {
+                'element': 'W',
+                'jri': 833,
+                'rmt': 2.3,
+                'dx': 0.015,
+                'lmax': 8,
+                'lo': '5p',
+                'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+            },
+            'comp': {
+                'kmax': 3.0,
+            },
+            'kpt': {
+                'nkpt': 100,
+            }
+        })
         parameters.store()
 
         #structure = generate_structure_W()
@@ -77,15 +75,14 @@ class Test_FleurCoreholeWorkChain():
         structure.append_atom(position=(0., 0., 0.), symbols='W')
 
         structure.store()
-        wf_para = Dict(
-            {
-                'method': 'valence',
-                'hole_charge': 0.5,
-                'atoms': ['all'],
-                'corelevel': ['W,4f', 'W,4p'],  #['W,all'],#
-                'supercell_size': [2, 1, 1],
-                'magnetic': True
-            })
+        wf_para = Dict({
+            'method': 'valence',
+            'hole_charge': 0.5,
+            'atoms': ['all'],
+            'corelevel': ['W,4f', 'W,4p'],  #['W,all'],#
+            'supercell_size': [2, 1, 1],
+            'magnetic': True
+        })
 
         FleurCode = fleur_local_code
         InpgenCode = inpgen_local_code

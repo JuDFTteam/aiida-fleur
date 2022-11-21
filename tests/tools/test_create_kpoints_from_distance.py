@@ -63,27 +63,26 @@ def test_create_kpoints_from_distance_with_para(generate_structure):
 
     cf_para = Dict({'distance': 0.1, 'force_parity': True, 'force_odd': True})
 
-    parameters = Dict(
-        {
-            'atom': {
-                'element': 'Si',
-                'rmt': 2.1,
-                'jri': 981,
-                'lmax': 12,
-                'lnonsph': 6
-            },
-            'comp': {
-                'kmax': 5.0,
-                'gmaxxc': 12.5,
-                'gmax': 15.0
-            },
-            'kpt': {
-                'div1': 17,
-                'div2': 17,
-                'div3': 17,
-                'tkb': 0.0005
-            }
-        })
+    parameters = Dict({
+        'atom': {
+            'element': 'Si',
+            'rmt': 2.1,
+            'jri': 981,
+            'lmax': 12,
+            'lnonsph': 6
+        },
+        'comp': {
+            'kmax': 5.0,
+            'gmaxxc': 12.5,
+            'gmax': 15.0
+        },
+        'kpt': {
+            'div1': 17,
+            'div2': 17,
+            'div3': 17,
+            'tkb': 0.0005
+        }
+    })
 
     result_para = create_kpoints_from_distance_parameter(structure, cf_para, calc_parameters=parameters)
     assert result_para.get_dict() == wanted_result
