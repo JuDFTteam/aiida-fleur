@@ -99,7 +99,7 @@ def test_fleur_relax_validation_wrong_inputs(fleur_local_code, inpgen_local_code
     FleurCode = fleur_local_code
     InpgenCode = inpgen_local_code
 
-    wf_parameters = Dict(dict={
+    wf_parameters = Dict({
         'relax_iter': 5,
         'film_distance_relaxation': False,
         'force_criterion': 0.001,

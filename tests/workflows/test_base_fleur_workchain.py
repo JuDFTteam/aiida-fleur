@@ -104,7 +104,7 @@ def test_handle_dirac_equation_fleurinp_with_relax(generate_workchain_base, crea
     path = os.path.abspath(os.path.join(aiida_path, '../tests/files/outxml/tmp'))
     remote = generate_remote_data(fleur.computer, path).store()
 
-    inputs = {'code': fleur, 'fleurinp': fleurinp, 'parent_folder': remote, 'options': Dict(dict=default_options)}
+    inputs = {'code': fleur, 'fleurinp': fleurinp, 'parent_folder': remote, 'options': Dict(default_options)}
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_DROP_CDN, inputs=inputs)
     process.setup()
@@ -164,7 +164,7 @@ def test_handle_not_enough_memory(generate_workchain_base, generate_remote_data,
     assert 'settings' in process.ctx.inputs
     assert process.ctx.inputs.settings['remove_from_remotecopy_list'] == ['mixing_history*']
 
-    process.ctx.inputs.settings = Dict(dict={})  #Test that already set inputs also work
+    process.ctx.inputs.settings = Dict({})  #Test that already set inputs also work
     process.ctx.num_machines = 14  #doubling goes over the maximum specified
     result = process.inspect_process()
     assert result.status == 0
@@ -266,7 +266,7 @@ def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_
         'code': fleur,
         'fleurinp': fleurinp,
         'parent_folder': remote_before,
-        'options': Dict(dict=default_options)
+        'options': Dict(default_options)
     }
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT, inputs=inputs)
@@ -304,7 +304,7 @@ def test_handle_time_limits_no_fleurinp(generate_workchain_base, generate_remote
         'code': fleur,
         'fleurinp': fleurinp,
         'parent_folder': remote_before,
-        'options': Dict(dict=default_options)
+        'options': Dict(default_options)
     }
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT, inputs=inputs)
@@ -353,7 +353,7 @@ def test_handle_time_limits_previous_calculation_error(generate_workchain_base, 
         'code': fleur,
         'fleurinp': fleurinp,
         'parent_folder': remote_before,
-        'options': Dict(dict=default_options)
+        'options': Dict(default_options)
     }
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT, inputs=inputs)
@@ -396,14 +396,14 @@ def test_base_fleur_worlchain_forbid_single_mpi(generate_workchain_base, create_
         'fleurinp':
         fleurinp,
         'add_comp_para':
-        Dict(dict={
+        Dict({
             'only_even_MPI': False,
             'forbid_single_mpi': True,
             'max_queue_nodes': 20,
             'max_queue_wallclock_sec': 86400
         }),
         'options':
-        Dict(dict=default_options)
+        Dict(default_options)
     }
 
     process = generate_workchain_base(inputs=inputs)
@@ -443,7 +443,7 @@ class Test_FleurBaseWorkChain():
         builder.metadata.description = 'Simple Fleur SCF test for Si bulk with fleurinp data given'
         builder.metadata.label = 'FleurBase_test_Si_bulk'
         builder.fleurinp = create_fleurinp(TEST_INP_XML_PATH)
-        builder.options = Dict(dict=options)
+        builder.options = Dict(options)
         builder.code = fleur_local_code
 
         # now run calculation

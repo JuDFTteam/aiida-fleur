@@ -128,7 +128,7 @@ def test_fleur_eos_validation_wrong_inputs(fleur_local_code, inpgen_local_code, 
     FleurCode = fleur_local_code
     InpgenCode = inpgen_local_code
 
-    wf_parameters = Dict(dict={'points': 9, 'step': 0.002, 'guess': 1.00, 'wrong_key': None})
+    wf_parameters = Dict({'points': 9, 'step': 0.002, 'guess': 1.00, 'wrong_key': None})
     wf_parameters.store()
     structure = generate_structure2()
     structure.store()

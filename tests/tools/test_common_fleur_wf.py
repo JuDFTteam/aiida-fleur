@@ -118,7 +118,7 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
     code = fixture_code('fleur.inpgen')
     structure = generate_structure()
 
-    params = Dict(dict={'test': 1})
+    params = Dict({'test': 1})
 
     inputs = {
         'structure': structure,
@@ -258,7 +258,7 @@ def test_performance_extract_calcs(fixture_localhost, generate_calc_job_node):
     from aiida.common.links import LinkType
     from aiida.orm import Dict
     out = Dict(
-        dict={
+        {
             'title': 'A Fleur input generator calculation with aiida',
             'energy': -138529.7052157,
             'bandgap': 6.0662e-06,

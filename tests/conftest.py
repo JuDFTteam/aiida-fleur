@@ -397,7 +397,7 @@ def generate_inputs_base(fixture_code, create_fleurinp, generate_kpoints_mesh):
         inputs = {
             'code': fixture_code('fleur'),
             'fleurinp': create_fleurinp(TEST_INPXML_PATH),
-            'options': Dict(dict=default_options)
+            'options': Dict(default_options)
         }
 
         return inputs
