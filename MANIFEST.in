@@ -1,9 +1,0 @@
-
-include aiida_fleur/tools/exp_bindingenergies.json
-include setup.json
-include setup_requirements.txt
-include AUTHORS.txt
-include CHANGELOG.md
-include LICENSE
-include README.md
-recursive-include docs *
