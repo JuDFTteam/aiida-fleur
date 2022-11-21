@@ -193,11 +193,11 @@ ___
 
 ## Code Dependencies <a name="Dependencies"></a>
 
-Requirements are listed in 'setup_requirements.txt' and setup.json.
+Requirements are listed in `pyproject.toml`
 
 most important are:
 
-* aiida_core >= 1.0.1
+* aiida_core >= 2.0
 * lxml
 * ase
 * masci-tools

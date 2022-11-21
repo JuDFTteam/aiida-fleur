@@ -224,8 +224,9 @@ Entrypoints
 +++++++++++
 
 In order to make AiiDA aware of any classes (plugins) like (calculations, parsers, data, workchains, workflows, commandline)
-the python entrypoint system is used. Therefore, you have to register any  of the above classes as an entrypoint in the 'setup.json' file.
+the python entrypoint system is used. Therefore, you have to register any  of the above classes as an entrypoint in the 'pyproject.toml' file.
 
+.. TODO: Rewrite for pyproject.toml syntax
 Example::
 
     "entry_points" : {
