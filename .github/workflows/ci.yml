@@ -53,10 +53,10 @@ jobs:
         restore-keys: |
           pip-pre-commit-
 
-    - name: Set up Python 3.7
+    - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 3.8
 
     - name: Install python dependencies
       run: |
@@ -74,8 +74,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
-        aiida: [{version: 'aiida-core==1.6.8', name: '1.6.8'}, {version: 'aiida-core==2.0.1', name: '2.0.1'}]
+        python-version: ["3.8", "3.9", "3.10"]
+        aiida: [{version: 'aiida-core==2.0.1', name: '2.0.1'},{version: 'aiida-core==2.1.2', name: '2.1.2'}]
         masci-tools: [{version: 'masci-tools', name: 'stable'}]
         allowed-to-fail: [false]
         include:
@@ -84,14 +84,9 @@ jobs:
             masci-tools: {version: 'masci-tools', name: 'stable'}
             allowed-to-fail: true
           - python-version: 3.9
-            aiida: {version: 'aiida-core==1.6.8', name: '1.6.8'}
+            aiida: {version: 'aiida-core==2.0.1', name: '2.0.1'}
             masci-tools: {version: 'git+https://github.com/JuDFTteam/masci-tools.git@develop', name: 'develop'}
             allowed-to-fail: true
-        exclude:
-          - python-version: 3.7
-            aiida: {version: 'aiida-core==2.0.1', name: '2.0.1'}
-            masci-tools: {version: 'masci-tools', name: 'stable'}
-            allowed-to-fail: false
 
       fail-fast: false
 
