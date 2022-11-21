@@ -41,7 +41,7 @@ class FleurSSDispWorkChain(WorkChain):
     This workflow calculates spin spiral dispersion of a structure.
     """
 
-    _workflowversion = '0.2.1'
+    _workflowversion = '0.3.0'
 
     _default_options = {
         'resources': {
