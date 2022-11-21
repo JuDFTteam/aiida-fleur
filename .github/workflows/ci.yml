@@ -155,3 +155,9 @@ jobs:
       with:
         file: ./tests/coverage.xml
         fail_ci_if_error: False
+
+    - uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: matplotlib-comparison-${{ matrix.python-version }}
+        path: mpl-results
