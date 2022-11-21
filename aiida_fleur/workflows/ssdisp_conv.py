@@ -117,7 +117,7 @@ class FleurSSDispConvWorkChain(WorkChain):
             calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
         else:
             calc_parameters['qss'] = {'x': qss[0], 'y': qss[1], 'z': qss[2]}
-        input_scf.calc_parameters = Dict(dict=calc_parameters)
+        input_scf.calc_parameters = Dict(calc_parameters)
 
         return input_scf
 

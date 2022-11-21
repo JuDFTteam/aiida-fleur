@@ -654,7 +654,7 @@ class FleurinpData(orm.Data):
 
         parameter_data = get_parameter_data(xmltree, schema_dict, inpgen_ready=inpgen_ready, write_ids=write_ids)
 
-        return Dict(dict=parameter_data)
+        return Dict(parameter_data)
 
     def get_parameterdata(self, inpgen_ready=None, write_ids=None):
         """

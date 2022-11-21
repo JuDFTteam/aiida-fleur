@@ -243,7 +243,7 @@ class FleurMaeWorkChain(WorkChain):
             if not self.ctx.wf_dict.get('use_symmetries_reference'):
                 # break symmetries, SOC will be removed if not set
                 calc_parameters['soc'] = {'theta': soc[0], 'phi': soc[1]}
-            input_scf.calc_parameters = Dict(dict=calc_parameters)
+            input_scf.calc_parameters = Dict(calc_parameters)
 
         return input_scf
 
@@ -489,7 +489,7 @@ class FleurMaeWorkChain(WorkChain):
 
         # ensure provenance of output nodes
 
-        out_dict = {'out': Dict(dict=out)}
+        out_dict = {'out': Dict(out)}
         if self.ctx.fleuroutuuid is not None:
             out_dict['last_fleur_out'] = load_node(self.ctx.fleuroutuuid)
 

@@ -253,7 +253,7 @@ class FleurDMIWorkChain(WorkChain):
             sum_vec = np.array([np.pi / 4.0, np.e / 3.0, np.euler_gamma])
             calc_parameters['qss'] = {'x': sum_vec[0], 'y': sum_vec[1], 'z': sum_vec[2]}
             calc_parameters['soc'] = {'theta': 0.7, 'phi': 0.7}
-            input_scf.calc_parameters = Dict(dict=calc_parameters)
+            input_scf.calc_parameters = Dict(calc_parameters)
         return input_scf
 
     def change_fleurinp(self):

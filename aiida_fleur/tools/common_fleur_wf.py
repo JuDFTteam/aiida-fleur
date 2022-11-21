@@ -42,7 +42,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
 
 
     '''
-    Dict = DataFactory('dict')
+    Dict = DataFactory('core.dict')
     inputs = {}
 
     add_comp_para_default = {
@@ -91,16 +91,16 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
             options['resources'] = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
 
     inputs['clean_workdir'] = Bool(add_comp_para.pop('clean_workdir', False))
-    inputs['add_comp_para'] = Dict(dict=add_comp_para)
+    inputs['add_comp_para'] = Dict(add_comp_para)
 
     if settings:
         if isinstance(settings, Dict):
             inputs['settings'] = settings
         else:
-            inputs['settings'] = Dict(dict=settings)
+            inputs['settings'] = Dict(settings)
 
     if options:
-        inputs['options'] = Dict(dict=options)
+        inputs['options'] = Dict(options)
 
     return inputs
 
@@ -207,7 +207,7 @@ def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
     returns: tuple (mesh, offset)
     returns: kpointsdata node
     """
-    KpointsData = DataFactory('array.kpoints')
+    KpointsData = DataFactory('core.array.kpoints')
     kp = KpointsData()
     kp.set_cell_from_structure(structure)
     density = kpoint_density  # 1/A

@@ -131,7 +131,7 @@ def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machi
     else:
         if option_node is None:
             option_node = Dict(
-                dict={
+                {
                     'withmpi': with_mpi,
                     'max_wallclock_seconds': max_wallclock_seconds,
                     'resources': {

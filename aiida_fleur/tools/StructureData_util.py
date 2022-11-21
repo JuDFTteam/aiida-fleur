@@ -37,7 +37,7 @@ def is_structure(structure):
     """
     from aiida.common import NotExistent
 
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
 
     # Test if StructureData
     if isinstance(structure, StructureData):
@@ -297,9 +297,9 @@ def break_symmetry_wf(structure, wf_para, parameterdata=None):
     :param parameterdata: AiiDa ParameterData
     :return: StructureData, a AiiDA crystal structure with new kind specification.
     """
-    Dict = DataFactory('dict')
+    Dict = DataFactory('core.dict')
     if parameterdata is None:
-        parameterdata = Dict(dict={})
+        parameterdata = Dict({})
     wf_dict = wf_para.get_dict()
     atoms = wf_dict.get('atoms', ['all'])
     sites = wf_dict.get('site', [])
@@ -876,7 +876,7 @@ def move_atoms_incell(structure, vector):
     :return: AiiDA structure
     """
 
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     new_structure = StructureData(cell=structure.cell)
     new_structure.pbc = structure.pbc
     sites = structure.sites
@@ -906,7 +906,7 @@ def find_primitive_cell(structure):
     # return the given structure (Is this good practise for prov?)
     from spglib import find_primitive
     from ase.atoms import Atoms
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
 
     symprec = 1e-7
     # print('old {}'.format(len(structure.sites)))
@@ -1018,7 +1018,7 @@ def create_all_slabs(initial_structure,
     """
     :return: a dictionary of structures
     """
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     aiida_strucs = {}
     # pymat_struc = initial_structure.get_pymatgen_structure()
     indices = get_all_miller_indices(initial_structure, miller_index)
@@ -1044,7 +1044,7 @@ def create_slap(initial_structure,
     wraps the pymatgen slab generator
     """
     # minimum slab size is in Angstrom!!!
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     pymat_struc = initial_structure.get_pymatgen_structure()
     slabg = SlabGenerator(pymat_struc,
                           miller_index,
@@ -1102,7 +1102,7 @@ def sort_atoms_z_value(structure):
     :param structure: AiiDA structure
     :return: AiiDA structure
     """
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     new_structure = StructureData(cell=structure.cell)
     new_structure.pbc = structure.pbc
     for kind in structure.kinds:
@@ -1772,7 +1772,7 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
         bond_data[sym2][sym1] = distance
         print(f'Request completed for {sym1} {sym2} pair')
 
-    return Dict(dict=bond_data)
+    return Dict(bond_data)
 
 
 @cf
@@ -1826,7 +1826,7 @@ def replace_elementf(inp_structure, replace_dict, replace_all):
         # TODO: log something
         return None
 
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
 
     replace_dict = replace_dict.get_dict()
 

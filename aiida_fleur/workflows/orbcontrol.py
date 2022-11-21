@@ -763,7 +763,7 @@ class FleurOrbControlWorkChain(WorkChain):
         with inpxml_changes(input_scf) as fm:
             fm.set_inpchanges({'l_linmix': False})
 
-        input_scf.settings = Dict(dict=settings)
+        input_scf.settings = Dict(settings)
 
         return input_scf
 
@@ -906,7 +906,7 @@ class FleurOrbControlWorkChain(WorkChain):
                 else:
                     self.report('Something went wrong. The groundstate SCF calculation contains no density matrix file')
 
-        outnode = Dict(dict=out)
+        outnode = Dict(out)
         outnodedict['results_node'] = outnode
 
         # create links between all these nodes...

@@ -598,7 +598,7 @@ class FleurCoreholeWorkChain(WorkChain):
         calcs = []
         for corehole in corehole_to_create:
             para = self.ctx.ref_para
-            wf_para = Dict(dict=corehole)
+            wf_para = Dict(corehole)
             #print(corehole)
             #print(base_supercell)
             #print(para)
@@ -620,7 +620,7 @@ class FleurCoreholeWorkChain(WorkChain):
             wf_parameter['add_comp_para'] = self.ctx.add_comp_para
             wf_parameter['inpxml_changes'] = corehole['inpxml_changes']
 
-            wf_parameters = Dict(dict=wf_parameter)
+            wf_parameters = Dict(wf_parameter)
             calcs.append([moved_struc, calc_para, wf_parameters])
         self.ctx.calcs_torun = calcs
         #print('ctx.calcs_torun {}'.format(self.ctx.calcs_torun))
@@ -665,8 +665,8 @@ class FleurCoreholeWorkChain(WorkChain):
         else:
             wf_parameter = para
         wf_parameter['add_comp_para'] = self.ctx.add_comp_para
-        wf_parameters = Dict(dict=wf_parameter)
-        options = Dict(dict=self.ctx.options)
+        wf_parameters = Dict(wf_parameter)
+        options = Dict(self.ctx.options)
         '''
         #res_all = []
         calcs = {}
@@ -811,8 +811,8 @@ class FleurCoreholeWorkChain(WorkChain):
         wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         #wf_parameter['queue_name'] = self.ctx.queue
         #wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
-        wf_parameters = Dict(dict=wf_parameter)
-        options = Dict(dict=self.ctx.options)
+        wf_parameters = Dict(wf_parameter)
+        options = Dict(self.ctx.options)
         #res_all = []
         calcs = {}
         scf_label = 'FleurCoreholeWorkChain cell'
@@ -993,13 +993,13 @@ class FleurCoreholeWorkChain(WorkChain):
         outputnode_dict['errors'] = self.ctx.errors
         outputnode_dict['hints'] = self.ctx.hints
 
-        outputnode = Dict(dict=outputnode_dict)
+        outputnode = Dict(outputnode_dict)
         outdict = {}
         outdict['output_corehole_wc_para'] = outputnode
 
         # To have to ouput node linked to the calculation output nodes
         outnodedict = {}
-        outnode = Dict(dict=outputnode_dict)
+        outnode = Dict(outputnode_dict)
         outnodedict['results_node'] = outnode
 
         # TODO: bad design, make bullet proof.
