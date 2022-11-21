@@ -8,7 +8,7 @@
 # For further information please visit http://www.flapw.de or                 #
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
-'''
-AiiDA-FLEUR
-'''
+"""
+AiiDA Plugin for running the FLEUR code and its input generator. Also includes high-level workchains and utilities
+"""
 __version__ = '2.0.0a0'
