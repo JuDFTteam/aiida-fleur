@@ -115,6 +115,22 @@ name = "aiida_fleur"
 [tool.flit.sdist]
 exclude = ['tests/']
 
+[tool.mypy]
+python_version = "3.8"
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+show_error_codes = true
+warn_no_return = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+
+[[tool.mypy.overrides]]
+module = [
+]
+follow_imports = 'skip'
+ignore_missing_imports = true
+
 [tool.pylint.basic]
 good-names = [
     "_",

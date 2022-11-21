@@ -55,3 +55,16 @@ repos:
     types: [python]
     language: system
     exclude: '^(docs/)|(examples/)'
+
+  - id: mypy
+    name: mypy
+    entry: mypy
+    args: [--config-file=pyproject.toml]
+    language: python
+    types: [python]
+    require_serial: true
+    pass_filenames: true
+    files: >-
+        (?x)^(
+            aiida_fleur/data/.*py|
+        )$
