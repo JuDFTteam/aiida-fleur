@@ -245,7 +245,7 @@ def generate_smco5_structure():
         a = 4.9679
         c = 3.9629
         cell = np.array([[a, 0.0, 0.0], [-a/2, a * np.sqrt(3)/2, 0.0], [0.0, 0.0, c]])
-        cell = np.round(a,10)
+        cell = np.round(cell,10)
         structure = StructureData(cell=cell)
         structure.append_atom(position=[0.0, 0.0, 0.0], symbols='Sm', name='Sm')
         structure.append_atom(position=np.array([1 / 3, 2 / 3, 0.0]) @ cell, symbols='Co', name='Co')
