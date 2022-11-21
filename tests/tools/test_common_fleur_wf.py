@@ -145,10 +145,7 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
         'structure': structure
     }
 
-    res = get_inputs_inpgen(**inputs)
-    #Remove keys that are not necessary for comparison
-    res['metadata']['options'].pop('stash', None)
-
+    res = get_inputs_inpgen(**inputs)._inputs(prune=True)
     assert res == returns
 
     # repeat without a label and description
@@ -170,10 +167,7 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
         'structure': structure
     }
 
-    res = get_inputs_inpgen(**inputs)
-    #Remove keys that are not necessary for comparison
-    res['metadata']['options'].pop('stash', None)
-
+    res = get_inputs_inpgen(**inputs)._inputs(prune=True)
     assert res == returns
 
 
