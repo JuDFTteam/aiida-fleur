@@ -559,7 +559,7 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict['bandgap_units'] = 'eV'
         outputnode_dict['fermi_energy_units'] = 'Htr'
 
-        outputnode_t = Dict(dict=outputnode_dict)
+        outputnode_t = Dict(outputnode_dict)
         if last_calc_out:
             outdict = create_band_result_node(outpara=outputnode_t,
                                               last_calc_out=last_calc_out,

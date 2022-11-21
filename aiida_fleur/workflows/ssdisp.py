@@ -227,7 +227,7 @@ class FleurSSDispWorkChain(WorkChain):
             for key, val in self.ctx.wf_dict['beta'].items():
                 fm.set_atomgroup_label(key, {'nocoParams': {'beta': val}})
 
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
+        input_scf.wf_parameters = Dict(scf_wf_dict)
 
         if 'structure' in input_scf:  # add info about spin spiral propagation
             if 'calc_parameters' in input_scf:
@@ -239,7 +239,7 @@ class FleurSSDispWorkChain(WorkChain):
                 'y': self.ctx.wf_dict['prop_dir'][1],
                 'z': self.ctx.wf_dict['prop_dir'][2]
             }
-            input_scf.calc_parameters = Dict(dict=calc_parameters)
+            input_scf.calc_parameters = Dict(calc_parameters)
 
         return input_scf
 

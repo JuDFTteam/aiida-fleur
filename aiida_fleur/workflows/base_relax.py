@@ -127,7 +127,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
             raise ValidationError('Stashed methods are not used and fixing_methods is not empty')
 
         wf_param['inpxml_changes'] = new_changes
-        self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_param)
+        self.ctx.inputs.scf.wf_parameters = Dict(wf_param)
 
     # @process_handler(priority=50, exit_codes=RelaxProcess.exit_codes.ERROR_DID_NOT_RELAX)
     # def _handle_not_conv_error(self, calculation):
@@ -181,7 +181,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
         scf_para = self.ctx.inputs.scf.wf_parameters.get_dict()
         scf_para['force_dict']['forcemix'] = 'BFGS'
-        self.ctx.inputs.scf.wf_parameters = Dict(dict=scf_para)
+        self.ctx.inputs.scf.wf_parameters = Dict(scf_para)
 
         if 'structure' in self.ctx.inputs.scf:
             del self.ctx.inputs.scf.structure
@@ -238,7 +238,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
         wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
         if wf_para_dict['force_dict']['forcemix'] != self.ctx.initial_mixing:
             wf_para_dict['force_dict']['forcemix'] = self.ctx.initial_mixing
-            self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
+            self.ctx.inputs.scf.wf_parameters = Dict(wf_para_dict)
 
         self.ctx.use_stashed_shift_methods = True
         self.ctx.fixing_methods = [('shift_value', {'change_dict': {'dTilda': 0.2, 'dVac': 0.2}})]
@@ -281,7 +281,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
             self_wf_para = self.ctx.inputs.wf_parameters.get_dict()
             self_wf_para['change_mixing_criterion'] = self_wf_para['change_mixing_criterion'] / 1.4
-            self.ctx.inputs.wf_parameters = Dict(dict=self_wf_para)
+            self.ctx.inputs.wf_parameters = Dict(self_wf_para)
             self.report('Seems it is too early for BFGS. I switch back to straight mixing'
                         ' and reduce change_mixing_criterion by a factor of 1.25')
         elif error_params['iteration_number'] == 2:
@@ -308,7 +308,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
         if wf_para_dict['force_dict']['forcemix'] != self.ctx.initial_mixing:
             wf_para_dict['force_dict']['forcemix'] = self.ctx.initial_mixing
-            self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
+            self.ctx.inputs.scf.wf_parameters = Dict(wf_para_dict)
 
         return ProcessHandlerReport(True)
 

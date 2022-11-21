@@ -404,10 +404,10 @@ class FleurInitialCLSWorkChain(WorkChain):
             wf_parameter = para
         wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         #wf_parameter['options'] = self.ctx.options
-        wf_parameters = Dict(dict=wf_parameter)
+        wf_parameters = Dict(wf_parameter)
         resall = {}
         calc_labels = []
-        options = Dict(dict=self.ctx.options)
+        options = Dict(self.ctx.options)
         # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
         res = None
         #print(self.ctx.calcs_torun)
@@ -534,8 +534,8 @@ class FleurInitialCLSWorkChain(WorkChain):
         wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         # TODO maybe use less resources, or default of one machine
         #wf_parameter['options'] = self.ctx.options
-        wf_parameters = Dict(dict=wf_parameter)
-        options = Dict(dict=self.ctx.options)
+        wf_parameters = Dict(wf_parameter)
+        options = Dict(self.ctx.options)
 
         res_all = []
         calcs = {}
@@ -823,7 +823,7 @@ class FleurInitialCLSWorkChain(WorkChain):
 
         # To have to ouput node linked to the calculation output nodes
         outnodedict = {}
-        outnode = Dict(dict=outputnode_dict)
+        outnode = Dict(outputnode_dict)
         outnodedict['results_node'] = outnode
 
         # TODO: bad design, put in calcfunction and make bullet proof.

@@ -62,7 +62,7 @@ def merge_parameter(Dict1, Dict2, overwrite=True, merge=True):
     dict2 = Dict2.get_dict()
 
     if dict1 == dict2:
-        return Dict(dict=dict1)
+        return Dict(dict1)
 
     for key in list(dict1.keys()):
         if 'atom' in key:
@@ -99,7 +99,7 @@ def merge_parameter(Dict1, Dict2, overwrite=True, merge=True):
 
     # be carefull with atom namelist
 
-    return Dict(dict=new_dict)
+    return Dict(new_dict)
 
 
 def merge_parameters(DictList, overwrite=True):
@@ -107,7 +107,7 @@ def merge_parameters(DictList, overwrite=True):
     Merge together all parameter nodes in the given list.
     """
     #Dict = DataFactory('dict')
-    paremeter_data_new = Dict(dict={})
+    paremeter_data_new = Dict({})
 
     for i, parameter in enumerate(DictList):
         if isinstance(parameter, Dict):

@@ -360,7 +360,7 @@ class FleurEosWorkChain(WorkChain):
             self.report('Done, but something went wrong.... Probably some individual calculation failed or'
                         ' a scf-cycle did not reach the desired distance.')
 
-        outnode = Dict(dict=out)
+        outnode = Dict(out)
         outnodedict['results_node'] = outnode
 
         # create links between all these nodes...

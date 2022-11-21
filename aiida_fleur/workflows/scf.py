@@ -369,7 +369,7 @@ class FleurScfWorkChain(WorkChain):
         kpt_dist = self.ctx.wf_dict['kpoints_distance']
         if kpt_dist is not None:
             cf_para_kpt = Dict(
-                dict={
+                {
                     'distance': kpt_dist,
                     'force_parity': self.ctx.wf_dict['kpoints_force_parity'],
                     'force_even': self.ctx.wf_dict['kpoints_force_even'],
@@ -847,7 +847,7 @@ class FleurScfWorkChain(WorkChain):
             self.report(f'INFO: The LDA+U density matrix is converged to {self.ctx.last_nmmp_distance} change '
                         'of all matrix elements')
 
-        outputnode_t = Dict(dict=outputnode_dict)
+        outputnode_t = Dict(outputnode_dict)
         # this is unsafe so far, because last_calc_out could not exist...
         if last_calc_out:
             outdict = create_scf_result_node(outpara=outputnode_t,

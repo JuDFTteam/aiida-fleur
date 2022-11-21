@@ -210,7 +210,7 @@ class FleurRelaxWorkChain(WorkChain):
             if 'calc_parameters' in input_scf:
                 calc_para = input_scf.calc_parameters
             # currently we always break the full symmetry
-            break_dict = Dict(dict={'atoms': ['all']})  # for provenance
+            break_dict = Dict({'atoms': ['all']})  # for provenance
             broken_sys = break_symmetry_wf(input_scf.structure, wf_para=break_dict, parameterdata=calc_para)
             input_scf.structure = broken_sys['new_structure']
             input_scf.calc_parameters = broken_sys['new_parameters']
@@ -230,7 +230,7 @@ class FleurRelaxWorkChain(WorkChain):
 
             fm.set_atomgroup_label('49999', {'force': {'relaxXYZ': 'FFF'}})
 
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
+        input_scf.wf_parameters = Dict(scf_wf_dict)
 
         return input_scf
 
@@ -259,7 +259,7 @@ class FleurRelaxWorkChain(WorkChain):
                 scf_wf_dict['inpxml_changes'] = new_changes
 
         scf_wf_dict['mode'] = 'force'
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
+        input_scf.wf_parameters = Dict(scf_wf_dict)
 
         scf_wc = self.ctx.scf_res
         input_scf.remote_data = scf_wc.outputs.last_calc.remote_folder
@@ -411,7 +411,7 @@ class FleurRelaxWorkChain(WorkChain):
                     scf_wf_dict['inpxml_changes'] = new_changes
 
             scf_wf_dict['mode'] = 'density'
-            input_final_scf.wf_parameters = Dict(dict=scf_wf_dict)
+            input_final_scf.wf_parameters = Dict(scf_wf_dict)
         structure = self.ctx.final_structure
         formula = structure.get_formula()
         input_final_scf.structure = structure
@@ -528,7 +528,7 @@ class FleurRelaxWorkChain(WorkChain):
             'total_magnetic_moment_cell': self.ctx.total_magnetic_moment,
             'total_magnetic_moment_cell_units': 'muBohr'
         }
-        outnode = Dict(dict=out)
+        outnode = Dict(out)
 
         con_nodes = {}
         try:

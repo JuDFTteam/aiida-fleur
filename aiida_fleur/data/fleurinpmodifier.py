@@ -786,7 +786,7 @@ class FleurinpModifier(FleurXMLModifier):
             raise ValueError('The freeze() method can only be used if a original FleurinpData'
                              ' was given on initialization')
         from aiida.orm import Dict
-        modifications = Dict(dict={'tasks': self._tasks})
+        modifications = Dict({'tasks': self._tasks})
         modifications.description = 'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = 'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance

@@ -114,7 +114,7 @@ class FleurMaeConvWorkChain(WorkChain):
             calc_parameters = {}
         calc_parameters['soc'] = {'theta': sqa[0], 'phi': sqa[1]}
 
-        input_scf.calc_parameters = Dict(dict=calc_parameters)
+        input_scf.calc_parameters = Dict(calc_parameters)
 
         return input_scf
 
