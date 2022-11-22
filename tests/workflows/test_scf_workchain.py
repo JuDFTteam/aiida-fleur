@@ -256,9 +256,6 @@ def test_fleur_scf_fleurinp_Si_modifications(with_export_cache, fleur_local_code
     n = out['output_scf_wc_para']
     n = n.get_dict()
     lasto = out['last_calc']['output_parameters']
-    calc = lasto.get_incoming().all()[0].node
-    print(calc)
-    print(calc.get_cache_source())
     lasto = lasto.get_dict()
 
     print(n)
@@ -336,9 +333,6 @@ def test_fleur_scf_structure_kpoint_distance(with_export_cache, fleur_local_code
     n = out['output_scf_wc_para']
     n = n.get_dict()
     lasto = out['last_calc']['output_parameters']
-    calc = lasto.get_incoming().all()[0].node
-    print(calc)
-    print(calc.get_cache_source())
     lasto = lasto.get_dict()
 
     print(n)
@@ -402,9 +396,6 @@ def test_fleur_scf_continue_converged(with_export_cache, fleur_local_code, clear
     n = out['output_scf_wc_para']
     n = n.get_dict()
     lasto = out['last_calc']['output_parameters']
-    calc = lasto.get_incoming().all()[0].node
-    print(calc)
-    print(calc.get_cache_source())
     lasto = lasto.get_dict()
 
     print(n)

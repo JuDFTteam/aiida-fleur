@@ -1008,7 +1008,7 @@ class FleurCoreholeWorkChain(WorkChain):
             #print(calc)
             #print(calc.get_outgoing().all())
             try:
-                calc_dict = calc.get_outgoing().get_node_by_label(
+                calc_dict = calc.base.links.get_outgoing().get_node_by_label(
                     'output_scf_wc_para')  #calc.outputs.output_scf_wc_para
             except (KeyError, ValueError):
                 print('continue 2')
@@ -1124,9 +1124,9 @@ def extract_results_corehole(calcs):
 
     calc_uuids = []
     for calc in calcs:
-        print(calc)
-        print(calc.exit_status, calc.exit_message)
-        print(calc.get_outgoing().all())
+        # print(calc)
+        # print(calc.exit_status, calc.exit_message)
+        # print(calc.get_outgoing().all())
         try:
             calc_uuid = calc.outputs.last_calc.remote_folder.creator.uuid
         except (KeyError, AttributeError):

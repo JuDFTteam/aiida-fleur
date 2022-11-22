@@ -277,7 +277,7 @@ def generate_retrieved_data():
 
         retrieved = orm.FolderData()
         retrieved.put_object_from_tree(filepath)
-        retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+        retrieved.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
         retrieved.store()
         return retrieved
 
@@ -770,7 +770,7 @@ def import_with_migrate(temp_dir):
 
 
 @pytest.fixture(scope='function', autouse=True)
-def clear_database_aiida_fleur(clear_database):  # pylint: disable=redefined-outer-name
+def clear_database_aiida_fleur(aiida_profile_clean):  # pylint: disable=redefined-outer-name
     """Clear the database after each test.
     """
 
@@ -788,11 +788,11 @@ def show_workchain_summary():
 
             calc_info_string = calc_info(node)
 
-            cache_source = node.get_cache_source()
+            cache_source = node.base.caching.get_cache_source()
             if cache_source is None:
                 caching_string = 'Not Cached'
                 if verbose:
-                    caching_string = f'Not Cached {node._get_objects_to_hash()}'
+                    caching_string = f'Not Cached {node.base.caching._get_objects_to_hash()}'
             else:
                 caching_string = f'Cached (Source: <{cache_source}>)'
 

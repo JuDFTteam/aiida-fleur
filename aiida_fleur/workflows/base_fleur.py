@@ -287,7 +287,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         #check if the cdn.hdf can be reused
         #Out of memory can also occur after a couple of iterations if the mixing_history gets too large
-        remote = calculation.get_outgoing().get_node_by_label('remote_folder')
+        remote = calculation.base.links.get_outgoing().get_node_by_label('remote_folder')
         if _is_remote_reusable(self.ctx.inputs, calculation):
             if 'fleurinp' in self.ctx.inputs:
                 del self.ctx.inputs.fleurinp
@@ -304,7 +304,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         # if previous calculation failed for the same reason, do not restart
         try:
-            prev_calculation_remote = calculation.get_incoming().get_node_by_label('parent_folder')
+            prev_calculation_remote = calculation.base.links.get_incoming().get_node_by_label('parent_folder')
             prev_calculation_status = prev_calculation_remote.creator.exit_status
             if prev_calculation_status in FleurCalculation.get_exit_statuses(['ERROR_TIME_LIMIT']):
                 self.ctx.is_finished = True
@@ -347,7 +347,7 @@ def _is_remote_reusable(inputs, calculation):
     can_use_remote = False
     #If no charge density file is available to restart from the calculation will except
     #with a not nice error message. So we can only reuse the charge density if these files are available
-    retrieved_filenames = calculation.get_outgoing().get_node_by_label('retrieved').list_object_names()
+    retrieved_filenames = calculation.base.links.get_outgoing().get_node_by_label('retrieved').list_object_names()
     if any(file in retrieved_filenames for file in (
             'cdn_last.hdf',
             'cdn1',

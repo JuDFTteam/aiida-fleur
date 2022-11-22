@@ -828,12 +828,12 @@ class FleurInitialCLSWorkChain(WorkChain):
 
         # TODO: bad design, put in calcfunction and make bullet proof.
         calc = self.ctx[self.ctx.calc_labels[-1]]
-        calc_dict = calc.get_outgoing().get_node_by_label('output_scf_wc_para')
+        calc_dict = calc.base.links.get_outgoing().get_node_by_label('output_scf_wc_para')
         outnodedict['input_structure'] = calc_dict
 
         for label in self.ctx.ref_labels:
             calc = self.ctx[label]
-            calc_dict = calc.get_outgoing().get_node_by_label('output_scf_wc_para')
+            calc_dict = calc.base.links.get_outgoing().get_node_by_label('output_scf_wc_para')
             outnodedict[label] = calc_dict
 
         outdict = create_initcls_result_node(**outnodedict)

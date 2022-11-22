@@ -152,7 +152,7 @@ def test_handle_not_enough_memory(generate_workchain_base, generate_remote_data,
     #Add outgoing remote folder
     process.ctx.children[-1].store()
     remote = generate_remote_data(code.computer, '/tmp')
-    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
     generate_retrieved_data(process.ctx.children[-1], 'default')
 
@@ -191,7 +191,7 @@ def test_handle_time_limits(generate_workchain_base, generate_remote_data, gener
     #Add outgoing remote folder
     process.ctx.children[-1].store()
     remote = generate_remote_data(code.computer, '/tmp')
-    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
     generate_retrieved_data(process.ctx.children[-1], 'default')
 
@@ -228,7 +228,7 @@ def test_handle_time_limits_no_charge_density(generate_workchain_base, generate_
     #Add outgoing remote folder
     process.ctx.children[-1].store()
     remote = generate_remote_data(code.computer, '/tmp')
-    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
     generate_retrieved_data(process.ctx.children[-1], 'complex_errorout')
 
@@ -277,7 +277,7 @@ def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_
     #Add outgoing remote folder
     process.ctx.children[-1].store()
     remote = generate_remote_data(fleur.computer, '/tmp')
-    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
     generate_retrieved_data(process.ctx.children[-1], 'default')
 
@@ -317,7 +317,7 @@ def test_handle_time_limits_no_fleurinp(generate_workchain_base, generate_remote
     #Add outgoing remote folder
     process.ctx.children[-1].store()
     remote = generate_remote_data(fleur.computer, '/tmp')
-    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
     generate_retrieved_data(process.ctx.children[-1], 'default')
 
@@ -347,7 +347,7 @@ def test_handle_time_limits_previous_calculation_error(generate_workchain_base, 
     prev_calc.set_exit_status(FleurCalculation.exit_codes.ERROR_TIME_LIMIT.status)
     prev_calc.store()
 
-    remote_before.add_incoming(prev_calc, link_type=LinkType.CREATE, link_label='remote_folder')
+    remote_before.base.links.add_incoming(prev_calc, link_type=LinkType.CREATE, link_label='remote_folder')
     remote_before.store()
 
     inputs = {
@@ -362,10 +362,10 @@ def test_handle_time_limits_previous_calculation_error(generate_workchain_base, 
     process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
 
     #Add outgoing remote folder
-    process.ctx.children[-1].add_incoming(remote_before, link_type=LinkType.INPUT_CALC, link_label='parent_folder')
+    process.ctx.children[-1].base.links.add_incoming(remote_before, link_type=LinkType.INPUT_CALC, link_label='parent_folder')
     process.ctx.children[-1].store()
     remote = generate_remote_data(fleur.computer, '/tmp')
-    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
 
     result = process._handle_time_limits(process.ctx.children[-1])

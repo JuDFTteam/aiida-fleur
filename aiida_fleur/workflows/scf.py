@@ -166,12 +166,12 @@ class FleurScfWorkChain(WorkChain):
                 wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-        fleur = self.inputs.fleur
-        fleur_extras = fleur.extras
-        inpgen_extras = None
-        if 'inpgen' in self.inputs:
-            inpgen = self.inputs.inpgen
-            inpgen_extras = inpgen.extras
+        # fleur = self.inputs.fleur
+        # fleur_extras = fleur.extras
+        # inpgen_extras = None
+        # if 'inpgen' in self.inputs:
+        #     inpgen = self.inputs.inpgen
+        #     inpgen_extras = inpgen.extras
 
         defaultoptions = self._default_options.copy()
         user_options = {}
