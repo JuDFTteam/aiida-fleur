@@ -19,7 +19,8 @@ from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
 @pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
 def test_fleur_cfcoeff_structure_no_analogue(with_export_cache, fleur_local_code, inpgen_local_code,
-                                             generate_smco5_structure, clear_database, aiida_caplog):
+                                             generate_smco5_structure, clear_database, aiida_caplog,
+                                             show_workchain_summary):
     """
     Full example using the CFCoeff workchain with just a structure as input.
     Calls scf for analogue and rare-earth system
@@ -81,10 +82,11 @@ def test_fleur_cfcoeff_structure_no_analogue(with_export_cache, fleur_local_code
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
+    assert 'output_cfcoeff_wc_para' in out
     n = out['output_cfcoeff_wc_para']
     n = n.get_dict()
     assert 'output_cfcoeff_wc_potentials' in out
@@ -111,7 +113,8 @@ def test_fleur_cfcoeff_structure_no_analogue(with_export_cache, fleur_local_code
 @pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
 def test_fleur_cfcoeff_structure_analogue(with_export_cache, fleur_local_code, inpgen_local_code,
-                                          generate_smco5_structure, clear_database, aiida_caplog):
+                                          generate_smco5_structure, clear_database, aiida_caplog,
+                                          show_workchain_summary):
     """
     Full example using the CFCoeff workchain with just a structure as input.
     Calls scf for analogue and rare-earth system
@@ -176,10 +179,11 @@ def test_fleur_cfcoeff_structure_analogue(with_export_cache, fleur_local_code, i
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
+    assert 'output_cfcoeff_wc_para' in out
     n = out['output_cfcoeff_wc_para']
     n = n.get_dict()
     assert 'output_cfcoeff_wc_potentials' in out
