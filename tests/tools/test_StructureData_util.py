@@ -112,64 +112,6 @@ def test_supercell(generate_structure):
     assert no_supercell is None
 
 
-def test_abs_to_rel(generate_structure):
-    from aiida_fleur.tools.StructureData_util import abs_to_rel
-
-    structure = generate_structure()
-    cell = structure.cell
-
-    vector = [1.3575, 1.3575, 1.3575]
-    with pytest.deprecated_call():
-        assert np.isclose(abs_to_rel(vector, cell), np.array([0.25, 0.25, 0.25])).all()
-    with pytest.deprecated_call():
-        with pytest.raises(ValueError):
-            assert not abs_to_rel([1], cell)
-
-
-def test_abs_to_rel_f(generate_film_structure):
-    from aiida_fleur.tools.StructureData_util import abs_to_rel_f
-
-    structure = generate_film_structure()
-    cell = structure.cell
-
-    vector = [1.4026317387183, 1.9836207751336, 0.25]
-    with pytest.deprecated_call():
-        assert np.isclose(abs_to_rel_f(vector, cell, pbc=structure.pbc), np.array([0.5, 0.5, 0.25])).all()
-    with pytest.deprecated_call():
-        with pytest.raises(ValueError):
-            abs_to_rel_f([1], cell, pbc=structure.pbc)
-
-
-def test_rel_to_abs(generate_structure):
-    """Test if rel_to_abs for bulk function scales coordinates right"""
-    from aiida_fleur.tools.StructureData_util import rel_to_abs
-
-    structure = generate_structure()
-    cell = structure.cell
-
-    vector = [0.25, 0.25, 0.25]
-    with pytest.deprecated_call():
-        assert np.isclose(rel_to_abs(vector, cell), np.array([1.3575, 1.3575, 1.3575])).all()
-    with pytest.deprecated_call():
-        with pytest.raises(ValueError):
-            assert not rel_to_abs([1], cell)
-
-
-def test_rel_to_abs_f(generate_film_structure):
-    """Test if rel_to_abs film function scales coordinates right"""
-    from aiida_fleur.tools.StructureData_util import rel_to_abs_f
-
-    structure = generate_film_structure()
-    cell = structure.cell
-
-    vector = [0.5, 0.5, 0.25]
-    with pytest.deprecated_call():
-        assert np.isclose(rel_to_abs_f(vector, cell), np.array([1.4026317387183, 1.9836207751336, 0.25])).all()
-    with pytest.deprecated_call():
-        with pytest.raises(ValueError):
-            assert not rel_to_abs_f([1], cell)
-
-
 def test_break_symmetry_wf_film_structure_only(generate_film_structure):
     """Check if it does not crash and able to destroy all symmetries"""
     from aiida_fleur.tools.StructureData_util import break_symmetry_wf, supercell_ncf
