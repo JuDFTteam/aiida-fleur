@@ -247,12 +247,12 @@ def generate_smco5_structure():
         cell = np.array([[a, 0.0, 0.0], [-a/2, a * np.sqrt(3)/2, 0.0], [0.0, 0.0, c]])
         cell = np.round(cell,10)
         structure = StructureData(cell=cell)
-        structure.append_atom(position=[0.0, 0.0, 0.0], symbols='Sm', name='Sm')
-        structure.append_atom(position=np.array([1 / 3, 2 / 3, 0.0]) @ cell, symbols='Co', name='Co')
-        structure.append_atom(position=np.array([2 / 3, 1 / 3, 0.0]) @ cell, symbols='Co', name='Co')
-        structure.append_atom(position=np.array([0.0, 0.5, 0.5]) @ cell, symbols='Co', name='Co')
-        structure.append_atom(position=np.array([0.5, 0.0, 0.5]) @ cell, symbols='Co', name='Co')
-        structure.append_atom(position=np.array([0.5, 0.5, 0.5]) @ cell, symbols='Co', name='Co')
+        structure.append_atom(position=np.array([0.0, 0.0, 0.0]), symbols='Sm', name='Sm')
+        structure.append_atom(position=np.round(np.array([1 / 3, 2 / 3, 0.0]) @ cell,10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([2 / 3, 1 / 3, 0.0]) @ cell,10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([0.0, 0.5, 0.5]) @ cell,10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([0.5, 0.0, 0.5]) @ cell,10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([0.5, 0.5, 0.5]) @ cell,10), symbols='Co', name='Co')
 
         return structure
 
