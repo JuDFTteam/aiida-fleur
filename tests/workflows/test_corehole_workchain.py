@@ -9,7 +9,7 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 '''Contains tests for the FleurCoreholeWorkChain'''
-
+#pylint: disable=no-self-use
 import pytest
 import aiida_fleur
 import os
