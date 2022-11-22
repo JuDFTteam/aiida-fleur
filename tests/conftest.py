@@ -176,22 +176,22 @@ def generate_calc_job_node(fixture_localhost):
         entry_point = format_entry_point_string('aiida.calculations', entry_point_name)
 
         node = orm.CalcJobNode(computer=computer, process_type=entry_point)
-        node.set_attribute('input_filename', 'aiida.in')
-        node.set_attribute('output_filename', 'aiida.out')
-        node.set_attribute('error_filename', 'aiida.err')
+        node.base.attributes.set('input_filename', 'aiida.in')
+        node.base.attributes.set('output_filename', 'aiida.out')
+        node.base.attributes.set('error_filename', 'aiida.err')
         node.set_option('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
         node.set_option('withmpi', True)
         node.set_option('max_wallclock_seconds', 1800)
 
         if retrieve_list is not None:
-            node.set_attribute('retrieve_list', retrieve_list)
+            node.base.attributes.set('retrieve_list', retrieve_list)
         if attributes:
-            node.set_attribute_many(attributes)
+            node.base.attributes.set_many(attributes)
 
         if inputs:
             for link_label, input_node in flatten_inputs(inputs):
                 input_node.store()
-                node.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
+                node.base.links.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
 
         if store:  # needed if test_name is not None
             node.store()
@@ -202,11 +202,11 @@ def generate_calc_job_node(fixture_localhost):
 
             retrieved = orm.FolderData()
             retrieved.put_object_from_tree(filepath)
-            retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+            retrieved.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
             retrieved.store()
 
             remote_folder = orm.RemoteData(computer=computer, remote_path='/tmp')
-            remote_folder.add_incoming(node, link_type=LinkType.CREATE, link_label='remote_folder')
+            remote_folder.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='remote_folder')
             remote_folder.store()
 
         return node

@@ -158,7 +158,7 @@ def wf_struc_from_cif(cif):
 
 def struc_from_cif(cif):
     asecell = cif.get_ase()
-    struc = DataFactory('structure')(ase=asecell)
+    struc = DataFactory('core.structure')(ase=asecell)
     return struc
 
 

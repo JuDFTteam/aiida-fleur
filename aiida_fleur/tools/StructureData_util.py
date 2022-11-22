@@ -106,7 +106,7 @@ def rescale_nowf(inp_structure, scale):
     the_ase = structure.get_ase()
     new_ase = the_ase.copy()
     new_ase.set_cell(the_ase.get_cell() * np.power(float(scale), 1.0 / 3), scale_atoms=True)
-    rescaled_structure = DataFactory('structure')(ase=new_ase)
+    rescaled_structure = DataFactory('core.structure')(ase=new_ase)
     rescaled_structure.label = f'{scale}  rescaled'  #, structure.uuid)
     #uuids in node labels are bad for caching
     rescaled_structure.pbc = structure.pbc
@@ -164,7 +164,7 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
     new_a2 = [i * na2 for i in old_a2]
     new_a3 = [i * na3 for i in old_a3]
     new_cell = [new_a1, new_a2, new_a3]
-    new_structure = DataFactory('structure')(cell=new_cell, pbc=old_pbc)
+    new_structure = DataFactory('core.structure')(cell=new_cell, pbc=old_pbc)
 
     # insert atoms
     # first create all kinds
@@ -324,7 +324,7 @@ def break_symmetry(structure,
     cell = struc.cell
     pbc = struc.pbc
     sites = struc.sites
-    new_structure = DataFactory('structure')(cell=cell, pbc=pbc)
+    new_structure = DataFactory('core.structure')(cell=cell, pbc=pbc)
 
     for sym in atoms:
         replace.append(sym)

@@ -327,7 +327,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             propose_nodes = self.ctx.max_queue_nodes
         self.ctx.num_machines = propose_nodes
 
-        remote = calculation.get_outgoing().get_node_by_label('remote_folder')
+        remote = calculation.base.links..get_outgoing().get_node_by_label('remote_folder')
 
         # resubmit providing inp.xml and cdn from the remote folder
         self.ctx.is_finished = False

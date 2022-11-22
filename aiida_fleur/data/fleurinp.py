@@ -101,10 +101,10 @@ def get_fleurinp_from_remote_data(remote_node, store=False, additional_files=Non
               of the calculation associated RemoteData
     """
 
-    for link in remote_node.get_incoming().all():
+    for link in remote_node.base.links.get_incoming().all():
         if isinstance(link.node, orm.CalcJobNode):
             parent_calc_node = link.node
-    retrieved = parent_calc_node.get_outgoing().get_node_by_label('retrieved')
+    retrieved = parent_calc_node.base.links.get_outgoing().get_node_by_label('retrieved')
 
     return get_fleurinp_from_folder_data(retrieved, store=store, additional_files=additional_files)
 
