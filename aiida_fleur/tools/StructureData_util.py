@@ -209,64 +209,6 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
 
 # Structure util
 # after ths is in plugin code import these in fleurinp.
-def abs_to_rel(vector, cell):
-    """
-    Converts a position vector in absolute coordinates to relative coordinates.
-
-    :param vector: list or np.array of length 3, vector to be converted
-    :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
-    :return: list of legth 3 of scaled vector, or False if vector was not length 3
-    """
-    warnings.warn(
-        'abs_to_rel will be removed from StructureData_util in the future.'
-        'Use the same function from masci_tools.io.common_functions', DeprecationWarning)
-    from masci_tools.io.common_functions import abs_to_rel  #pylint: disable=redefined-outer-name
-    return abs_to_rel(vector, cell)
-
-
-def abs_to_rel_f(vector, cell, pbc):
-    """
-    Converts a position vector in absolute coordinates to relative coordinates
-    for a film system.
-
-    :param vector: list or np.array of length 3, vector to be converted
-    :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
-    :param pbc: Boundary conditions, List or Tuple of 3 Boolean
-    :return: list of legth 3 of scaled vector, or False if vector was not length 3
-    """
-    warnings.warn(
-        'abs_to_rel_f will be removed from StructureData_util in the future.'
-        'Use the same function from masci_tools.io.common_functions', DeprecationWarning)
-    from masci_tools.io.common_functions import abs_to_rel_f  #pylint: disable=redefined-outer-name
-    return abs_to_rel_f(vector, cell, pbc)
-
-
-def rel_to_abs(vector, cell):
-    """
-    Converts a position vector in internal coordinates to absolute coordinates
-    in Angstrom.
-
-    :param vector: list or np.array of length 3, vector to be converted
-    :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
-    :return: list of legth 3 of scaled vector, or False if vector was not lenth 3
-    """
-    warnings.warn(
-        'rel_to_abs will be removed from StructureData_util in the future.'
-        'Use the same function from masci_tools.io.common_functions', DeprecationWarning)
-    from masci_tools.io.common_functions import rel_to_abs  #pylint: disable=redefined-outer-name
-    return rel_to_abs(vector, cell)
-
-
-def rel_to_abs_f(vector, cell):
-    """
-    Converts a position vector in internal coordinates to absolute coordinates
-    in Angstrom for a film structure (2D).
-    """
-    warnings.warn(
-        'rel_to_abs_f will be removed from StructureData_util in the future.'
-        'Use the same function from masci_tools.io.common_functions', DeprecationWarning)
-    from masci_tools.io.common_functions import rel_to_abs_f  #pylint: disable=redefined-outer-name
-    return rel_to_abs_f(vector, cell)
 
 
 @cf

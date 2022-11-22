@@ -666,25 +666,6 @@ class FleurinpData(orm.Data):
         """
         return get_parameterdata(self, inpgen_ready=inpgen_ready, write_ids=write_ids)
 
-    def get_tag(self, xpath):
-        """
-        Tries to evaluate an xpath expression for ``inp.xml`` file. If it fails it logs it.
-
-        :param xpath: an xpath expression
-        :returns: A node list retrived using given xpath
-        """
-        from masci_tools.util.xml.common_functions import eval_xpath
-
-        warnings.warn(
-            'The get_tag method is deprecated. Instead you can use the load_inpxml method to access '
-            'the xmltree and schema of the stored inp.xml. Then the required information can be accessed '
-            'via the XML functions in masci-tools or directly', DeprecationWarning)
-
-        xmltree, _ = self.load_inpxml()
-        root = xmltree.getroot()
-
-        return eval_xpath(root, xpath)
-
     def convert_inpxml(self, to_version: orm.Str) -> 'FleurinpData':
         """
         Convert the fleurinp data node to a different inp.xml version
