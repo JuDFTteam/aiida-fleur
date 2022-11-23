@@ -527,18 +527,33 @@ class FleurScfWorkChain(WorkChain):
                 'ctail': 'F'
             })
             fleurmode.set_complex_tag('greensFunction',
-                    changes={'realAxis': {'ne': 5400, 'ellow': -1, 'elup': 1.0},
-                                          'contourSemicircle': {'n':128, 'eb':-1.0, 'et':0.0, 'alpha':1.0}},
-                    create=True)
+                                      changes={
+                                          'realAxis': {
+                                              'ne': 5400,
+                                              'ellow': -1,
+                                              'elup': 1.0
+                                          },
+                                          'contourSemicircle': {
+                                              'n': 128,
+                                              'eb': -1.0,
+                                              'et': 0.0,
+                                              'alpha': 1.0
+                                          }
+                                      },
+                                      create=True)
             fleurmode.set_species(species_name='all',
-               attributedict={'torqueCalculation':
-                                                  {'kkintgrCutoff': "d",
-                                                   'greensfElements':
-                                                                    {'s': ['F', 'F', 'F','F'],
-                                                                     'p': ['F', 'T', 'T','F'],
-                                                                     'd': ['F', 'T', 'T','F'],
-                                                                     'f': ['F', 'F', 'F','F']}}},
-               create=True)
+                                  attributedict={
+                                      'torqueCalculation': {
+                                          'kkintgrCutoff': 'd',
+                                          'greensfElements': {
+                                              's': ['F', 'F', 'F', 'F'],
+                                              'p': ['F', 'T', 'T', 'F'],
+                                              'd': ['F', 'T', 'T', 'F'],
+                                              'f': ['F', 'F', 'F', 'F']
+                                          }
+                                      }
+                                  },
+                                  create=True)
             fleurmode.set_attrib_value(attributename='l_mperp', attribv='T', tag_name='mtNocoParams')
             fleurmode.set_attrib_value(attributename='l_mperp', attribv='T', tag_name='greensFunction')
 
@@ -592,7 +607,7 @@ class FleurScfWorkChain(WorkChain):
             if 'mixing_history*' not in remotecopy_list:
                 remotecopy_list.append('mixing_history*')
             settings['remove_from_remotecopy_list'] = remotecopy_list
-        
+
         if self.ctx.run_straight_mixing and self.ctx.loop_count == 1:
             status = self.reset_straight_mixing()
             if status:
@@ -715,7 +730,7 @@ class FleurScfWorkChain(WorkChain):
 
             if mode == 'torque':
 
-                with fleur_calcjob.outputs.retrieved.open(fleur_calcjob.process_class._OUTXML_FILE_NAME, 'r') as outxmlfile:
+                with last_base_wc.outputs.retrieved.open(FleurCalculation._OUTXML_FILE_NAME, 'r') as outxmlfile:
                     output_dict_torque = outxml_parser(outxmlfile,
                                                        iteration_to_parse='all',
                                                        optional_tasks=['torques', 'noco_angles'],
@@ -723,7 +738,7 @@ class FleurScfWorkChain(WorkChain):
 
                     x_torques = output_dict_torque.get('torque_x', [])
                     y_torques = output_dict_torque.get('torque_y', [])
-                    if not isinstance(x_torques[0], list): # only 1 iterations was done
+                    if not isinstance(x_torques[0], list):  # only 1 iterations was done
                         x_torques = [x_torques]
                         y_torques = [y_torques]
 
@@ -788,8 +803,8 @@ class FleurScfWorkChain(WorkChain):
             x_torques = self.ctx.x_torques
             y_torques = self.ctx.y_torques
             if len(x_torques) > 1 and len(y_torques) > 1:
-                max_x_torque_diff = max([abs(x_torques[-1][i] - x_torques[-2][i]) for i in range(len(x_torques[0]))])
-                max_y_torque_diff = max([abs(y_torques[-1][i] - y_torques[-2][i]) for i in range(len(y_torques[0]))])
+                max_x_torque_diff = max(abs(x_torques[-1][i] - x_torques[-2][i]) for i in range(len(x_torques[0])))
+                max_y_torque_diff = max(abs(y_torques[-1][i] - y_torques[-2][i]) for i in range(len(y_torques[0])))
                 self.ctx.torquediff = max(max_x_torque_diff, max_y_torque_diff)
             else:
                 self.ctx.torquediff = 'can not be determined'
@@ -825,12 +840,13 @@ class FleurScfWorkChain(WorkChain):
                     if not ldau_notconverged:
                         return False
         elif mode == 'torque':
-                if self.ctx.torquediff == 'can not be determined' and self.ctx.wf_dict.get('density_converged') >= self.ctx.last_charge_density:
-                    if not ldau_notconverged:
-                        return False
-                elif self.ctx.wf_dict.get('torque_converged') >= self.ctx.torquediff:
-                    if not ldau_notconverged:
-                        return False
+            if self.ctx.torquediff == 'can not be determined' and self.ctx.wf_dict.get(
+                    'density_converged') >= self.ctx.last_charge_density:
+                if not ldau_notconverged:
+                    return False
+            elif self.ctx.wf_dict.get('torque_converged') >= self.ctx.torquediff:
+                if not ldau_notconverged:
+                    return False
 
         if self.ctx.loop_count >= self.ctx.max_number_runs:
             self.ctx.reached_conv = False

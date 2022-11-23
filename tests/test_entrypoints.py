@@ -179,3 +179,10 @@ class TestFleurEntrypoints:
 
         workflow = WorkflowFactory('fleur.cfcoeff')
         assert workflow == FleurCFCoeffWorkChain
+
+    def test_fleur_relax_torque_wc_entry_point(self):
+        from aiida.plugins import WorkflowFactory
+        from aiida_fleur.workflows.relax_torque import FleurRelaxTorqueWorkChain
+
+        workflow = WorkflowFactory('fleur.relax_torque')
+        assert workflow == FleurRelaxTorqueWorkChain
