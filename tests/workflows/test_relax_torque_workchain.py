@@ -19,9 +19,6 @@ import aiida_fleur
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/FeRelaxTorque/inp.xml')
-TEST_KPTS_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/FeRelaxTorque/kpts.xml')
-TEST_SYM_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/FeRelaxTorque/sym.xml')
-
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(2000, method='thread')
@@ -49,7 +46,7 @@ def test_fleur_relax_torque_fleurinp(with_export_cache, fleur_local_code, create
 
     builder.scf.fleur = FleurCode
     builder.scf.options = orm.Dict(options).store()
-    builder.scf.fleurinp = create_fleurinp(TEST_INP_XML_PATH, additional_files=[TEST_KPTS_XML_PATH, TEST_SYM_XML_PATH])
+    builder.scf.fleurinp = create_fleurinp(TEST_INP_XML_PATH)
 
     with with_export_cache('fleur_relax_torque_fleurinp.tar.gz'):
         out, node = run_get_node(builder)
