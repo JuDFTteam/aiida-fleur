@@ -848,7 +848,7 @@ class FleurOrbControlWorkChain(WorkChain):
         else:
             settings = input_scf.settings.get_dict()
         settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
-        input_scf.settings = Dict(dict=settings)
+        input_scf.settings = Dict(settings)
 
         scf_wf_parameters = {}
         if 'wf_parameters' in input_scf:

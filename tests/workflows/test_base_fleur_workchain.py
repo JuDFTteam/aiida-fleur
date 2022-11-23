@@ -263,12 +263,7 @@ def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_
     path = os.path.abspath(os.path.join(aiida_path, '../tests/files/outxml/tmp'))
     remote_before = generate_remote_data(fleur.computer, path).store()
 
-    inputs = {
-        'code': fleur,
-        'fleurinp': fleurinp,
-        'parent_folder': remote_before,
-        'options': Dict(default_options)
-    }
+    inputs = {'code': fleur, 'fleurinp': fleurinp, 'parent_folder': remote_before, 'options': Dict(default_options)}
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT, inputs=inputs)
     process.setup()
@@ -301,12 +296,7 @@ def test_handle_time_limits_no_fleurinp(generate_workchain_base, generate_remote
     path = os.path.abspath(os.path.join(aiida_path, '../tests/files/outxml/tmp'))
     remote_before = generate_remote_data(fleur.computer, path).store()
 
-    inputs = {
-        'code': fleur,
-        'fleurinp': fleurinp,
-        'parent_folder': remote_before,
-        'options': Dict(default_options)
-    }
+    inputs = {'code': fleur, 'fleurinp': fleurinp, 'parent_folder': remote_before, 'options': Dict(default_options)}
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT, inputs=inputs)
     process.setup()
@@ -350,12 +340,7 @@ def test_handle_time_limits_previous_calculation_error(generate_workchain_base, 
     remote_before.base.links.add_incoming(prev_calc, link_type=LinkType.CREATE, link_label='remote_folder')
     remote_before.store()
 
-    inputs = {
-        'code': fleur,
-        'fleurinp': fleurinp,
-        'parent_folder': remote_before,
-        'options': Dict(default_options)
-    }
+    inputs = {'code': fleur, 'fleurinp': fleurinp, 'parent_folder': remote_before, 'options': Dict(default_options)}
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT, inputs=inputs)
     process.setup()
