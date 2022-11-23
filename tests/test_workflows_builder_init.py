@@ -165,3 +165,11 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.cfcoeff import FleurCFCoeffWorkChain
 
         builder = FleurCFCoeffWorkChain.get_builder()
+
+    def test_fleur_relax_torque_wc_init(self):
+        """
+        Test the interface of the cfcoeff workchain
+        """
+        from aiida_fleur.workflows.relax_torque import FleurRelaxTorqueWorkChain
+
+        builder = FleurRelaxTorqueWorkChain.get_builder()
