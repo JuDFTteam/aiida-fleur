@@ -885,13 +885,18 @@ class FleurOrbControlWorkChain(WorkChain):
 
             converged_mask = np.ones(energy.size, dtype=bool)
             converged_mask[non_converged_configs] = False
+            converged_mask[failed_configs] = False
+
+            non_converged_mask = np.ones(energy.size, dtype=bool)
+            non_converged_mask[converged_configs] = False
+            non_converged_mask[failed_configs] = False
 
             if len(energy[converged_mask]) != 0:
                 converged_minimum_energy = np.nanmin(energy[converged_mask])
-                if len(energy[~converged_mask]) != 0:
-                    if np.nanmin(energy[~converged_mask]) < converged_minimum_energy:
+                if len(energy[non_converged_mask]) != 0:
+                    if np.nanmin(energy[non_converged_mask]) < converged_minimum_energy:
                         lower_non_converged = np.array(non_converged_configs)[
-                            energy[~converged_mask] < converged_minimum_energy]
+                            energy[non_converged_mask] < converged_minimum_energy]
                         out['warnings'].extend(f"Configuration 'Relaxed_{index}' did not converge "
                                                'but is lower in energy than the lowest converged configuration'
                                                for index in lower_non_converged)
