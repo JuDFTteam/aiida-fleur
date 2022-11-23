@@ -12,10 +12,7 @@
 """
     In this module you find the workflow 'FleurRelaxTorqueWorkChain' which relaxed a spin struture.
 """
-from __future__ import absolute_import
-from __future__ import print_function
 import copy
-import six
 
 from aiida.engine import WorkChain, ToContext, while_, if_
 from aiida.engine import calcfunction as cf
@@ -27,7 +24,6 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
 from aiida_fleur.tools.common_fleur_wf import find_nested_process
-
 
 class FleurRelaxTorqueWorkChain(WorkChain):
     """
@@ -115,7 +111,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
         # extend wf parameters given by user using defaults
-        for key, val in six.iteritems(wf_default):
+        for key, val in wf_default.items():
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
@@ -250,9 +246,8 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         input_scf.wf_parameters = Dict(dict=scf_wf_dict)
 
         scf_wc = self.ctx.scf_res
-        last_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
 
-        input_scf.remote_data = last_calc.outputs.remote_folder
+        input_scf.remote_data = scf_wc.outputs.last_calc.remote_folder
         if self.ctx.new_fleurinp:
             input_scf.fleurinp = self.ctx.new_fleurinp
 
@@ -272,7 +267,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         if not scf_wc.is_finished_ok:
             exit_statuses = FleurScfWorkChain.get_exit_statuses(['ERROR_FLEUR_CALCULATION_FAILED'])
             if scf_wc.exit_status == exit_statuses[0]:
-                fleur_calc = load_node(scf_wc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid'])
+                fleur_calc = scf_wc.outputs.last_calc.remote_folder.creator
                 if fleur_calc.exit_status == FleurCalc.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to atom and vacuum overlap')
                     return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
@@ -462,7 +457,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         """
 
         try:
-            scf_out = self.ctx.scf_final_res.outputs.last_fleur_calc_output
+            scf_out = self.ctx.scf_final_res.outputs.last_calc.output_parameters
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT
 
@@ -505,7 +500,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
 
         con_nodes = {}
         try:
-            relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
+            relax_out = self.ctx.scf_res.outputs.last_calc.output_parameters
         except NotExistent:
             relax_out = None
         if relax_out is not None:
@@ -513,7 +508,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
 
         if all([self.ctx.wf_dict.get('run_final_scf', False), self.ctx.reached_relax]):
             try:
-                scf_out = self.ctx.scf_final_res.outputs.last_fleur_calc_output
+                scf_out = self.ctx.scf_final_res.outputs.last_calc.output_parameters
             except NotExistent:
                 scf_out = None
             if relax_out is not None:
@@ -525,7 +520,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         outdict = create_relax_result_node(output_relax_wc_para=outnode, **con_nodes)
 
         # return output nodes
-        for link_name, node in six.iteritems(outdict):
+        for link_name, node in outdict.items():
             self.out(link_name, node)
 
         if not self.ctx.reached_relax:
@@ -550,7 +545,7 @@ def create_relax_result_node(**kwargs):
     All other inputs will be connected in the DB to these ourput nodes
     """
     outdict = {}
-    for key, val in six.iteritems(kwargs):
+    for key, val in kwargs.items():
         if key == 'output_relax_wc_para':  # should always be present
             outnode = val.clone()  # dublicate node instead of circle (keep DAG)
             outnode.label = 'output_relax_wc_para'
