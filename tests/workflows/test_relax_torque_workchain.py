@@ -25,8 +25,8 @@ TEST_SYM_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/FeRelaxTorqu
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(2000, method='thread')
-def test_fleur_orbcontrol_structure(with_export_cache, fleur_local_code, inpgen_local_code, create_fleurinp,
-                                    clear_database, aiida_caplog, show_workchain_summary):
+def test_fleur_relax_torque_fleurinp(with_export_cache, fleur_local_code, create_fleurinp,
+                                     clear_database, aiida_caplog, show_workchain_summary):
     """
     Full example using the Relax Torque workchain with just a fleurinp as input.
     """
@@ -49,7 +49,7 @@ def test_fleur_orbcontrol_structure(with_export_cache, fleur_local_code, inpgen_
 
     builder.scf.fleur = FleurCode
     builder.scf.options = orm.Dict(options).store()
-    builder.scf.structure = create_fleurinp(TEST_INP_XML_PATH, additional_files=[TEST_KPTS_XML_PATH, TEST_SYM_XML_PATH])
+    builder.scf.fleurinp = create_fleurinp(TEST_INP_XML_PATH, additional_files=[TEST_KPTS_XML_PATH, TEST_SYM_XML_PATH])
 
     with with_export_cache('fleur_relax_torque_fleurinp.tar.gz'):
         out, node = run_get_node(builder)

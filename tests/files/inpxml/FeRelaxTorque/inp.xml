@@ -20,10 +20,20 @@
       <bzIntegration valenceElectrons="16.00000000" mode="hist" fermiSmearingEnergy=".00100000">
          <!-- k-points included here -->
          <kPointListSelection listName="default" />
-         <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="kpts.xml"> </xi:include>
+         <kPointLists>
+         <kPointList name="default" count="1">
+            <kPoint weight="    1.000000">    0.0000     0.0000     0.0000</kPoint>
+         </kPointList>
+         </kPointLists>
+
       </bzIntegration>
-      <!-- symmetry operations included here -->
-      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="sym.xml"> </xi:include>
+      <symmetryOperations>
+         <symOp>
+            <row-1>1 0 0 .0000000000</row-1>
+            <row-2>0 1 0 .0000000000</row-2>
+            <row-3>0 0 1 .0000000000</row-3>
+         </symOp>
+      </symmetryOperations>
       <bulkLattice scale="1.0000000000">
          <bravaisMatrix>
             <row-1>5.4159572954 .0000000000 .0000000000</row-1>
