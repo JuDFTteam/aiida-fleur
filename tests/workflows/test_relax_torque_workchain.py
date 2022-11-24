@@ -68,7 +68,7 @@ def test_fleur_relax_torque_fleurinp(with_export_cache, fleur_local_code, create
 
     assert node.exit_status == 350
     assert pytest.approx(n['alphas']) == [0.0, 0.0]
-    assert pytest.approx(n['betas']) == [0.4, 1.1708047268]
-    assert pytest.approx(n['energy']) == -2541.3701388552
-    assert pytest.approx(n['x_torques']) == [-619.93526449, 619.93526449]
-    assert pytest.approx(n['y_torques']) [0.0, 0.0]
+    assert pytest.approx(n['betas'], rel=1e-5) == [0.4, 1.1708047268]
+    assert pytest.approx(n['energy'], rel=1e-7) == -2541.3701388552
+    assert pytest.approx(n['x_torques'], rel=1e-2) == [-619.93526449, 619.93526449]
+    assert pytest.approx(n['y_torques']) == [0.0, 0.0]
