@@ -8,6 +8,8 @@ from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 
 from masci_tools.util.constants import HTR_TO_EV
+from aiida_fleur.data import inpxml_changes
+from aiida_fleur.calculation.fleur import FleurCalculation
 
 from .scf import FleurScfWorkChain
 
@@ -25,6 +27,12 @@ class FleurMagRotateWorkChain(WorkChain):
         'noco': True,
         'noco_species_name': 'all',
         'first_calculation_reference': False,
+        'dftu_rotation': False,
+        'dftu_density_matrix_relaxation': None  #Which density matrices are allowed to relax
+        # None -> All configurations are frozen
+        # First -> The first one is relaxed and then used
+        #          as a reference
+        # All  -> All density matrices can relax
     }
 
     @classmethod
@@ -33,6 +41,7 @@ class FleurMagRotateWorkChain(WorkChain):
         spec.expose_inputs(FleurScfWorkChain, namespace='scf')
         spec.input('wf_parameters_first_scf', valid_type=orm.Dict, required=False)
         spec.input('wf_parameters', valid_type=orm.Dict)
+        spec.input('dftu_denmat_source', valid_type=(orm.SinglefileData, orm.FolderData), required=False)
         spec.input_namespace('remotes', valid_type=orm.RemoteData, dynamic=True, required=False)
 
         spec.outline(
@@ -122,6 +131,17 @@ class FleurMagRotateWorkChain(WorkChain):
 
         self.ctx.run_sequentially = self.ctx.wf_dict['reuse_charge_density']
 
+        if self.ctx.wf_dict['dftu_density_matrix_relaxation'] not in (None, 'all', 'first'):
+            error = f"ERROR: invalid option for DFT+U density matrix relaxation: {self.ctx.wf_dict['dftu_density_matrix_relaxation']}"
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
+        if self.ctx.wf_dict['dftu_density_matrix_relaxation'] == 'first' \
+           and not self.ctx.wf_dict['first_calculation_reference']:
+            error = 'ERROR: For only relaxing the first density matrix the first_calculation_reference option has t also be true'
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
     def run_first(self):
         return self.ctx.wf_dict['first_calculation_reference']
 
@@ -148,7 +168,8 @@ class FleurMagRotateWorkChain(WorkChain):
             if 'fleurinp' in inputs_scf:
                 inputs_scf.pop('fleurinp')
 
-        if self.ctx.wf_dict['first_calculation_reference'] and self.ctx.current_configuration > 0:
+        reuse_first = self.ctx.wf_dict['first_calculation_reference'] and self.ctx.current_configuration > 0
+        if reuse_first:
             first_scf = self.ctx['scf_0']
 
             if not first_scf.is_finished_ok:
@@ -173,45 +194,61 @@ class FleurMagRotateWorkChain(WorkChain):
 
         theta, phi = self.ctx.wf_dict['angles'][self.ctx.current_configuration]
 
-        if self.ctx.wf_dict['noco']:
-            fchanges = [('set_inpchanges', {
-                'changes': {
-                    'l_noco': True,
-                    'ctail': False
-                }
-            }),
-                        ('set_atomgroup', {
-                            'species': self.ctx.wf_dict['noco_species_name'],
-                            'changes': {
-                                'nocoparams': {
-                                    'alpha': phi,
-                                    'beta': theta
-                                }
-                            }
-                        })]
-        else:
-            fchanges = [('set_inpchanges', {
-                'changes': {
-                    'l_soc': True
-                }
-            }),
-                        ('set_inpchanges', {
-                            'changes': {
-                                'phi': phi,
-                                'theta': theta
-                            },
-                            'path_spec': {
-                                'phi': {
-                                    'contains': 'soc'
-                                },
-                                'theta': {
-                                    'contains': 'soc'
-                                }
-                            }
-                        })]
+        #The tasks are put in front of any evtl. already user-defined tasks
+        #THis is so that users can already use the defined directions for other
+        #customizations
+        with inpxml_changes(wf_parameters, append=False) as fm:
+            if self.ctx.wf_dict['noco']:
+                fm.set_inpchanges({'l_noco': True, 'ctail': False})
+                fm.set_atomgroup(self.ctx.wf_dict['noco_species_name'], {'nocoparams': {'alpha': phi, 'beta': theta}})
+            else:
+                fm.set_inpchanges({
+                    'l_soc': True,
+                    'phi': phi,
+                    'theta': theta
+                },
+                                  path_spec={
+                                      'phi': {
+                                          'contains': 'soc'
+                                      },
+                                      'theta': {
+                                          'contains': 'soc'
+                                      }
+                                  })
 
-        fchanges.extend(wf_parameters.setdefault('inpxml_changes', []))
-        wf_parameters['inpxml_changes'] = fchanges
+            if self.ctx.wf_dict['dftu_rotation']:
+                if 'dftu_denmat_source' in self.inputs or reuse_first:
+                    if not reuse_first:
+                        source = self.inputs.dftu_denmat_source
+                    else:
+                        source = inputs_scf.remote_data.creator.outputs.retrieved
+
+                    if isinstance(source, orm.SinglefileData):
+                        fm.set_file(source.filename, dst_filename=FleurCalculation._NMMPMAT_FILE_NAME, node=source.uuid)
+                    else:
+                        fm.set_file(FleurCalculation._NMMPMAT_HDF5_FILE_NAME,
+                                    dst_filename=FleurCalculation._NMMPMAT_FILE_NAME,
+                                    node=source.uuid)
+
+                if self.ctx.wf_dict['dftu_density_matrix_relaxation'] is None:
+                    fm.set_inpchanges({'l_linmix': True, 'mixparam': 0})
+                    wf_parameters['nmmp_converged'] = 999  #To prevent the SCF workchain from running with fixed DFT+U
+                elif self.ctx.wf_dict['dftu_density_matrix_relaxation'] == 'first' \
+                     and reuse_first:
+                    fm.set_inpchanges({'l_linmix': True, 'mixparam': 0})
+                    wf_parameters['nmmp_converged'] = 999  #To prevent the SCF workchain from running with fixed DFT+U
+                else:
+                    fm.set_inpchanges({'l_linmix': False})
+
+                #TODO: angles before could be non-zero
+                fm.align_nmmpmat_to_sqa()
+
+                #Overwrite any existing density matrix in the remote folder
+                settings = {}
+                if 'settings' in inputs_scf:
+                    settings = inputs_scf.settings.get_dict()
+                settings['fleurinp_nmmpmat_priority'] = True
+                inputs_scf.settings = orm.Dict(dict=settings)
 
         inputs_scf.wf_parameters = orm.Dict(dict=wf_parameters)
         label = f'scf_{self.ctx.current_configuration}'
