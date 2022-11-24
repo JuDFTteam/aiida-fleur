@@ -19,7 +19,7 @@ class FleurMagRotateWorkChain(WorkChain):
     Workchain for calculating different magnetic directions
     both for second variation SOC and noco
     """
-    _workflowversion = '0.3.0'
+    _workflowversion = '0.4.0'
 
     _wf_default = {
         'angles': [],  #[(0.0,0.0), (np.pi/4, 0.0), ...]
