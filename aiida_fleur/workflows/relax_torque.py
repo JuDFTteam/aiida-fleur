@@ -348,7 +348,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             new_angles['betas'] = bfgs_optimizer.new_positions[len(alphas):]
 
         first_fleurcalc = find_nested_process(scf_wc, FleurCalc)
-        old_fleurinp = min(first_fleurcalc, key=lambda x: x.pk).inputs.fleurinpdata
+        old_fleurinp = min(first_fleurcalc, key=lambda x: x.pk).inputs.fleurinp
 
         fm = FleurinpModifier(old_fleurinp)
         for i, angle in enumerate(zip(new_angles['alphas'], new_angles['betas'])):
