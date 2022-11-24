@@ -25,7 +25,7 @@ except ImportError:
 @pytest.mark.regression_test
 @pytest.mark.skipif(not aiida_common_workflows, reason='aiida-common-workflows is not installed')
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_eos_structure_Si(with_export_cache, fleur_local_code, inpgen_local_code, generate_structure, show_workchain_summary):
+def test_fleur_acwf_eos_structure_Si(with_export_cache, fleur_local_code, inpgen_local_code, generate_structure, show_workchain_summary):
     """
     full example using scf workflow with just a fleurinp data as input.
     Several fleur runs needed till convergence

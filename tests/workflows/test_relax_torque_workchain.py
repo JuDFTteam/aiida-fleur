@@ -47,6 +47,9 @@ def test_fleur_relax_torque_fleurinp(with_export_cache, fleur_local_code, create
     builder.scf.fleur = FleurCode
     builder.scf.options = orm.Dict(options).store()
     builder.scf.fleurinp = create_fleurinp(TEST_INP_XML_PATH)
+    builder.wf_parameters = orm.Dict({
+        'opt_scheme': 'bfgs',
+    })
 
     with with_export_cache('fleur_relax_torque_fleurinp.tar.gz'):
         out, node = run_get_node(builder)
