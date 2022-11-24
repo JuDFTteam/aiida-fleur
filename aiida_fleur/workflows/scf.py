@@ -730,7 +730,7 @@ class FleurScfWorkChain(WorkChain):
 
             if mode == 'torque':
 
-                with last_base_wc.outputs.retrieved.open(FleurCalculation._OUTXML_FILE_NAME, 'r') as outxmlfile:
+                with last_base_wc.outputs.retrieved.open(FleurCalculation._OUTXML_FILE_NAME, 'rb') as outxmlfile:
                     output_dict_torque = outxml_parser(outxmlfile,
                                                        iteration_to_parse='all',
                                                        optional_tasks=['torques', 'noco_angles'],
