@@ -13,7 +13,6 @@ import pytest
 from aiida_fleur.workflows.relax_torque import FleurRelaxTorqueWorkChain
 from aiida import orm
 from aiida.engine import run_get_node
-from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
 import os
 import aiida_fleur
 
@@ -60,11 +59,16 @@ def test_fleur_relax_torque_fleurinp(with_export_cache, fleur_local_code, create
 
     #assert node.is_finished_ok
     # check output
-    assert 'output_relax_wc_para' in out
-    n = out['output_relax_wc_para']
+    assert 'output_relax_torque_wc_para' in out
+    n = out['output_relax_torque_wc_para']
     n = n.get_dict()
 
     from pprint import pprint
     pprint(n)
 
-    assert False
+    assert node.exit_status == 350
+    assert pytest.approx(n['alphas']) == [0.0, 0.0]
+    assert pytest.approx(n['betas']) == [0.4, 1.1708047268]
+    assert pytest.approx(n['energy']) == -2541.3701388552
+    assert pytest.approx(n['x_torques']) == [-619.93526449, 619.93526449]
+    assert pytest.approx(n['y_torques']) [0.0, 0.0]

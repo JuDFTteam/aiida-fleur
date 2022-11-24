@@ -69,7 +69,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             cls.return_results,
         )
 
-        spec.output('output_relax_wc_para', valid_type=Dict)
+        spec.output('output_relax_torque_wc_para', valid_type=Dict)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -517,7 +517,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         # TODO: for a trajectory output node all corresponding nodes have to go into
         # con_nodes
 
-        outdict = create_relax_result_node(output_relax_wc_para=outnode, **con_nodes)
+        outdict = create_relax_result_node(output_relax_torque_wc_para=outnode, **con_nodes)
 
         # return output nodes
         for link_name, node in outdict.items():
@@ -546,10 +546,10 @@ def create_relax_result_node(**kwargs):
     """
     outdict = {}
     for key, val in kwargs.items():
-        if key == 'output_relax_wc_para':  # should always be present
+        if key == 'output_relax_torque_wc_para':  # should always be present
             outnode = val.clone()  # dublicate node instead of circle (keep DAG)
-            outnode.label = 'output_relax_wc_para'
-            outnode.description = ('Contains results and information of an FleurRelaxWorkChain run.')
-            outdict['output_relax_wc_para'] = outnode
+            outnode.label = 'output_relax_torque_wc_para'
+            outnode.description = ('Contains results and information of an FleurRelaxTorqueWorkChain run.')
+            outdict['output_relax_torque_wc_para'] = outnode
 
     return outdict
