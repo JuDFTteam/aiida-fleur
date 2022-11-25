@@ -243,7 +243,7 @@ class FleurinpModifier(FleurXMLModifier):
                          }))
 
     #Modification functions that accept XML elements, which have to be serialized beforehand
-    def xml_create_tag(self, *args, **kwargs):
+    def xml_create_tag(self, *args: Any, **kwargs: Any) -> None:
         """
         Appends a :py:func:`~masci_tools.util.xml.xml_setters_basic.xml_create_tag()` to
         the list of tasks that will be done on the xmltree.
@@ -259,7 +259,7 @@ class FleurinpModifier(FleurXMLModifier):
         args, kwargs = serialize_xml_objects(args, kwargs)
         super().xml_create_tag(*args, **kwargs)
 
-    def create_tag(self, *args, **kwargs):
+    def create_tag(self, *args: Any, **kwargs: Any) -> None:
         """
         Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.create_tag()` to
         the list of tasks that will be done on the xmltree.
@@ -279,7 +279,7 @@ class FleurinpModifier(FleurXMLModifier):
         args, kwargs = serialize_xml_objects(args, kwargs)
         super().create_tag(*args, **kwargs)
 
-    def xml_replace_tag(self, *args, **kwargs):
+    def xml_replace_tag(self, *args: Any, **kwargs: Any) -> None:
         """
         Appends a :py:func:`~masci_tools.util.xml.xml_setters_basic.xml_replace_tag()` to
         the list of tasks that will be done on the xmltree.
@@ -293,7 +293,7 @@ class FleurinpModifier(FleurXMLModifier):
         args, kwargs = serialize_xml_objects(args, kwargs)
         super().xml_replace_tag(*args, **kwargs)
 
-    def replace_tag(self, *args, **kwargs):
+    def replace_tag(self, *args: Any, **kwargs: Any) -> None:
         """
         Deprecation layer for replace_tag if there are slashes in the first positional argument or xpath is is in kwargs.
         We know that it is the old usage.
