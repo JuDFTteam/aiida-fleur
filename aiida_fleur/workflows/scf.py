@@ -59,10 +59,11 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.6.2'
+    _workflowversion = '0.6.3'
     _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
+        'stop_if_last_distance_exceeds': None,
         'energy_converged': 0.002,
         'force_converged': 0.002,
         'torque_converged': 0.0002,
@@ -517,13 +518,14 @@ class FleurScfWorkChain(WorkChain):
             else:
                 fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'gw': 1})
         elif converge_mode == 'torque':
+            #TODO: Allow to select orbitals
             dist = wf_dict.get('density_converged')
             fleurmode.set_inpchanges({
                 'itmax': self.ctx.default_itmax,
                 'minDistance': dist,
-                'l_noco': 'T',
+                'l_noco': True,
                 # 'numbands': 'all',
-                'ctail': 'F'
+                'ctail': False
             })
             fleurmode.set_complex_tag('greensFunction',
                                       changes={
@@ -540,21 +542,20 @@ class FleurScfWorkChain(WorkChain):
                                           }
                                       },
                                       create=True)
-            fleurmode.set_species(species_name='all',
-                                  attributedict={
-                                      'torqueCalculation': {
-                                          'kkintgrCutoff': 'd',
-                                          'greensfElements': {
-                                              's': ['F', 'F', 'F', 'F'],
-                                              'p': ['F', 'T', 'T', 'F'],
-                                              'd': ['F', 'T', 'T', 'F'],
-                                              'f': ['F', 'F', 'F', 'F']
-                                          }
-                                      }
-                                  },
+            fleurmode.set_species('all', {
+                'torqueCalculation': {
+                    'kkintgrCutoff': 'd',
+                    'greensfElements': {
+                        's': ['F', 'F', 'F', 'F'],
+                        'p': ['F', 'T', 'T', 'F'],
+                        'd': ['F', 'T', 'T', 'F'],
+                        'f': ['F', 'F', 'F', 'F']
+                    }
+                }
+            },
                                   create=True)
-            fleurmode.set_attrib_value(attributename='l_mperp', attribv='T', tag_name='mtNocoParams')
-            fleurmode.set_attrib_value(attributename='l_mperp', attribv='T', tag_name='greensFunction')
+            fleurmode.set_attrib_value('l_mperp', True, tag_name='mtNocoParams')
+            fleurmode.set_attrib_value('l_mperp', True, tag_name='greensFunction')
 
         # apply further user dependend changes
         if fchanges:
@@ -729,7 +730,7 @@ class FleurScfWorkChain(WorkChain):
 
             if mode == 'torque':
 
-                with last_base_wc.outputs.retrieved.open(FleurCalculation._OUTXML_FILE_NAME, 'r') as outxmlfile:
+                with last_base_wc.outputs.retrieved.open(FleurCalculation._OUTXML_FILE_NAME, 'rb') as outxmlfile:
                     output_dict_torque = outxml_parser(outxmlfile,
                                                        iteration_to_parse='all',
                                                        optional_tasks=['torques', 'noco_angles'],
@@ -850,6 +851,26 @@ class FleurScfWorkChain(WorkChain):
         if self.ctx.loop_count >= self.ctx.max_number_runs:
             self.ctx.reached_conv = False
             return False
+
+        if self.ctx.wf_dict['stop_if_last_distance_exceeds'] is not None:
+            if mode == 'density' and \
+               self.ctx.last_charge_density >= self.ctx.wf_dict['stop_if_last_distance_exceeds']:
+
+                self.report(
+                    f'Stopping because last charge density distance {self.ctx.last_charge_density} me/bohr^3'
+                    f' of the last calculation exceeded the given limit of {self.ctx.wf_dict["stop_if_last_distance_exceeds"]} me/bohr^3'
+                )
+                self.ctx.reached_conv = False
+                return False
+            if mode in ('energy', 'spex') and \
+               self.ctx.energydiff >= self.ctx.wf_dict['stop_if_last_distance_exceeds']:
+
+                self.report(
+                    f'Stopping because last energy difference {self.ctx.energydiff} htr'
+                    f' of the last calculation exceeded the given limit of {self.ctx.wf_dict["stop_if_last_distance_exceeds"]} htr'
+                )
+                self.ctx.reached_conv = False
+                return False
 
         return True
 

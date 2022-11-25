@@ -12,7 +12,7 @@
 Contains smoke tests for all workchains of aiida-fleur,
 checks if builderis from aiida-core gets the correct class.
 '''
-#pylint: disable=no-self-use
+
 import pytest
 
 

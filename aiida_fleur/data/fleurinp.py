@@ -542,11 +542,11 @@ class FleurinpData(orm.Data):
         :returns: StructureData node, or None
         """
         from aiida.orm import StructureData
-        from masci_tools.util.xml.xml_getters import get_structuredata
+        from masci_tools.util.xml.xml_getters import get_structuredata as get_structuredata_xml
 
         xmltree, schema_dict = self.load_inpxml()
 
-        atoms, cell, pbc = get_structuredata(xmltree, schema_dict, normalize_kind_name=normalize_kind_name)
+        atoms, cell, pbc = get_structuredata_xml(xmltree, schema_dict, normalize_kind_name=normalize_kind_name)
 
         struc = StructureData(cell=cell, pbc=pbc)
 
@@ -584,7 +584,7 @@ class FleurinpData(orm.Data):
         :returns: :class:`~aiida.orm.KpointsData` node
         """
         from aiida.orm import KpointsData
-        from masci_tools.util.xml.xml_getters import get_kpointsdata
+        from masci_tools.util.xml.xml_getters import get_kpointsdata as get_kpointsdata_xml
 
         # HINT, TODO:? in this routine, the 'cell' you might get in an other way
         # exp: StructureData.cell, but for this you have to make a structureData Node,
@@ -595,13 +595,13 @@ class FleurinpData(orm.Data):
         xmltree, schema_dict = self.load_inpxml()
 
         if name is None and index is None:
-            kpoints, weights, cell, pbc = get_kpointsdata(xmltree, schema_dict, only_used=only_used)
+            kpoints, weights, cell, pbc = get_kpointsdata_xml(xmltree, schema_dict, only_used=only_used)
         else:
-            kpoints, weights, cell, pbc = get_kpointsdata(xmltree,
-                                                          schema_dict,
-                                                          name=name,
-                                                          index=index,
-                                                          only_used=only_used)
+            kpoints, weights, cell, pbc = get_kpointsdata_xml(xmltree,
+                                                              schema_dict,
+                                                              name=name,
+                                                              index=index,
+                                                              only_used=only_used)
 
         if isinstance(kpoints, dict):
             kpoints_data = {}
@@ -648,11 +648,11 @@ class FleurinpData(orm.Data):
         :returns: :class:`~aiida.orm.Dict` node
         """
         from aiida.orm import Dict
-        from masci_tools.util.xml.xml_getters import get_parameterdata
+        from masci_tools.util.xml.xml_getters import get_parameterdata as get_parameterdata_xml
 
         xmltree, schema_dict = self.load_inpxml()
 
-        parameter_data = get_parameterdata(xmltree, schema_dict, inpgen_ready=inpgen_ready, write_ids=write_ids)
+        parameter_data = get_parameterdata_xml(xmltree, schema_dict, inpgen_ready=inpgen_ready, write_ids=write_ids)
 
         return Dict(parameter_data)
 

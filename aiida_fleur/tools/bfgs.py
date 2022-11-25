@@ -155,14 +155,15 @@ def get_forces(workchain):
 
     def rotation_matrix(alpha, beta):
         'This matrix converts local spin directions to the global frame'
-        return np.array([[cos(alpha) * cos(beta), -sin(alpha), cos(alpha) * sin(beta)],
-                        [sin(alpha) * cos(beta), cos(alpha), sin(alpha) * sin(beta)],
-                        [-sin(beta),             0,           cos(beta)]])
+        return np.array([[cos(alpha) * cos(beta), -sin(alpha),
+                          cos(alpha) * sin(beta)], [sin(alpha) * cos(beta),
+                                                    cos(alpha),
+                                                    sin(alpha) * sin(beta)], [-sin(beta), 0, cos(beta)]])
 
     for alpha, beta, x_torque, y_torque in zip(alphas, betas, x_torques, y_torques):
         torque = np.dot(rotation_matrix(alpha, beta), np.array([x_torque, y_torque, 0]))
 
-        f_theta.append(torque[0] * cos(alpha) * cos(beta) + torque[1] * sin(alpha) * cos(beta) - torque[2]*sin(beta))
+        f_theta.append(torque[0] * cos(alpha) * cos(beta) + torque[1] * sin(alpha) * cos(beta) - torque[2] * sin(beta))
         f_phi.append(-torque[0] * sin(alpha) * sin(beta) + torque[1] * cos(alpha) * sin(beta))
 
     f = f_phi + f_theta

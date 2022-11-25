@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Copyright (c), Forschungszentrum Jülich GmbH, IAS-1/PGI-1, Germany.         #
 #                All rights reserved.                                         #
@@ -69,7 +68,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             cls.return_results,
         )
 
-        spec.output('output_relax_wc_para', valid_type=Dict)
+        spec.output('output_relax_torque_wc_para', valid_type=Dict)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -81,7 +80,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         """
         Retrieve and initialize paramters of the WorkChain, validate inputs
         """
-        self.report('INFO: Started structure relaxation workflow version {}\n'.format(self._workflowversion))
+        self.report(f'INFO: Started structure relaxation workflow version {self._workflowversion}\n')
 
         self.ctx.info = []  # Collects Hints
         self.ctx.warnings = []  # Collects Warnings
@@ -106,7 +105,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             if key not in wf_default.keys():
                 extra_keys.append(key)
         if extra_keys:
-            error = 'ERROR: input wf_parameters for Relax contains extra keys: {}'.format(extra_keys)
+            error = f'ERROR: input wf_parameters for Relax contains extra keys: {extra_keys}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
@@ -295,12 +294,12 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             # return self.exit_codes.ERROR_RELAX_FAILED
             return False
         else:
-            self.ctx.max_torques.append(max([abs(x) for x in x_torques + y_torques]))
+            self.ctx.max_torques.append(max(abs(x) for x in x_torques + y_torques))
 
         largest_now = self.ctx.max_torques[-1]
 
         if largest_now < self.ctx.wf_dict['torque_criterion']:
-            self.report('INFO: Structure is converged to the largest torque ' '{}'.format(self.ctx.max_torques[-1]))
+            self.report(f'INFO: Structure is converged to the largest torque {self.ctx.max_torques[-1]}')
             self.ctx.reached_relax = True
             return False
 
@@ -308,12 +307,12 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         if self.ctx.loop_count == self.ctx.wf_dict['relax_iter']:
             self.report('INFO: Reached optimization iteration number {}. Largest torque is {}, '
                         'torque criterion is {}'.format(self.ctx.loop_count + 1, largest_now,
-                                                       self.ctx.wf_dict['torque_criterion']))
+                                                        self.ctx.wf_dict['torque_criterion']))
             return False
 
         self.report('INFO: submit optimization iteration number {}. Largest torque is {}, '
                     'torque criterion is {}'.format(self.ctx.loop_count + 1, largest_now,
-                                                   self.ctx.wf_dict['torque_criterion']))
+                                                    self.ctx.wf_dict['torque_criterion']))
 
         return True
 
@@ -323,7 +322,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         :meth:`~aiida_fleur.workflows.relax.FleurRelaxWorkChain.analyse_relax()`.
         New FleurinpData is stored in the context.
         """
-        from aiida_fleur.data.fleurinpmodifier import  FleurinpModifier
+        from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 
         relax_alpha = self.ctx.wf_dict['relax_alpha']
         maxstep = self.ctx.wf_dict['maxstep']
@@ -348,11 +347,11 @@ class FleurRelaxTorqueWorkChain(WorkChain):
             new_angles['betas'] = bfgs_optimizer.new_positions[len(alphas):]
 
         first_fleurcalc = find_nested_process(scf_wc, FleurCalc)
-        old_fleurinp = min(first_fleurcalc, key=lambda x: x.pk).inputs.fleurinpdata
+        old_fleurinp = min(first_fleurcalc, key=lambda x: x.pk).inputs.fleurinp
 
         fm = FleurinpModifier(old_fleurinp)
         for i, angle in enumerate(zip(new_angles['alphas'], new_angles['betas'])):
-            fm.set_atomgroup(attributedict={'nocoParams': {'beta': angle[1], 'alpha': angle[0]}}, position=i+1)
+            fm.set_atomgroup({'nocoParams': {'beta': angle[1], 'alpha': angle[0]}}, position=i + 1)
 
         new_fleurinpdata = fm.freeze()
 
@@ -392,7 +391,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         formula = structure.get_formula()
         input_final_scf.structure = structure
         input_final_scf.fleur = input_scf.fleur
-        input_final_scf.metadata.label = 'SCF_final_{}'.format(formula)
+        input_final_scf.metadata.label = f'SCF_final_{formula}'
         input_final_scf.metadata.description = ('Final SCF workchain running on optimized structure {}, '
                                                 'part of relax workchain'.format(formula))
 
@@ -516,8 +515,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
 
         # TODO: for a trajectory output node all corresponding nodes have to go into
         # con_nodes
-
-        outdict = create_relax_result_node(output_relax_wc_para=outnode, **con_nodes)
+        outdict = create_relax_result_node(output_relax_torque_wc_para=outnode, **con_nodes)
 
         # return output nodes
         for link_name, node in outdict.items():
@@ -546,10 +544,10 @@ def create_relax_result_node(**kwargs):
     """
     outdict = {}
     for key, val in kwargs.items():
-        if key == 'output_relax_wc_para':  # should always be present
+        if key == 'output_relax_torque_wc_para':  # should always be present
             outnode = val.clone()  # dublicate node instead of circle (keep DAG)
-            outnode.label = 'output_relax_wc_para'
-            outnode.description = ('Contains results and information of an FleurRelaxWorkChain run.')
-            outdict['output_relax_wc_para'] = outnode
+            outnode.label = 'output_relax_torque_wc_para'
+            outnode.description = ('Contains results and information of an FleurRelaxTorqueWorkChain run.')
+            outdict['output_relax_torque_wc_para'] = outnode
 
     return outdict

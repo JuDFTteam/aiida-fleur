@@ -146,6 +146,7 @@ jobs:
       run: |
         pip install --upgrade wheel setuptools
         pip install git+https://github.com/JuDFTteam/aiida-testing.git@export_cache_config
+        pip install --no-deps git+https://github.com/aiidateam/aiida-common-workflows.git@master
         pip install .[testing,graphs]
         pip install ${{ matrix.aiida.version }} ${{ matrix.masci-tools.version }}
         reentry scan || true
