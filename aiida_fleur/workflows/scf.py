@@ -518,13 +518,14 @@ class FleurScfWorkChain(WorkChain):
             else:
                 fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'gw': 1})
         elif converge_mode == 'torque':
+            #TODO: Allow to select orbitals
             dist = wf_dict.get('density_converged')
             fleurmode.set_inpchanges({
                 'itmax': self.ctx.default_itmax,
                 'minDistance': dist,
-                'l_noco': 'T',
+                'l_noco': True,
                 # 'numbands': 'all',
-                'ctail': 'F'
+                'ctail': False
             })
             fleurmode.set_complex_tag('greensFunction',
                                       changes={
@@ -541,8 +542,8 @@ class FleurScfWorkChain(WorkChain):
                                           }
                                       },
                                       create=True)
-            fleurmode.set_species(species_name='all',
-                                  attributedict={
+            fleurmode.set_species('all',
+                                  {
                                       'torqueCalculation': {
                                           'kkintgrCutoff': 'd',
                                           'greensfElements': {
@@ -554,8 +555,8 @@ class FleurScfWorkChain(WorkChain):
                                       }
                                   },
                                   create=True)
-            fleurmode.set_attrib_value(attributename='l_mperp', attribv='T', tag_name='mtNocoParams')
-            fleurmode.set_attrib_value(attributename='l_mperp', attribv='T', tag_name='greensFunction')
+            fleurmode.set_attrib_value('l_mperp', True, tag_name='mtNocoParams')
+            fleurmode.set_attrib_value('l_mperp', True, tag_name='greensFunction')
 
         # apply further user dependend changes
         if fchanges:

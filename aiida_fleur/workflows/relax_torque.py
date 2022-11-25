@@ -352,7 +352,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
 
         fm = FleurinpModifier(old_fleurinp)
         for i, angle in enumerate(zip(new_angles['alphas'], new_angles['betas'])):
-            fm.set_atomgroup(attributedict={'nocoParams': {'beta': angle[1], 'alpha': angle[0]}}, position=i+1)
+            fm.set_atomgroup({'nocoParams': {'beta': angle[1], 'alpha': angle[0]}}, position=i+1)
 
         new_fleurinpdata = fm.freeze()
 
