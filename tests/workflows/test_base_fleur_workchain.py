@@ -9,7 +9,7 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 '''Contains tests for the FleurBaseWorkChain'''
-#pylint: disable=no-self-use
+
 import pytest
 import os
 from aiida.orm import Dict

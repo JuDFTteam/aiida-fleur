@@ -9,7 +9,7 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 ''' Contains smoke tests for all aiida-fleur entry points '''
-#pylint: disable=no-self-use
+
 import pytest
 
 

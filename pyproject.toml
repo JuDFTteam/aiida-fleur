@@ -184,6 +184,7 @@ disable = [
     "protected-access",
     "unexpected-keyword-arg",
     "missing-module-docstring",
+    "unsubscriptable-object" #QueryBuilder outputs always raise this??
 ]
 
 [tool.pytest.ini_options]

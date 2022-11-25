@@ -70,4 +70,6 @@ def test_fleur_acwf_eos_structure_Si(with_export_cache, fleur_local_code, inpgen
 
     assert node.is_finished_ok
 
-    assert False
+    total_energies = {l: pytest.approx(e.value) for l, e in node.outputs.total_energies.items()}
+
+    assert total_energies == {'0': -15784.47967609, '1': -15784.481581973, '2': -15784.47497104}

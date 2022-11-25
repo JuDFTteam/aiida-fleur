@@ -11,7 +11,7 @@
 '''
 Module to test all CLI types of the package.
 '''
-#pylint: disable=no-self-use
+
 import pytest
 import os
 import click
