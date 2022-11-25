@@ -542,18 +542,17 @@ class FleurScfWorkChain(WorkChain):
                                           }
                                       },
                                       create=True)
-            fleurmode.set_species('all',
-                                  {
-                                      'torqueCalculation': {
-                                          'kkintgrCutoff': 'd',
-                                          'greensfElements': {
-                                              's': ['F', 'F', 'F', 'F'],
-                                              'p': ['F', 'T', 'T', 'F'],
-                                              'd': ['F', 'T', 'T', 'F'],
-                                              'f': ['F', 'F', 'F', 'F']
-                                          }
-                                      }
-                                  },
+            fleurmode.set_species('all', {
+                'torqueCalculation': {
+                    'kkintgrCutoff': 'd',
+                    'greensfElements': {
+                        's': ['F', 'F', 'F', 'F'],
+                        'p': ['F', 'T', 'T', 'F'],
+                        'd': ['F', 'T', 'T', 'F'],
+                        'f': ['F', 'F', 'F', 'F']
+                    }
+                }
+            },
                                   create=True)
             fleurmode.set_attrib_value('l_mperp', True, tag_name='mtNocoParams')
             fleurmode.set_attrib_value('l_mperp', True, tag_name='greensFunction')

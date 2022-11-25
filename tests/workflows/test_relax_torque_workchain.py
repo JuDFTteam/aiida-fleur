@@ -19,10 +19,11 @@ import aiida_fleur
 aiida_path = os.path.dirname(aiida_fleur.__file__)
 TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/FeRelaxTorque/inp.xml')
 
+
 @pytest.mark.regression_test
 @pytest.mark.timeout(2000, method='thread')
-def test_fleur_relax_torque_fleurinp(with_export_cache, fleur_local_code, create_fleurinp,
-                                     clear_database, aiida_caplog, show_workchain_summary):
+def test_fleur_relax_torque_fleurinp(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
+                                     show_workchain_summary):
     """
     Full example using the Relax Torque workchain with just a fleurinp as input.
     """

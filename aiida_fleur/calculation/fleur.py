@@ -20,7 +20,6 @@ from aiida.orm import RemoteData
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import InputValidationError
-from aiida.common.exceptions import UniquenessError
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 

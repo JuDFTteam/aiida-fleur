@@ -1,6 +1,7 @@
 import numpy as np
 from numpy import cos, sin
 
+
 def analyse_relax_straight(alphas, betas, x_torques, y_torques, relax_alpha, maxstep):
     """
     This function generates a new fleurinp analysing parsed relax.xml from the previous
@@ -12,9 +13,10 @@ def analyse_relax_straight(alphas, betas, x_torques, y_torques, relax_alpha, max
 
     def rotation_matrix(alpha, beta):
         'This matrix converts local spin directions to the global frame'
-        return np.array([[cos(alpha) * cos(beta), -sin(alpha), cos(alpha) * sin(beta)],
-                        [sin(alpha) * cos(beta), cos(alpha), sin(alpha) * sin(beta)],
-                        [-sin(beta),             0,           cos(beta)]])
+        return np.array([[cos(alpha) * cos(beta), -sin(alpha),
+                          cos(alpha) * sin(beta)], [sin(alpha) * cos(beta),
+                                                    cos(alpha),
+                                                    sin(alpha) * sin(beta)], [-sin(beta), 0, cos(beta)]])
 
     def convert_to_xyz(alpha, beta):
         x = sin(beta) * cos(alpha)
@@ -24,7 +26,7 @@ def analyse_relax_straight(alphas, betas, x_torques, y_torques, relax_alpha, max
 
     def convert_to_angles(vector):
         alpha = np.arctan2(vector[1], vector[0])
-        beta = np.arccos(vector[2]/np.linalg.norm(vector))
+        beta = np.arccos(vector[2] / np.linalg.norm(vector))
 
         return alpha, beta
 

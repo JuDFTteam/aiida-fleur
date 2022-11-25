@@ -347,7 +347,9 @@ def test_handle_time_limits_previous_calculation_error(generate_workchain_base, 
     process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
 
     #Add outgoing remote folder
-    process.ctx.children[-1].base.links.add_incoming(remote_before, link_type=LinkType.INPUT_CALC, link_label='parent_folder')
+    process.ctx.children[-1].base.links.add_incoming(remote_before,
+                                                     link_type=LinkType.INPUT_CALC,
+                                                     link_label='parent_folder')
     process.ctx.children[-1].store()
     remote = generate_remote_data(fleur.computer, '/tmp')
     remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
