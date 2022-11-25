@@ -24,7 +24,7 @@ def test_fleurparse_relax_file(test_file):
     with open(test_file('relaxxml/Fe_relax.xml'), encoding='utf-8') as relaxfile:
         result = parse_relax_file(relaxfile, schema_dict)
     assert isinstance(result, Dict)
-    assert result.get_dict() != {}
+    assert result.get_dict() != {} #pylint: disable=use-implicit-booleaness-not-compariso
 
 
 # test the full parser itself. on all kinds of different output files.
