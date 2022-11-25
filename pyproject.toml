@@ -130,6 +130,7 @@ disallow_subclassing_any = true
 [[tool.mypy.overrides]]
 module = [
     'ruamel.*',
+    'pymatgen'
 ]
 follow_imports = 'skip'
 ignore_missing_imports = true
