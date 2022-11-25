@@ -56,6 +56,7 @@ def test_fleur_acwf_eos_structure_Si(with_export_cache, fleur_local_code, inpgen
             },
         },
         'protocol': 'fast',
+        'relax_type': 'none'
     }
     builder.sub_process_class = 'common_workflows.relax.fleur'
 
