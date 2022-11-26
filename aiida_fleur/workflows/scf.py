@@ -558,27 +558,27 @@ class FleurScfWorkChain(WorkChain):
             return status
 
         if 'settings' in self.inputs:
-            settings = self.inputs.settings
+            settings_dict = self.inputs.settings.get_dict()
         else:
-            settings = None
+            settings_dict = {}
 
         if self.ctx.run_straight_mixing and self.ctx.loop_count == 1:
             status = self.reset_straight_mixing()
             if status:
                 return status
-
-            if settings is None:
-                settings = {}
-            else:
-                settings = settings.get_dict()
-
-            settings.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
+            settings_dict.setdefault('remove_from_remotecopy_list', []).append('mixing_history*')
 
         fleurin = self.ctx.fleurinp
 
         if self.ctx['last_base_wc']:
             # will this fail if fleur before failed? try needed?
             remote = self.ctx['last_base_wc'].outputs.remote_folder
+
+            if any(f in self.ctx['last_base_wc'].outputs.retrieved.list_object_names()
+                   for f in (FleurCalculation._NMMPMAT_FILE_NAME, FleurCalculation._NMMPMAT_HDF5_FILE_NAME)) and \
+               FleurCalculation._NMMPMAT_FILE_NAME in fleurin.files:
+                settings_dict['fleurinp_nmmpmat_priority'] = False
+
         elif 'remote_data' in self.inputs:
             remote = self.inputs.remote_data
         else:
@@ -602,7 +602,7 @@ class FleurScfWorkChain(WorkChain):
                                           options,
                                           label,
                                           description,
-                                          settings,
+                                          settings_dict,
                                           add_comp_para=self.ctx.wf_dict['add_comp_para'])
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         self.ctx.loop_count = self.ctx.loop_count + 1
