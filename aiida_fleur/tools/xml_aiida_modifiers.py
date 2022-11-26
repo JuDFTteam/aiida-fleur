@@ -10,7 +10,7 @@ from aiida import orm
 try:
     from typing import Literal
 except ImportError:
-    from typing_extensions import Literal  #type: ignore[misc]
+    from typing_extensions import Literal  #type: ignore[assignment]
 
 
 def set_kpointsdata_f(xmltree: XMLLike,
