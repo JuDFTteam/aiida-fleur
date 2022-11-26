@@ -120,7 +120,7 @@ class FleurinpModifier(FleurXMLModifier):
 
     _extra_functions = {'schema_dict': {'set_kpointsdata': set_kpointsdata_f}}
 
-    def __init__(self, original: FleurinpData | None=None) -> None:
+    def __init__(self, original: FleurinpData | None = None) -> None:
         """
         Initiation of FleurinpModifier.
 
@@ -193,7 +193,7 @@ class FleurinpModifier(FleurXMLModifier):
             if task.name in fleurinp_mod_functions:
                 modification_tasks.remove(task)
                 action = fleurinp_mod_functions[task.name]
-                action(*task.args, **task.kwargs) #type:ignore[operator]
+                action(*task.args, **task.kwargs)  #type:ignore[operator]
                 if warn:
                     warnings.warn('The modification methods operating directly adding/removing files '
                                   'are performed before any XML modification methods')
@@ -212,9 +212,13 @@ class FleurinpModifier(FleurXMLModifier):
 
         outside_actions_fleurxml = super().get_avail_actions().copy()
 
-        return {**outside_actions_fleurxml, **outside_actions_fleurinp} #type: ignore[arg-type]
+        return {**outside_actions_fleurxml, **outside_actions_fleurinp}  #type: ignore[arg-type]
 
-    def set_kpointsdata(self, kpointsdata_uuid: int | str | orm.KpointsData, name: str | None=None, switch: bool=False, kpoint_type: str='path') -> None:
+    def set_kpointsdata(self,
+                        kpointsdata_uuid: int | str | orm.KpointsData,
+                        name: str | None = None,
+                        switch: bool = False,
+                        kpoint_type: str = 'path') -> None:
         """
         Appends a :py:func:`~aiida_fleur.tools.xml_aiida_modifiers.set_kpointsdata_f()` to
         the list of tasks that will be done on the FleurinpData.
@@ -315,7 +319,10 @@ class FleurinpModifier(FleurXMLModifier):
         args, kwargs = serialize_xml_objects(args, kwargs)
         super().replace_tag(*args, **kwargs)
 
-    def set_file(self, filename: str, dst_filename: str | None=None, node: int|str|orm.Data | None=None) -> None:
+    def set_file(self,
+                 filename: str,
+                 dst_filename: str | None = None,
+                 node: int | str | orm.Data | None = None) -> None:
         """
         Appends a :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.set_file()` to
         the list of tasks that will be done on the FleurinpData instance.
@@ -386,7 +393,7 @@ class FleurinpModifier(FleurXMLModifier):
 
         return xmltree
 
-    def show(self, display: bool=True, validate: bool=False) -> etree._ElementTree:
+    def show(self, display: bool = True, validate: bool = False) -> etree._ElementTree:
         """
         Applies the modifications and displays/prints the resulting ``inp.xml`` file.
         Does not generate a new

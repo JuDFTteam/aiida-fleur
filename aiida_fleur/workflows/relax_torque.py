@@ -24,6 +24,7 @@ from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
 from aiida_fleur.tools.common_fleur_wf import find_nested_process
 
+
 class FleurRelaxTorqueWorkChain(WorkChain):
     """
     This workflow performs spin structure optimization.

@@ -61,6 +61,7 @@ pre-commit = [
     "pylint>=2.5",
     "mypy==0.990",
     "types-PyYAML",
+    "lxml-stubs~=0.4"
     ]
 dev = [
     'bumpver'

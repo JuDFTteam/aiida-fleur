@@ -10,10 +10,15 @@ from aiida import orm
 try:
     from typing import Literal
 except ImportError:
-    from typing_extensions import Literal #type: ignore[misc]
+    from typing_extensions import Literal  #type: ignore[misc]
 
 
-def set_kpointsdata_f(xmltree: XMLLike, schema_dict: InputSchemaDict, kpointsdata_uuid: orm.KpointsData | int | str, name: str | None=None, switch: bool=False, kpoint_type: Literal['path', 'mesh', 'tria', 'tria-bulk', 'spex-mesh']='path') -> XMLLike:
+def set_kpointsdata_f(xmltree: XMLLike,
+                      schema_dict: InputSchemaDict,
+                      kpointsdata_uuid: orm.KpointsData | int | str,
+                      name: str | None = None,
+                      switch: bool = False,
+                      kpoint_type: Literal['path', 'mesh', 'tria', 'tria-bulk', 'spex-mesh'] = 'path') -> XMLLike:
     """This function creates a kpoint list in the inp.xml from a :py:class:`~aiida.orm.KpointsData` Node
     If no weights are given the weight is distibuted equally along the kpoints
 

@@ -67,4 +67,5 @@ repos:
     files: >-
         (?x)^(
             aiida_fleur/data/.*py|
+            aiida_fleur/tools/xml_aiida_modifiers.py|
         )$

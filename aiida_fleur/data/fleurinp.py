@@ -330,9 +330,6 @@ class FleurinpData(orm.Data):
         # remove file from folder first if it exists
         if final_filename not in old_files_list:
             old_files_list.append(final_filename)
-        else:
-            old_files_list.remove(final_filename)
-            old_files_list.append(final_filename)
 
         if is_filelike:
             self.put_object_from_filelike(path_or_handle, final_filename)

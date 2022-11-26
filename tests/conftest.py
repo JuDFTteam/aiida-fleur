@@ -775,6 +775,25 @@ def clear_database_aiida_fleur(aiida_profile_clean):  # pylint: disable=redefine
     """
 
 
+@pytest.fixture(scope='function', autouse=True)
+def configure_aiida_loggers(caplog):
+    """
+    Configure the aiida logging to reduce noise in workchain regression tests
+    """
+    import logging
+
+    caplog.set_level(logging.CRITICAL, logger='aiida.export')
+
+    aiida_logger = logging.getLogger('aiida')
+
+    STREAM_HANDLER = [h for h in aiida_logger.handlers if isinstance(h, logging.StreamHandler)][0]
+    aiida_logger.removeHandler(STREAM_HANDLER)
+
+    yield  #Now test runs
+
+    aiida_logger.addHandler(STREAM_HANDLER)
+
+
 @pytest.fixture
 def show_workchain_summary():
 
