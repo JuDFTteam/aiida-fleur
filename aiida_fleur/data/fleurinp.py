@@ -29,7 +29,7 @@ from aiida import orm
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import InputValidationError, ValidationError
 
-from typing import Any, cast, Iterator, BinaryIO, TextIO, ContextManager
+from typing import Any, cast, Iterator, BinaryIO, TextIO, ContextManager, Dict, List
 
 from lxml import etree
 from masci_tools.io.parsers.fleur_schema import InputSchemaDict
@@ -603,7 +603,7 @@ class FleurinpData(orm.Data):
                                                               only_used=only_used)
 
         if isinstance(kpoints, dict):
-            weights = cast(dict[str, list[float]], weights)
+            weights = cast(Dict[str, List[float]], weights)
             kpoints_data = {}
             for (label, kpoints_set), weights_set in zip(kpoints.items(), weights.values()):
                 kps = orm.KpointsData()
