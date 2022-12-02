@@ -58,7 +58,7 @@ class FleurScfWorkChain(WorkChain):
     :return: output_scf_wc_para (Dict), Information of workflow results
         like Success, last result node, list with convergence behavior
     """
-
+    
     _workflowversion = '0.6.3'
     _default_wf_para = {
         'fleur_runmax': 4,

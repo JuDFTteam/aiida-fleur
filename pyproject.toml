@@ -103,6 +103,7 @@ Source = "https://github.com/JuDFTteam/aiida-fleur"
 "fleur.create_magnetic" = "aiida_fleur.workflows.create_magnetic_film:FleurCreateMagneticWorkChain"
 "fleur.base_relax" = "aiida_fleur.workflows.base_relax:FleurBaseRelaxWorkChain"
 "fleur.base" = "aiida_fleur.workflows.base_fleur:FleurBaseWorkChain"
+"fleur.stress" = "aiida_fleur.workflows.stress:FleurStressWorkChain"
 
 [tool.coverage.run]
 omit = [
