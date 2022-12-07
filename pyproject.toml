@@ -78,6 +78,7 @@ Source = "https://github.com/JuDFTteam/aiida-fleur"
 
 [project.entry-points."aiida.data"]
 "fleur.fleurinp" = "aiida_fleur.data.fleurinp:FleurinpData"
+"fleur.magnetic_structure" = "aiida_fleur.data.magnetic_structure:FleurMagneticStructureData"
 
 [project.entry-points."aiida.calculations"]
 "fleur.fleur" = "aiida_fleur.calculation.fleur:FleurCalculation"

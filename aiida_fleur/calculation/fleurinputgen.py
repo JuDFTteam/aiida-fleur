@@ -20,6 +20,7 @@ from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.orm import StructureData, Dict
 
 from aiida_fleur.data.fleurinp import FleurinpData
+from aiida_fleur.data.magnetic_structure import FleurMagneticStructureData
 import io
 
 
@@ -29,7 +30,7 @@ class FleurinputgenCalculation(CalcJob):
     For more information about produced files and the FLEUR-code family, go to http://www.flapw.de/.
     """
 
-    __version__ = '1.2.2'
+    __version__ = '1.3.0'
 
     # Default input and output files
     _INPUT_FILE = 'aiida.in'  # will be shown with inputcat
@@ -62,7 +63,9 @@ class FleurinputgenCalculation(CalcJob):
 
         spec.input('metadata.options.input_filename', valid_type=str, default=cls._INPUT_FILE)
         spec.input('metadata.options.output_filename', valid_type=str, default=cls._INPXML_FILE_NAME)
-        spec.input('structure', valid_type=StructureData, help='Choose the input structure to use')
+        spec.input('structure',
+                   valid_type=(StructureData, FleurMagneticStructureData),
+                   help='Choose the input structure to use')
         spec.input('parameters',
                    valid_type=Dict,
                    required=False,
@@ -265,8 +268,12 @@ def write_inpgen_file_aiida_struct(structure, file, input_params=None, settings=
     for kind in structure.kinds:
         kind_list.append(kind.get_raw())
 
-    for site in structure.sites:
-        atoms_dict_list.append(site.get_raw())
+    if isinstance(structure, FleurMagneticStructureData):
+        for site, mag_mom in zip(structure.sites, structure.magnetic_moments):
+            atoms_dict_list.append({**site.get_raw(), 'magnetic_moment': mag_mom})
+    else:
+        for site in structure.sites:
+            atoms_dict_list.append(site.get_raw())
 
     if settings is None:
         settings = {}
@@ -276,6 +283,8 @@ def write_inpgen_file_aiida_struct(structure, file, input_params=None, settings=
         write_settings['significant_figures_cell'] = settings.get('significant_figures_cell')
     if 'significant_figures_positions' in settings:
         write_settings['significant_figures_positions'] = settings.get('significant_figures_positions')
+    if 'significant_figures_magnetic_moments' in settings:
+        write_settings['significant_figures_magnetic_moments'] = settings.get('significant_figures_magnetic_moments')
 
     report = write_inpgen_file(structure.cell,
                                atoms_dict_list,

@@ -227,6 +227,34 @@ def generate_structure():
 
 
 @pytest.fixture
+def generate_magnetic_structure():
+    """Return a `FleurMagneticStructureData` representing SmCo5."""
+
+    def _generate_magnetic_structure():
+        """Return a `FleurMagneticStructureData` representing SmCo5."""
+        from aiida_fleur.data.magnetic_structure import FleurMagneticStructureData
+        import numpy as np
+
+        a = 4.9679
+        c = 3.9629
+        cell = np.array([[a, 0.0, 0.0], [-a / 2, a * np.sqrt(3) / 2, 0.0], [0.0, 0.0, c]])
+        cell = np.round(cell, 10)
+        structure = FleurMagneticStructureData(cell=cell)
+        structure.append_atom(position=np.array([0.0, 0.0, 0.0]), symbols='Sm', name='Sm')
+        structure.append_atom(position=np.round(np.array([1 / 3, 2 / 3, 0.0]) @ cell, 10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([2 / 3, 1 / 3, 0.0]) @ cell, 10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([0.0, 0.5, 0.5]) @ cell, 10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([0.5, 0.0, 0.5]) @ cell, 10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([0.5, 0.5, 0.5]) @ cell, 10), symbols='Co', name='Co')
+
+        structure.magnetic_moments = ['up', 'down', 'down', 'down', 'down', 'down']
+
+        return structure
+
+    return _generate_magnetic_structure
+
+
+@pytest.fixture
 def generate_smco5_structure():
     """Return a `StructureData` representing SmCo5"""
 
