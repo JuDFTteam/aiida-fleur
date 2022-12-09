@@ -230,16 +230,6 @@ class FleurMagRotateWorkChain(WorkChain):
                                     dst_filename=FleurCalculation._NMMPMAT_FILE_NAME,
                                     node=source.uuid)
 
-                if self.ctx.wf_dict['dftu_density_matrix_relaxation'] is None:
-                    fm.set_inpchanges({'l_linmix': True, 'mixparam': 0})
-                    wf_parameters['nmmp_converged'] = 999  #To prevent the SCF workchain from running with fixed DFT+U
-                elif self.ctx.wf_dict['dftu_density_matrix_relaxation'] == 'first' \
-                     and reuse_first:
-                    fm.set_inpchanges({'l_linmix': True, 'mixparam': 0})
-                    wf_parameters['nmmp_converged'] = 999  #To prevent the SCF workchain from running with fixed DFT+U
-                else:
-                    fm.set_inpchanges({'l_linmix': False})
-
                 #TODO: angles before could be non-zero
                 fm.align_nmmpmat_to_sqa()
 
@@ -249,6 +239,16 @@ class FleurMagRotateWorkChain(WorkChain):
                     settings = inputs_scf.settings.get_dict()
                 settings['fleurinp_nmmpmat_priority'] = True
                 inputs_scf.settings = orm.Dict(dict=settings)
+
+            if self.ctx.wf_dict['dftu_density_matrix_relaxation'] is None:
+                fm.set_inpchanges({'l_linmix': True, 'mixparam': 0})
+                wf_parameters['nmmp_converged'] = 999  #To prevent the SCF workchain from running with fixed DFT+U
+            elif self.ctx.wf_dict['dftu_density_matrix_relaxation'] == 'first' \
+                    and reuse_first:
+                fm.set_inpchanges({'l_linmix': True, 'mixparam': 0})
+                wf_parameters['nmmp_converged'] = 999  #To prevent the SCF workchain from running with fixed DFT+U
+            else:
+                fm.set_inpchanges({'l_linmix': False})
 
         inputs_scf.wf_parameters = orm.Dict(dict=wf_parameters)
         label = f'scf_{self.ctx.current_configuration}'
