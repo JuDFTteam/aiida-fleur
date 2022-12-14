@@ -28,7 +28,8 @@ class FleurMagRotateWorkChain(WorkChain):
         'noco_species_name': 'all',
         'first_calculation_reference': False,
         'dftu_rotation': False,
-        'dftu_density_matrix_relaxation': None  #Which density matrices are allowed to relax
+        'dftu_density_matrix_relaxation': None,  #Which density matrices are allowed to relax
+        'append_custom_inpxml_changes': True,
         # None -> All configurations are frozen
         # First -> The first one is relaxed and then used
         #          as a reference
@@ -197,7 +198,7 @@ class FleurMagRotateWorkChain(WorkChain):
         #The tasks are put in front of any evtl. already user-defined tasks
         #THis is so that users can already use the defined directions for other
         #customizations
-        with inpxml_changes(wf_parameters, append=False) as fm:
+        with inpxml_changes(wf_parameters, append=not self.ctx.wf_dict['append_custom_inpxml_changes']) as fm:
             if self.ctx.wf_dict['noco']:
                 fm.set_inpchanges({'l_noco': True, 'ctail': False})
                 fm.set_atomgroup(self.ctx.wf_dict['noco_species_name'], {'nocoparams': {'alpha': phi, 'beta': theta}})
