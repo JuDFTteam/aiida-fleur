@@ -1,7 +1,7 @@
 ci:
     autoupdate_schedule: monthly
     autofix_prs: true
-    skip: [pylint, version-number]
+    skip: [pylint, mypy]
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
@@ -55,3 +55,17 @@ repos:
     types: [python]
     language: system
     exclude: '^(docs/)|(examples/)'
+
+  - id: mypy
+    name: mypy
+    entry: mypy
+    args: [--config-file=pyproject.toml]
+    language: python
+    types: [python]
+    require_serial: true
+    pass_filenames: true
+    files: >-
+        (?x)^(
+            aiida_fleur/data/.*py|
+            aiida_fleur/tools/xml_aiida_modifiers.py|
+        )$

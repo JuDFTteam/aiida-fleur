@@ -30,7 +30,7 @@ from aiida_fleur.tools.xml_aiida_modifiers import set_kpointsdata_f
 
 from masci_tools.io.fleurxmlmodifier import ModifierTask, FleurXMLModifier
 from masci_tools.util.xml.common_functions import serialize_xml_objects
-from typing import Any, Generator
+from typing import Any, Generator, Callable
 
 __all__ = ('FleurinpModifier', 'inpxml_changes', 'modify_fleurinpdata')
 
@@ -101,7 +101,7 @@ def inpxml_changes(wf_parameters: dict | orm.Dict | ProcessBuilderNamespace,
         if isinstance(wf_parameters, orm.Dict):
             wf_parameters = wf_parameters.get_dict()
 
-        changes = wf_parameters.get(_INPXML_CHANGES_KEY, [])
+        changes = wf_parameters.get(_INPXML_CHANGES_KEY, [])  #type: ignore[call-arg]
         if append:
             changes.extend(fm.task_list)
         else:
@@ -120,7 +120,7 @@ class FleurinpModifier(FleurXMLModifier):
 
     _extra_functions = {'schema_dict': {'set_kpointsdata': set_kpointsdata_f}}
 
-    def __init__(self, original=None):
+    def __init__(self, original: FleurinpData | None = None) -> None:
         """
         Initiation of FleurinpModifier.
 
@@ -139,7 +139,7 @@ class FleurinpModifier(FleurXMLModifier):
                 )
 
         self._original = original
-        self._other_nodes = {}
+        self._other_nodes: dict[str, orm.Node] = {}
 
         super().__init__()
 
@@ -170,7 +170,7 @@ class FleurinpModifier(FleurXMLModifier):
         return kwargs_complete
 
     @classmethod
-    def apply_fleurinp_modifications(cls, new_fleurinp, modification_tasks):
+    def apply_fleurinp_modifications(cls, new_fleurinp: FleurinpData, modification_tasks: list[ModifierTask]) -> None:
         """
         Apply the modifications working directly on the cloned
         FleurinpData instance. The functions will warn the user if one of the methods
@@ -193,14 +193,14 @@ class FleurinpModifier(FleurXMLModifier):
             if task.name in fleurinp_mod_functions:
                 modification_tasks.remove(task)
                 action = fleurinp_mod_functions[task.name]
-                action(*task.args, **task.kwargs)
+                action(*task.args, **task.kwargs)  #type:ignore[operator]
                 if warn:
                     warnings.warn('The modification methods operating directly adding/removing files '
                                   'are performed before any XML modification methods')
             else:
                 warn = True
 
-    def get_avail_actions(self):
+    def get_avail_actions(self) -> dict[str, Callable]:
         """
         Returns the allowed functions from FleurinpModifier
         """
@@ -212,9 +212,13 @@ class FleurinpModifier(FleurXMLModifier):
 
         outside_actions_fleurxml = super().get_avail_actions().copy()
 
-        return {**outside_actions_fleurxml, **outside_actions_fleurinp}
+        return {**outside_actions_fleurxml, **outside_actions_fleurinp}  #type: ignore[arg-type]
 
-    def set_kpointsdata(self, kpointsdata_uuid, name=None, switch=False, kpoint_type='path'):
+    def set_kpointsdata(self,
+                        kpointsdata_uuid: int | str | orm.KpointsData,
+                        name: str | None = None,
+                        switch: bool = False,
+                        kpoint_type: str = 'path') -> None:
         """
         Appends a :py:func:`~aiida_fleur.tools.xml_aiida_modifiers.set_kpointsdata_f()` to
         the list of tasks that will be done on the FleurinpData.
@@ -224,16 +228,15 @@ class FleurinpModifier(FleurXMLModifier):
         :param switch: bool if True the entered kpoint list will be used directly (only Max5 or later)
         :param kpoint_type: str of the type of kpoint list given (mesh, path, etc.) only Max5 or later
         """
-        from aiida.orm import KpointsData, load_node
 
-        if isinstance(kpointsdata_uuid, KpointsData):
+        if isinstance(kpointsdata_uuid, orm.KpointsData):
             kpointsdata_uuid = kpointsdata_uuid.uuid
         # Be more careful? Needs to be stored, otherwise we cannot load it
 
         num_nodes = sum('kpoints' in label for label in self._other_nodes) + 1
         node_label = f'kpoints_{num_nodes}'
 
-        self._other_nodes[node_label] = load_node(kpointsdata_uuid)
+        self._other_nodes[node_label] = orm.load_node(kpointsdata_uuid)
         self._tasks.append(
             ModifierTask('set_kpointsdata',
                          args=(kpointsdata_uuid,),
@@ -244,7 +247,7 @@ class FleurinpModifier(FleurXMLModifier):
                          }))
 
     #Modification functions that accept XML elements, which have to be serialized beforehand
-    def xml_create_tag(self, *args, **kwargs):
+    def xml_create_tag(self, *args: Any, **kwargs: Any) -> None:
         """
         Appends a :py:func:`~masci_tools.util.xml.xml_setters_basic.xml_create_tag()` to
         the list of tasks that will be done on the xmltree.
@@ -260,7 +263,7 @@ class FleurinpModifier(FleurXMLModifier):
         args, kwargs = serialize_xml_objects(args, kwargs)
         super().xml_create_tag(*args, **kwargs)
 
-    def create_tag(self, *args, **kwargs):
+    def create_tag(self, *args: Any, **kwargs: Any) -> None:
         """
         Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.create_tag()` to
         the list of tasks that will be done on the xmltree.
@@ -280,7 +283,7 @@ class FleurinpModifier(FleurXMLModifier):
         args, kwargs = serialize_xml_objects(args, kwargs)
         super().create_tag(*args, **kwargs)
 
-    def xml_replace_tag(self, *args, **kwargs):
+    def xml_replace_tag(self, *args: Any, **kwargs: Any) -> None:
         """
         Appends a :py:func:`~masci_tools.util.xml.xml_setters_basic.xml_replace_tag()` to
         the list of tasks that will be done on the xmltree.
@@ -294,7 +297,7 @@ class FleurinpModifier(FleurXMLModifier):
         args, kwargs = serialize_xml_objects(args, kwargs)
         super().xml_replace_tag(*args, **kwargs)
 
-    def replace_tag(self, *args, **kwargs):
+    def replace_tag(self, *args: Any, **kwargs: Any) -> None:
         """
         Deprecation layer for replace_tag if there are slashes in the first positional argument or xpath is is in kwargs.
         We know that it is the old usage.
@@ -316,7 +319,10 @@ class FleurinpModifier(FleurXMLModifier):
         args, kwargs = serialize_xml_objects(args, kwargs)
         super().replace_tag(*args, **kwargs)
 
-    def set_file(self, filename, dst_filename=None, node=None):
+    def set_file(self,
+                 filename: str,
+                 dst_filename: str | None = None,
+                 node: int | str | orm.Data | None = None) -> None:
         """
         Appends a :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.set_file()` to
         the list of tasks that will be done on the FleurinpData instance.
@@ -326,17 +332,17 @@ class FleurinpModifier(FleurXMLModifier):
                              to store it
         :param node: a :class:`~aiida.orm.FolderData` node containing the file
         """
-        from aiida.orm import load_node, Data
 
-        node_uuid = None
+        node_uuid: None | int | str = None
         if node is not None:
-            node_uuid = node
-            if isinstance(node, Data):
+            if isinstance(node, orm.Data):
                 node_uuid = node.uuid
+            else:
+                node_uuid = node
             num_nodes = sum('folder' in label for label in self._other_nodes) + 1
             node_label = f'folder_{num_nodes}'
             # Be more careful? Needs to be stored, otherwise we cannot load it
-            self._other_nodes[node_label] = load_node(node_uuid)
+            self._other_nodes[node_label] = orm.load_node(node_uuid)
 
         self._tasks.append(
             ModifierTask('set_file', args=(filename,), kwargs={
@@ -344,7 +350,7 @@ class FleurinpModifier(FleurXMLModifier):
                 'node': node_uuid
             }))
 
-    def del_file(self, filename):
+    def del_file(self, filename: str) -> None:
         """
         Appends a :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.del_file()` to
         the list of tasks that will be done on the FleurinpData instance.
@@ -353,7 +359,7 @@ class FleurinpModifier(FleurXMLModifier):
         """
         self._tasks.append(ModifierTask('del_file', args=(filename,), kwargs={}))
 
-    def validate(self):
+    def validate(self) -> etree._ElementTree:
         """
         Extracts the schema-file.
         Makes a test if all the changes lead to an inp.xml file that is validated against the
@@ -387,7 +393,7 @@ class FleurinpModifier(FleurXMLModifier):
 
         return xmltree
 
-    def show(self, display=True, validate=False):
+    def show(self, display: bool = True, validate: bool = False) -> etree._ElementTree:
         """
         Applies the modifications and displays/prints the resulting ``inp.xml`` file.
         Does not generate a new
@@ -424,7 +430,7 @@ class FleurinpModifier(FleurXMLModifier):
             print(xmltreestring)
         return xmltree
 
-    def freeze(self):
+    def freeze(self) -> FleurinpData:
         """
         This method applies all the modifications to the input and
         returns a new stored fleurinpData object.
@@ -446,7 +452,7 @@ class FleurinpModifier(FleurXMLModifier):
                           'description': 'This calcfunction modified an Fleurinpdataobject'
                       },
                       **self._other_nodes)
-        out = modify_fleurinpdata(**inputs)
+        out = modify_fleurinpdata(**inputs)  #type: ignore[arg-type]
         return out
 
     #Deactivate modify_xmlfile method from FleurXMLModifier (Only modify fleurinp)
@@ -455,7 +461,7 @@ class FleurinpModifier(FleurXMLModifier):
 
 
 @cf
-def modify_fleurinpdata(original, modifications, **kwargs):
+def modify_fleurinpdata(original: FleurinpData, modifications: orm.Dict, **kwargs: orm.Node) -> FleurinpData:
     """
     A CalcFunction that performs the modification of the given FleurinpData and stores
     the result in a database.

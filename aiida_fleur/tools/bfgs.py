@@ -2,6 +2,7 @@ import numpy as np
 from numpy.linalg import eigh
 from numpy import cos, sin
 
+
 class BFGS_torques():
     """
     BFGS optimiser for spin directions
@@ -112,6 +113,7 @@ class BFGS_torques():
         self.r0 = r0
         self.f0 = f0
 
+
 def unwrap_workchains(workchains):
     """
     Finds all nested SCF workchains and sorts them according to the PK
@@ -133,6 +135,7 @@ def unwrap_workchains(workchains):
 
     return sorted(unwrapped, key=lambda x: x.pk)
 
+
 def get_positions(workchain):
     """
     Extracts alpha and beta angles
@@ -140,6 +143,7 @@ def get_positions(workchain):
     output_dict = workchain.outputs.output_scf_wc_para.get_dict()
     r = np.array(output_dict['alphas'] + output_dict['betas'])
     return r
+
 
 def get_forces(workchain):
     """
