@@ -131,7 +131,8 @@ disallow_subclassing_any = true
 [[tool.mypy.overrides]]
 module = [
     'ruamel.*',
-    'pymatgen'
+    'pymatgen',
+    'plumpy'
 ]
 follow_imports = 'skip'
 ignore_missing_imports = true
