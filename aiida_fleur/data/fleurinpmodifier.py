@@ -452,7 +452,7 @@ class FleurinpModifier(FleurXMLModifier):
                           'description': 'This calcfunction modified an Fleurinpdataobject'
                       },
                       **self._other_nodes)
-        out = modify_fleurinpdata(**inputs)
+        out = modify_fleurinpdata(**inputs)  #type: ignore[arg-type]
         return out
 
     #Deactivate modify_xmlfile method from FleurXMLModifier (Only modify fleurinp)
