@@ -169,4 +169,4 @@ jobs:
       if: failure()
       with:
         name: matplotlib-comparison-${{ matrix.python-version }}
-        path: mpl-results
+        path: tests/mpl-results
