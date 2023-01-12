@@ -164,3 +164,19 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.cfcoeff import FleurCFCoeffWorkChain
 
         builder = FleurCFCoeffWorkChain.get_builder()
+
+    def test_fleur_greensf_wc_init(self):
+        """
+        Test the interface of the greensf workchain
+        """
+        from aiida_fleur.workflows.greensf import FleurGreensfWorkChain
+
+        builder = FleurGreensfWorkChain.get_builder()
+
+    def test_fleur_greensf_dmi_wc_init(self):
+        """
+        Test the interface of the greensf workchain
+        """
+        from aiida_fleur.workflows.greensf_dmi import FleurGreensfDMIWorkChain
+
+        builder = FleurGreensfDMIWorkChain.get_builder()
