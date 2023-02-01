@@ -19,11 +19,7 @@ from aiida_fleur.workflows.dmi import FleurDMIWorkChain
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(2000, method='thread')
-def test_fleur_dmi_FePt_film(
-        clear_database,
-        with_export_cache,  #run_with_cache,
-        fleur_local_code,
-        inpgen_local_code):
+def test_fleur_dmi_FePt_film(clear_database, enable_archive_cache, fleur_local_code, inpgen_local_code):
     """
     full example using mae workflow with FePt film structure as input.
     """
@@ -103,7 +99,7 @@ def test_fleur_dmi_FePt_film(
         'options': options
     }
 
-    with with_export_cache('fleur_dmi_FePt.tar.gz'):
+    with enable_archive_cache('fleur_dmi_FePt.tar.gz'):
         out, node = run_get_node(FleurDMIWorkChain, **inputs)
     print(out)
     print(node)

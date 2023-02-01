@@ -57,7 +57,7 @@ def test_fleur_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_jo
 
 
 @pytest.mark.regression_test
-def test_FleurJobCalc_full_mock(fleur_local_code, create_fleurinp, clear_database, hash_code_by_entrypoint):  # pylint: disable=redefined-outer-name
+def test_FleurJobCalc_full_mock(fleur_local_code, create_fleurinp, clear_database):  # pylint: disable=redefined-outer-name
     """
     Tests the fleur inputgenerate with a mock executable if the datafiles are their,
     otherwise runs inpgen itself if a executable was specified

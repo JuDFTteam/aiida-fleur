@@ -28,7 +28,7 @@ class Test_FleurCoreholeWorkChain():
 
     @pytest.mark.regression_test
     @pytest.mark.timeout(5000, method='thread')
-    def test_fleur_corehole_W(self, with_export_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
+    def test_fleur_corehole_W(self, enable_archive_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
                               show_workchain_summary):
         """
         full example using FleurCoreholeWorkChain on W.
@@ -101,8 +101,7 @@ class Test_FleurCoreholeWorkChain():
         }
 
         # now run calculation
-        #out, node = run_with_cache(inputs, process_class=FleurCoreholeWorkChain)
-        with with_export_cache('fleur_corehole_W.tar.gz'):
+        with enable_archive_cache('fleur_corehole_W.tar.gz'):
             out, node = run_get_node(FleurCoreholeWorkChain, **inputs)
 
         # check general run

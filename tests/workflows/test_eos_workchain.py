@@ -26,7 +26,7 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_eos_structure_Si(with_export_cache, fleur_local_code, inpgen_local_code, generate_structure):
+def test_fleur_eos_structure_Si(enable_archive_cache, fleur_local_code, inpgen_local_code, generate_structure):
     """
     full example using scf workflow with just a fleurinp data as input.
     Several fleur runs needed till convergence
@@ -79,7 +79,7 @@ def test_fleur_eos_structure_Si(with_export_cache, fleur_local_code, inpgen_loca
     }
     print(builder)
 
-    with with_export_cache('fleur_eos_si_structure.tar.gz'):
+    with enable_archive_cache('fleur_eos_si_structure.tar.gz'):
         out, node = run_get_node(builder)
 
     print(out)

@@ -20,11 +20,7 @@ from aiida_fleur.workflows.mae_conv import FleurMaeConvWorkChain
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
-def test_fleur_mae_FePt_film(
-        clear_database,
-        with_export_cache,  #run_with_cache,
-        fleur_local_code,
-        inpgen_local_code):
+def test_fleur_mae_FePt_film(clear_database, enable_archive_cache, fleur_local_code, inpgen_local_code):
     """
     full example using mae workflow with FePt film structure as input.
     """
@@ -99,9 +95,7 @@ def test_fleur_mae_FePt_film(
         'options': options
     }
 
-    #out, node = run_with_cache(inputs, process_class=FleurMaeWorkChain)
-    #with enable_caching():
-    with with_export_cache('fleur_mae_FePt.tar.gz'):
+    with enable_archive_cache('fleur_mae_FePt.tar.gz'):
         out, node = run_get_node(FleurMaeWorkChain, **inputs)
     print(out)
     print(node)
@@ -176,12 +170,8 @@ def test_fleur_mae_validation_wrong_inputs(fleur_local_code, inpgen_local_code):
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(3000, method='thread')
-def test_fleur_mae_conv_FePt_film(
-        clear_database,
-        with_export_cache,  #run_with_cache,
-        fleur_local_code,
-        inpgen_local_code,
-        show_workchain_summary):
+def test_fleur_mae_conv_FePt_film(clear_database, enable_archive_cache, fleur_local_code, inpgen_local_code,
+                                  show_workchain_summary):
     """
     full example using mae workflow with FePt film structure as input.
     """
@@ -251,9 +241,7 @@ def test_fleur_mae_conv_FePt_film(
         'wf_parameters': wf_para,
     }
 
-    #out, node = run_with_cache(inputs, process_class=FleurMaeWorkChain)
-    #with enable_caching():
-    with with_export_cache('fleur_mae_conv_FePt.tar.gz'):
+    with enable_archive_cache('fleur_mae_conv_FePt.tar.gz'):
         out, node = run_get_node(FleurMaeConvWorkChain, **inputs)
 
     if not node.is_finished_ok:

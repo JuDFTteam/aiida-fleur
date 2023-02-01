@@ -185,11 +185,13 @@ def test_break_symmetry_corhole(generate_structure):
         }
     })
     new_kinds_names = {'Si': [kind_name + '_corehole1']}
-    inputs = dict(structure=structure,
-                  atoms=[],
-                  site=[],
-                  pos=[(pos[0], pos[1], pos[2])],
-                  new_kinds_names=new_kinds_names)
+    inputs = {
+        'structure': structure,
+        'atoms': [],
+        'site': [],
+        'pos': [(pos[0], pos[1], pos[2])],
+        'new_kinds_names': new_kinds_names
+    }
     if para is not None:
         inputs['parameterdata'] = para
     new_struc, new_para = break_symmetry(**inputs)

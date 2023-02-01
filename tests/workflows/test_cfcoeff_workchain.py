@@ -18,7 +18,7 @@ from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
-def test_fleur_cfcoeff_structure_no_analogue(with_export_cache, fleur_local_code, inpgen_local_code,
+def test_fleur_cfcoeff_structure_no_analogue(enable_archive_cache, fleur_local_code, inpgen_local_code,
                                              generate_smco5_structure, clear_database, aiida_caplog,
                                              show_workchain_summary):
     """
@@ -77,7 +77,7 @@ def test_fleur_cfcoeff_structure_no_analogue(with_export_cache, fleur_local_code
         })
     builder.wf_parameters = orm.Dict(dict={'element': 'Sm'})
 
-    with with_export_cache('fleur_cfcoeff_smco5_structure_no_analogue.tar.gz'):
+    with enable_archive_cache('fleur_cfcoeff_smco5_structure_no_analogue.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
@@ -112,7 +112,7 @@ def test_fleur_cfcoeff_structure_no_analogue(with_export_cache, fleur_local_code
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
-def test_fleur_cfcoeff_structure_analogue(with_export_cache, fleur_local_code, inpgen_local_code,
+def test_fleur_cfcoeff_structure_analogue(enable_archive_cache, fleur_local_code, inpgen_local_code,
                                           generate_smco5_structure, clear_database, aiida_caplog,
                                           show_workchain_summary):
     """
@@ -174,7 +174,7 @@ def test_fleur_cfcoeff_structure_analogue(with_export_cache, fleur_local_code, i
     builder.scf_rare_earth_analogue.options = orm.Dict(dict=options).store()
     builder.wf_parameters = orm.Dict(dict={'element': 'Sm', 'rare_earth_analogue': True})
 
-    with with_export_cache('fleur_cfcoeff_smco5_structure_analogue.tar.gz'):
+    with enable_archive_cache('fleur_cfcoeff_smco5_structure_analogue.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)

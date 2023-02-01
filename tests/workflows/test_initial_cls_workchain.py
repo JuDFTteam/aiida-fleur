@@ -29,7 +29,7 @@ class Test_FleurInitialCLSWorkChain():
 
     @pytest.mark.regression_test
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_initial_cls_W(self, with_export_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
+    def test_fleur_initial_cls_W(self, enable_archive_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
                                  load_cache):
         """
         full example using FleurInitialCLSWorkChain with just elemental W as input
@@ -98,7 +98,7 @@ class Test_FleurInitialCLSWorkChain():
             'structure': structure
         }
 
-        with with_export_cache('fleur_initial_cls_W.tar.gz'):
+        with enable_archive_cache('fleur_initial_cls_W.tar.gz'):
             # now run calculation
             out, node = run_get_node(FleurInitialCLSWorkChain, **inputs)
 

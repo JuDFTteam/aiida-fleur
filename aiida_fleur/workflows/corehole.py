@@ -1086,11 +1086,13 @@ def prepare_struc_corehole_wf(
     npos = -np.array(pos)
 
     # break the symmetry, make corehole atoms its own species. # pos has to be tuple, unpack problem here.. #TODO rather not so nice
-    inputs = dict(structure=base_supercell,
-                  atoms=[],
-                  site=[],
-                  pos=[(pos[0], pos[1], pos[2])],
-                  new_kinds_names=new_kinds_names)
+    inputs = {
+        'structure': base_supercell,
+        'atoms': [],
+        'site': [],
+        'pos': [(pos[0], pos[1], pos[2])],
+        'new_kinds_names': new_kinds_names
+    }
     if para is not None:
         inputs['parameterdata'] = para
     new_struc, new_para = break_symmetry(**inputs)

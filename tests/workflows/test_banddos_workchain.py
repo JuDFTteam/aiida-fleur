@@ -25,7 +25,7 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
+def test_fleur_band_fleurinp_Si(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
                                 show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
@@ -65,7 +65,7 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
     builder.scf.options = orm.Dict(dict=options).store()
     #print(builder)
 
-    with with_export_cache('fleur_band_fleurinp_Si.tar.gz'):
+    with enable_archive_cache('fleur_band_fleurinp_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
@@ -93,7 +93,7 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
+def test_fleur_dos_fleurinp_Si(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
                                show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
@@ -137,8 +137,7 @@ def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
     #print(builder)
 
     # now run calculation
-    #run_with_cache(builder)
-    with with_export_cache('fleur_dos_fleurinp_Si.tar.gz'):
+    with enable_archive_cache('fleur_dos_fleurinp_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
@@ -166,7 +165,7 @@ def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, create_fleurinp, clear_database,
+def test_fleur_band_fleurinp_Si_seekpath(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database,
                                          aiida_caplog, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
@@ -210,7 +209,7 @@ def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, cr
     builder.scf.options = orm.Dict(dict=options).store()
     #print(builder)
 
-    with with_export_cache('fleur_band_fleurinp_Si_seek.tar.gz'):
+    with enable_archive_cache('fleur_band_fleurinp_Si_seek.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
@@ -238,8 +237,8 @@ def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, cr
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
-                                    show_workchain_summary):
+def test_fleur_band_fleurinp_Si_ase(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database,
+                                    aiida_caplog, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Uses ase bandpath to determine the path through the briloouin zone
@@ -282,7 +281,7 @@ def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_
     builder.scf.options = orm.Dict(dict=options).store()
     #print(builder)
 
-    with with_export_cache('fleur_band_fleurinp_Si_ase.tar.gz'):
+    with enable_archive_cache('fleur_band_fleurinp_Si_ase.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
@@ -310,7 +309,7 @@ def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_remote_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
+def test_fleur_band_remote_Si(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
                               get_remote_data_si, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
@@ -348,7 +347,7 @@ def test_fleur_band_remote_Si(with_export_cache, fleur_local_code, create_fleuri
     builder.remote = get_remote_data_si()
     #print(builder)
 
-    with with_export_cache('fleur_band_remote_Si.tar.gz'):
+    with enable_archive_cache('fleur_band_remote_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
@@ -376,7 +375,7 @@ def test_fleur_band_remote_Si(with_export_cache, fleur_local_code, create_fleuri
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_dos_remote_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
+def test_fleur_dos_remote_Si(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
                              get_remote_data_si, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
@@ -418,8 +417,7 @@ def test_fleur_dos_remote_Si(with_export_cache, fleur_local_code, create_fleurin
     #print(builder)
 
     # now run calculation
-    #run_with_cache(builder)
-    with with_export_cache('fleur_dos_remote_Si.tar.gz'):
+    with enable_archive_cache('fleur_dos_remote_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)

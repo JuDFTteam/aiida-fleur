@@ -12,6 +12,9 @@
 Collection of utility routines dealing with StructureData objects
 """
 # TODO move imports to workfuncitons namespace?
+# TODO: MPrester has a new backwards incompatible version in pymatgen
+#       Migrate and solve pylint warning deactivated below
+#pylint: disable=not-context-manager
 
 # from ase import *
 # from ase.lattice.surface import *

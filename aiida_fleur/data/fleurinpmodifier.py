@@ -445,19 +445,21 @@ class FleurinpModifier(FleurXMLModifier):
         modifications.description = 'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = 'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance
-        inputs = dict(original=self._original,
-                      modifications=modifications,
-                      metadata={
-                          'label': 'fleurinp modifier',
-                          'description': 'This calcfunction modified an Fleurinpdataobject'
-                      },
-                      **self._other_nodes)
+        inputs = {
+            'original': self._original,
+            'modifications': modifications,
+            'metadata': {
+                'label': 'fleurinp modifier',
+                'description': 'This calcfunction modified an Fleurinpdataobject'
+            },
+            **self._other_nodes
+        }
         out = modify_fleurinpdata(**inputs)  #type: ignore[arg-type]
         return out
 
     #Deactivate modify_xmlfile method from FleurXMLModifier (Only modify fleurinp)
     def modify_xmlfile(self, *args, **kwargs):  #pylint: disable=missing-function-docstring
-        raise Exception(f'modify_xmlfile is disabled on {self.__class__.__name__}')
+        raise Exception(f'modify_xmlfile is disabled on {self.__class__.__name__}')  #pylint: disable=broad-exception-raised
 
 
 @cf

@@ -410,7 +410,7 @@ class Test_FleurBaseWorkChain():
 
     @pytest.mark.skip
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_base_fleurinp_Si(self, with_export_cache, fleur_local_code, create_fleurinp):
+    def test_fleur_base_fleurinp_Si(self, enable_archive_cache, fleur_local_code, create_fleurinp):
         """
         full example using FleurBaseWorkChain with just a fleurinp data as input.
         Several fleur runs needed till convergence
@@ -435,7 +435,7 @@ class Test_FleurBaseWorkChain():
         builder.code = fleur_local_code
 
         # now run calculation
-        with with_export_cache('fleur_base_fleurinp_Si.tar.gz'):
+        with enable_archive_cache('fleur_base_fleurinp_Si.tar.gz'):
             out, node = run_get_node(builder)
 
         # check output

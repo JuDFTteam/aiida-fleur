@@ -28,7 +28,7 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, create_fleurinp, clear_database,
+def test_fleur_relax_fleurinp_Si_bulk(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database,
                                       show_workchain_summary):
     """
     full example using FleurRelaxWorkChain with just a fleurinp data as input.
@@ -55,7 +55,7 @@ def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, creat
     builder.scf.fleur = FleurCode
     #print(builder)
 
-    with with_export_cache('fleur_relax_fleurinp_Si.tar.gz'):
+    with enable_archive_cache('fleur_relax_fleurinp_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)

@@ -18,18 +18,11 @@ CONFTEST_LOCATION = Path(__file__).parent.resolve()
 RUN_REGRESSION_TESTS = True
 try:
     import aiida_testing
-    from aiida_testing.export_cache._fixtures import run_with_cache, export_cache, load_cache, hash_code_by_entrypoint
 except ImportError:
     print('AiiDA-testing not in path. Running without regression tests for Workchains and CalcJobs.')
     RUN_REGRESSION_TESTS = False
 
-if RUN_REGRESSION_TESTS:
-    pytest_plugins = [
-        'aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache',
-        'masci_tools.testing.bokeh'
-    ]  # pylint: disable=invalid-name
-else:
-    pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
+pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
 
 
 def pytest_addoption(parser):
@@ -767,6 +760,21 @@ def import_with_migrate(temp_dir):
                     raise
 
     return _import_with_migrate
+
+
+@pytest.fixture
+def load_cache(absolute_archive_path):  # pylint: disable=redefined-outer-name
+
+    def _load_cache(archive_path):
+        #TODO: private import not good
+        from aiida_testing.archive_cache._utils import load_node_archive  # pylint: disable=import-error
+        full_archive_path = absolute_archive_path(archive_path, overwrite=False)
+        # check and load export
+        export_exists = os.path.isfile(full_archive_path)
+        if export_exists:
+            load_node_archive(full_archive_path)  #
+
+    return _load_cache
 
 
 @pytest.fixture(scope='function', autouse=True)

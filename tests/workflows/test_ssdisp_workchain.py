@@ -20,12 +20,8 @@ from aiida_fleur.workflows.ssdisp_conv import FleurSSDispConvWorkChain
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
-def test_fleur_ssdisp_FePt_film(
-        clear_database,
-        with_export_cache,  #run_with_cache,
-        fleur_local_code,
-        inpgen_local_code,
-        show_workchain_summary):
+def test_fleur_ssdisp_FePt_film(clear_database, enable_archive_cache, fleur_local_code, inpgen_local_code,
+                                show_workchain_summary):
     """
     full example using mae workflow with FePt film structure as input.
     """
@@ -101,7 +97,7 @@ def test_fleur_ssdisp_FePt_film(
         'options': options
     }
 
-    with with_export_cache('fleur_ssdisp_FePt.tar.gz'):
+    with enable_archive_cache('fleur_ssdisp_FePt.tar.gz'):
         out, node = run_get_node(FleurSSDispWorkChain, **inputs)
 
     if not node.is_finished_ok:
@@ -174,12 +170,8 @@ def test_fleur_ssdisp_validation_wrong_inputs(fleur_local_code, inpgen_local_cod
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(3000, method='thread')
-def test_fleur_ssdisp_conv_FePt_film(
-        clear_database,
-        with_export_cache,  #run_with_cache,
-        fleur_local_code,
-        inpgen_local_code,
-        show_workchain_summary):
+def test_fleur_ssdisp_conv_FePt_film(clear_database, enable_archive_cache, fleur_local_code, inpgen_local_code,
+                                     show_workchain_summary):
     """
     full example using mae workflow with FePt film structure as input.
     """
@@ -255,7 +247,7 @@ def test_fleur_ssdisp_conv_FePt_film(
         'wf_parameters': wf_para,
     }
 
-    with with_export_cache('fleur_ssdisp_conv_FePt.tar.gz'):
+    with enable_archive_cache('fleur_ssdisp_conv_FePt.tar.gz'):
         out, node = run_get_node(FleurSSDispConvWorkChain, **inputs)
 
     if not node.is_finished_ok:

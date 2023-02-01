@@ -19,7 +19,7 @@ import os
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(2000, method='thread')
-def test_fleur_orbcontrol_structure(with_export_cache, fleur_local_code, inpgen_local_code, generate_smco5_structure,
+def test_fleur_orbcontrol_structure(enable_archive_cache, fleur_local_code, inpgen_local_code, generate_smco5_structure,
                                     clear_database, aiida_caplog, show_workchain_summary):
     """
     Full example using the OrbControl workchain with just a structure as input.
@@ -83,7 +83,7 @@ def test_fleur_orbcontrol_structure(with_export_cache, fleur_local_code, inpgen_
             },
         })
 
-    with with_export_cache('fleur_orbcontrol_structure.tar.gz'):
+    with enable_archive_cache('fleur_orbcontrol_structure.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)

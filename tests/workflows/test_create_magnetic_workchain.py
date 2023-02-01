@@ -34,7 +34,7 @@ class Test_FleurCreateMagneticWorkChain:
                       '(probably) has a different hash due to numerical differences')
     @pytest.mark.regression_test
     @pytest.mark.timeout(9000, method='thread')
-    def test_fleur_create_mag_FePt(self, with_export_cache, fleur_local_code, inpgen_local_code,
+    def test_fleur_create_mag_FePt(self, enable_archive_cache, fleur_local_code, inpgen_local_code,
                                    show_workchain_summary):
         """
         full example using scf workflow with just a fleurinp data as input.
@@ -201,7 +201,7 @@ class Test_FleurCreateMagneticWorkChain:
             })
         }
 
-        with with_export_cache('fleur_create_magnetic_FePt.tar.gz'):
+        with enable_archive_cache('fleur_create_magnetic_FePt.tar.gz'):
             # now run calculation
             out, node = run_get_node(FleurCreateMagneticWorkChain, **inputs)
 
