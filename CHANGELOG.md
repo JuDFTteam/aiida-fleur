@@ -20,7 +20,24 @@ available with releases from the 1.X series of aiida-fleur. Dropped python 3.7 s
 - Removed `constants` module. Now only available in `masci-tools`
 
 
-### New features
+### Improvements
+- New workchain `FleurRelaxTorqueWorkChain` for relaxing non-collinear magnetic configurations
+- Fixes in DFT+U handling
+  - `FleurCalculation`: added `fleurinp_nmmpmat_priority` key to `settings` to control from where to take the `n_mmp_mat` file if it's in the fleurinp and parent_folder input
+  - Fixed several errors in orbcontrol workchain when handling non-converged/failed calculation
+  - Added inputs to orbcontrol to restart from intermediate charge densities
+- Added `inpxml_changes` contextmanager for easier creation of the workflow parameters input of the same name
+```python
+from aiida_fleur.data import inpxml_changes
+
+wf_parameters = {}
+
+with inpxml_changes(wf_parameters) as fm:
+  fm.set_inpchanges({'kmax': 4, 'itmax': 100})
+  fm.set_species('all', {'mtsphere': {'radius': 3}})
+
+print(wf_parameters['inpxml_changes']) #now contains the list like before
+```
 
 
 
