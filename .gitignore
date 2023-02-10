@@ -53,8 +53,9 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
-aiida_fleur/tests/coverage
-aiida_fleur/tests/local_exe/
+tests/coverage
+tests/local_exe/
+tests/workflows/calculations/
 # Translations
 *.mo
 *.pot

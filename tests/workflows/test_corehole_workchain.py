@@ -28,44 +28,42 @@ class Test_FleurCoreholeWorkChain():
 
     @pytest.mark.regression_test
     @pytest.mark.timeout(5000, method='thread')
-    def test_fleur_corehole_W(self, with_export_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
+    def test_fleur_corehole_W(self, enable_archive_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
                               show_workchain_summary):
         """
         full example using FleurCoreholeWorkChain on W.
         Several fleur runs needed, calculation of all only certain coreholes
         """
         from aiida.engine import run_get_node
-        options = Dict(
-            dict={
-                'resources': {
-                    'num_machines': 1,
-                    'num_mpiprocs_per_machine': 1
-                },
-                'max_wallclock_seconds': 60 * 60,
-                'queue_name': '',
-                'withmpi': False,
-            })
+        options = Dict({
+            'resources': {
+                'num_machines': 1,
+                'num_mpiprocs_per_machine': 1
+            },
+            'max_wallclock_seconds': 60 * 60,
+            'queue_name': '',
+            'withmpi': False,
+        })
         #'withmpi': False, 'custom_scheduler_commands': ''}
         options.store()
 
-        parameters = Dict(
-            dict={
-                'atom': {
-                    'element': 'W',
-                    'jri': 833,
-                    'rmt': 2.3,
-                    'dx': 0.015,
-                    'lmax': 8,
-                    'lo': '5p',
-                    'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
-                },
-                'comp': {
-                    'kmax': 3.0,
-                },
-                'kpt': {
-                    'nkpt': 100,
-                }
-            })
+        parameters = Dict({
+            'atom': {
+                'element': 'W',
+                'jri': 833,
+                'rmt': 2.3,
+                'dx': 0.015,
+                'lmax': 8,
+                'lo': '5p',
+                'econfig': '[Kr] 5s2 4d10 4f14| 5p6 5d4 6s2',
+            },
+            'comp': {
+                'kmax': 3.0,
+            },
+            'kpt': {
+                'nkpt': 100,
+            }
+        })
         parameters.store()
 
         #structure = generate_structure_W()
@@ -77,15 +75,14 @@ class Test_FleurCoreholeWorkChain():
         structure.append_atom(position=(0., 0., 0.), symbols='W')
 
         structure.store()
-        wf_para = Dict(
-            dict={
-                'method': 'valence',
-                'hole_charge': 0.5,
-                'atoms': ['all'],
-                'corelevel': ['W,4f', 'W,4p'],  #['W,all'],#
-                'supercell_size': [2, 1, 1],
-                'magnetic': True
-            })
+        wf_para = Dict({
+            'method': 'valence',
+            'hole_charge': 0.5,
+            'atoms': ['all'],
+            'corelevel': ['W,4f', 'W,4p'],  #['W,all'],#
+            'supercell_size': [2, 1, 1],
+            'magnetic': True
+        })
 
         FleurCode = fleur_local_code
         InpgenCode = inpgen_local_code
@@ -104,8 +101,7 @@ class Test_FleurCoreholeWorkChain():
         }
 
         # now run calculation
-        #out, node = run_with_cache(inputs, process_class=FleurCoreholeWorkChain)
-        with with_export_cache('fleur_corehole_W.tar.gz'):
+        with enable_archive_cache('fleur_corehole_W.tar.gz'):
             out, node = run_get_node(FleurCoreholeWorkChain, **inputs)
 
         # check general run

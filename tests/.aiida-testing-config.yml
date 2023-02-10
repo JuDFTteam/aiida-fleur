@@ -1,6 +1,7 @@
 mock_code: 
     inpgen: ./local_exe/inpgen
     fleur: ./local_exe/fleur
-export_cache:
-    calcjob_ignored_attributes: 
-        - environment_variables_double_quotes
+archive_cache:
+    ignore:
+        calcjob_attributes: 
+            - environment_variables_double_quotes

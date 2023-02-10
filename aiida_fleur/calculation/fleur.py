@@ -20,7 +20,6 @@ from aiida.orm import RemoteData
 from aiida.common.datastructures import CalcInfo, CodeInfo
 from aiida.common.utils import classproperty
 from aiida.common.exceptions import InputValidationError
-from aiida.common.exceptions import UniquenessError
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.calculation.fleurinputgen import FleurinputgenCalculation
 
@@ -193,7 +192,7 @@ class FleurCalculation(CalcJob):
     # possible settings_dict keys
     _settings_keys = [
         'additional_retrieve_list', 'remove_from_retrieve_list', 'additional_remotecopy_list',
-        'remove_from_remotecopy_list', 'cmdline'
+        'remove_from_remotecopy_list', 'cmdline', 'fleurinp_nmmpmat_priority'
     ]
 
     @classmethod
@@ -207,7 +206,7 @@ class FleurCalculation(CalcJob):
         spec.input('metadata.options.parser_name', valid_type=str, default='fleur.fleurparser')
 
         # inputs
-        spec.input('fleurinpdata',
+        spec.input('fleurinp',
                    valid_type=FleurinpData,
                    required=False,
                    help='Use a FleurinpData node that specifies the input parameters'
@@ -302,7 +301,7 @@ class FleurCalculation(CalcJob):
                 with_hdf5 = True
             else:
                 with_hdf5 = False
-        # a Fleur calc can be created from a fleurinpData alone
+        # a Fleur calc can be created from a FleurinpData alone
         # (then no parent is needed) all files are in the repo, but usually it is
         # a child of a inpgen calc or an other fleur calc (some or all files are
         # in a remote source). if the User has not changed something, the
@@ -310,15 +309,11 @@ class FleurCalculation(CalcJob):
         # the one from the parent, but the plug-in desgin is in a way that it has
         # to be there and it just copies files if changes occurred..
 
-        if 'fleurinpdata' in self.inputs:
-            fleurinp = self.inputs.fleurinpdata
+        has_fleurinp = 'fleurinp' in self.inputs
+        if has_fleurinp:
+            fleurinp = self.inputs.fleurinp
         else:
             fleurinp = None
-
-        if fleurinp is None:
-            has_fleurinp = False
-        else:
-            has_fleurinp = True
 
         if 'parent_folder' in self.inputs:
             parent_calc_folder = self.inputs.parent_folder
@@ -425,10 +420,16 @@ class FleurCalculation(CalcJob):
                 self._NMMPMAT_HDF5_FILE_NAME in outfolder_filenames):
                 if has_fleurinp:
                     if self._NMMPMAT_FILE_NAME in fleurinp.files:
-                        self.logger.warning('Ignoring {filename} from fleurinp. '
-                                            'There is already an {filename} file '
-                                            'for the parent calculation'.format(filename=self._NMMPMAT_FILE_NAME))
-                        local_copy_list.remove((fleurinp.uuid, self._NMMPMAT_FILE_NAME, self._NMMPMAT_FILE_NAME))
+                        if settings_dict.get('fleurinp_nmmpmat_priority', False):
+                            self.logger.warning('Ignoring {filename} from remote. '
+                                                'There is already an {filename} file '
+                                                'for the fleurinp node'.format(filename=self._NMMPMAT_FILE_NAME))
+                            has_nmmpmat_file = False
+                        else:
+                            self.logger.warning('Ignoring {filename} from fleurinp. '
+                                                'There is already an {filename} file '
+                                                'for the parent calculation'.format(filename=self._NMMPMAT_FILE_NAME))
+                            local_copy_list.remove((fleurinp.uuid, self._NMMPMAT_FILE_NAME, self._NMMPMAT_FILE_NAME))
 
             if fleurinpgen and (not has_fleurinp):
                 for file1 in self._copy_filelist_inpgen:
@@ -451,7 +452,7 @@ class FleurCalculation(CalcJob):
                             message += 'Make sure that the given Fleur code is correctly labelled with/without HDF5'
                         raise InputValidationError(message)
                     local_copy_list.append((outfolder_uuid, file_orig, file_dest))
-                # TODO: get inp.xml from parent fleurinpdata; otherwise it will be doubled in rep
+                # TODO: get inp.xml from parent FleurinpData; otherwise it will be doubled in rep
             elif not fleurinpgen and has_fleurinp:
                 # inp.xml will be copied from fleurinp
                 if with_hdf5:

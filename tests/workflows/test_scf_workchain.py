@@ -23,7 +23,7 @@ TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database,
+def test_fleur_scf_fleurinp_Si(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database,
                                show_workchain_summary):
     """
     full example using scf workflow with just a fleurinp data as input.
@@ -48,7 +48,7 @@ def test_fleur_scf_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
     builder.fleur = fleur_local_code
     #print(builder)
 
-    with with_export_cache('fleur_scf_fleurinp_Si.tar.gz'):
+    with enable_archive_cache('fleur_scf_fleurinp_Si.tar.gz'):
         out, node = run_get_node(builder)
 
     show_workchain_summary(node)
@@ -58,8 +58,6 @@ def test_fleur_scf_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
     n = out['output_scf_wc_para']
     n = n.get_dict()
 
-    print(get_calcjob_report(load_node(n['last_calc_uuid'])))
-
     #print(n)
     assert abs(n.get('distance_charge') - 9.8993e-06) < 2.0e-6
     assert n.get('errors') == []
@@ -68,7 +66,7 @@ def test_fleur_scf_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_structure_Si(with_export_cache, clear_database, fleur_local_code, inpgen_local_code,
+def test_fleur_scf_structure_Si(enable_archive_cache, clear_database, fleur_local_code, inpgen_local_code,
                                 generate_structure2, show_workchain_summary):
     """
     Full regression test of FleurScfWorkchain starting with a crystal structure and parameters
@@ -123,7 +121,7 @@ def test_fleur_scf_structure_Si(with_export_cache, clear_database, fleur_local_c
     builder.inpgen = inpgen_local_code
     print(builder)
 
-    with with_export_cache('fleur_scf_structure_Si.tar.gz'):
+    with enable_archive_cache('fleur_scf_structure_Si.tar.gz'):
         out, node = run_get_node(builder)
     show_workchain_summary(node)
     assert node.is_finished_ok
@@ -142,7 +140,7 @@ def test_fleur_scf_structure_Si(with_export_cache, clear_database, fleur_local_c
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_non_convergence(with_export_cache, clear_database, fleur_local_code, inpgen_local_code,
+def test_fleur_scf_non_convergence(enable_archive_cache, clear_database, fleur_local_code, inpgen_local_code,
                                    generate_structure2, show_workchain_summary):
     """
     Full regression test of FleurScfWorkchain starting with a crystal structure and parameters
@@ -193,7 +191,7 @@ def test_fleur_scf_non_convergence(with_export_cache, clear_database, fleur_loca
     print(builder)
 
     # now run scf with cache fixture
-    with with_export_cache('fleur_scf_structure_Si_non_converged.tar.gz'):
+    with enable_archive_cache('fleur_scf_structure_Si_non_converged.tar.gz'):
         out, node = run_get_node(builder)
 
     show_workchain_summary(node)
@@ -203,7 +201,7 @@ def test_fleur_scf_non_convergence(with_export_cache, clear_database, fleur_loca
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_fleurinp_Si_modifications(with_export_cache, fleur_local_code, create_fleurinp, clear_database,
+def test_fleur_scf_fleurinp_Si_modifications(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database,
                                              show_workchain_summary):
     """
     Full regression test of FleurScfWorkchain starting with a fleurinp data,
@@ -249,7 +247,7 @@ def test_fleur_scf_fleurinp_Si_modifications(with_export_cache, fleur_local_code
     builder.fleur = fleur_local_code
     #print(builder)
 
-    with with_export_cache('fleur_scf_fleurinp_Si_mod.tar.gz'):
+    with enable_archive_cache('fleur_scf_fleurinp_Si_mod.tar.gz'):
         out, node = run_get_node(builder)
 
     show_workchain_summary(node)
@@ -257,10 +255,7 @@ def test_fleur_scf_fleurinp_Si_modifications(with_export_cache, fleur_local_code
     # check output
     n = out['output_scf_wc_para']
     n = n.get_dict()
-    lasto = out['last_fleur_calc_output']
-    calc = lasto.get_incoming().all()[0].node
-    print(calc)
-    print(calc.get_cache_source())
+    lasto = out['last_calc']['output_parameters']
     lasto = lasto.get_dict()
 
     print(n)
@@ -272,7 +267,7 @@ def test_fleur_scf_fleurinp_Si_modifications(with_export_cache, fleur_local_code
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_structure_kpoint_distance(with_export_cache, fleur_local_code, inpgen_local_code, clear_database,
+def test_fleur_scf_structure_kpoint_distance(enable_archive_cache, fleur_local_code, inpgen_local_code, clear_database,
                                              generate_structure2, show_workchain_summary):
     """
     Full regression test of FleurScfWorkchain starting with a fleurinp data,
@@ -329,7 +324,7 @@ def test_fleur_scf_structure_kpoint_distance(with_export_cache, fleur_local_code
     builder.inpgen = inpgen_local_code
     #print(builder)
 
-    with with_export_cache('fleur_scf_structure_Si_kpoints_distance.tar.gz'):
+    with enable_archive_cache('fleur_scf_structure_Si_kpoints_distance.tar.gz'):
         out, node = run_get_node(builder)
 
     show_workchain_summary(node)
@@ -337,10 +332,7 @@ def test_fleur_scf_structure_kpoint_distance(with_export_cache, fleur_local_code
     # check output
     n = out['output_scf_wc_para']
     n = n.get_dict()
-    lasto = out['last_fleur_calc_output']
-    calc = lasto.get_incoming().all()[0].node
-    print(calc)
-    print(calc.get_cache_source())
+    lasto = out['last_calc']['output_parameters']
     lasto = lasto.get_dict()
 
     print(n)
@@ -355,7 +347,7 @@ def test_fleur_scf_structure_kpoint_distance(with_export_cache, fleur_local_code
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_scf_continue_converged(with_export_cache, fleur_local_code, clear_database, get_remote_data_si,
+def test_fleur_scf_continue_converged(enable_archive_cache, fleur_local_code, clear_database, get_remote_data_si,
                                       show_workchain_summary):
     """
     Full regression test of FleurScfWorkchain starting from an already converged fleur calculation,
@@ -395,7 +387,7 @@ def test_fleur_scf_continue_converged(with_export_cache, fleur_local_code, clear
     builder.fleur = fleur_local_code
     #print(builder)
 
-    with with_export_cache('fleur_scf_remote_Si_converged.tar.gz'):
+    with enable_archive_cache('fleur_scf_remote_Si_converged.tar.gz'):
         out, node = run_get_node(builder)
 
     show_workchain_summary(node)
@@ -403,10 +395,7 @@ def test_fleur_scf_continue_converged(with_export_cache, fleur_local_code, clear
     # check output
     n = out['output_scf_wc_para']
     n = n.get_dict()
-    lasto = out['last_fleur_calc_output']
-    calc = lasto.get_incoming().all()[0].node
-    print(calc)
-    print(calc.get_cache_source())
+    lasto = out['last_calc']['output_parameters']
     lasto = lasto.get_dict()
 
     print(n)
@@ -414,6 +403,12 @@ def test_fleur_scf_continue_converged(with_export_cache, fleur_local_code, clear
     assert abs(n.get('distance_charge') - 4.122e-07) < 2.0e-7
     assert n.get('errors') == []
     assert len(n['distance_charge_all']) == 1
+
+    #Test that the provenance is being kept for the fleurinp output
+    assert 'fleurinp' in out
+    #This should be the calcfunction that creates the fleurinp from the remote data
+    assert out['fleurinp'].creator.inputs.original.creator is not None
+    assert out['fleurinp'].creator.inputs.original.creator.inputs.remote_node.uuid == builder.remote_data.uuid
 
 
 @pytest.mark.regression_test
@@ -437,7 +432,7 @@ def test_fleur_scf_validation_wrong_inputs(fleur_local_code, inpgen_local_code, 
     }
     options = Dict(dict=options).store()
 
-    calc_parameters = Dict(dict={})
+    calc_parameters = Dict({})
     calc_parameters.store()
     structure = generate_structure2()
     structure.store()

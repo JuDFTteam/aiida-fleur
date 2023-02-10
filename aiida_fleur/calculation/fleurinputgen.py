@@ -80,9 +80,7 @@ class FleurinputgenCalculation(CalcJob):
         spec.input('metadata.options.parser_name', valid_type=str, default='fleur.fleurinpgenparser')
 
         # declaration of outputs of the calclation
-        #TODO: Should this be renamed? FleurinpData inputs/outputs are called fleurinp everywhere
-        #else
-        spec.output('fleurinpData', valid_type=FleurinpData, required=True)
+        spec.output('fleurinp', valid_type=FleurinpData, required=True)
 
         # exit codes
         # spec.exit_code(251, 'ERROR_WRONG_INPUT_PARAMS',

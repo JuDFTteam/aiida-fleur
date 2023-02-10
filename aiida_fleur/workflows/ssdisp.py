@@ -41,7 +41,7 @@ class FleurSSDispWorkChain(WorkChain):
     This workflow calculates spin spiral dispersion of a structure.
     """
 
-    _workflowversion = '0.2.1'
+    _workflowversion = '0.3.0'
 
     _default_options = {
         'resources': {
@@ -94,7 +94,7 @@ class FleurSSDispWorkChain(WorkChain):
                          cls.force_wo_scf,
                      ), cls.get_results, cls.return_results)
 
-        spec.output('out', valid_type=Dict)
+        spec.output('output_ssdisp_wc_para', valid_type=Dict)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -227,7 +227,7 @@ class FleurSSDispWorkChain(WorkChain):
             for key, val in self.ctx.wf_dict['beta'].items():
                 fm.set_atomgroup_label(key, {'nocoParams': {'beta': val}})
 
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
+        input_scf.wf_parameters = Dict(scf_wf_dict)
 
         if 'structure' in input_scf:  # add info about spin spiral propagation
             if 'calc_parameters' in input_scf:
@@ -239,7 +239,7 @@ class FleurSSDispWorkChain(WorkChain):
                 'y': self.ctx.wf_dict['prop_dir'][1],
                 'z': self.ctx.wf_dict['prop_dir'][2]
             }
-            input_scf.calc_parameters = Dict(dict=calc_parameters)
+            input_scf.calc_parameters = Dict(calc_parameters)
 
         return input_scf
 
@@ -464,7 +464,7 @@ class FleurSSDispWorkChain(WorkChain):
         }
 
         out = save_output_node(Dict(dict=out))
-        self.out('out', out)
+        self.out('output_ssdisp_wc_para', out)
 
     def control_end_wc(self, errormsg):
         """

@@ -115,15 +115,15 @@ Returns nodes
 
 The table below shows all the possible output nodes of the SCF workchain.
 
-+-------------------------+------------------------------------------------------+------------------------------------------------------+
-| name                    | type                                                 | comment                                              |
-+=========================+======================================================+======================================================+
-| output_scf_wc_para      | :py:class:`~aiida.orm.Dict`                          | results of the workchain                             |
-+-------------------------+------------------------------------------------------+------------------------------------------------------+
-| fleurinp                | :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`  | FleurinpData that was used (after all modifications) |
-+-------------------------+------------------------------------------------------+------------------------------------------------------+
-| last_fleur_calc_output  | :py:class:`~aiida.orm.Dict`                          | Link to last FleurCalculation output dict            |
-+-------------------------+------------------------------------------------------+------------------------------------------------------+
++--------------------+-----------------------------------------------------+--------------------------------------------------------------------------+
+| name               | type                                                | comment                                                                  |
++====================+=====================================================+==========================================================================+
+| output_scf_wc_para | :py:class:`~aiida.orm.Dict`                         | results of the workchain                                                 |
++--------------------+-----------------------------------------------------+--------------------------------------------------------------------------+
+| fleurinp           | :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` | FleurinpData that was used (after all modifications)                     |
++--------------------+-----------------------------------------------------+--------------------------------------------------------------------------+
+| last_calc          | Namespace                                           | Link to all output nodes (out dict, retrieved) of last Fleur calculation |
++--------------------+-----------------------------------------------------+--------------------------------------------------------------------------+
 
 More details:
 
@@ -132,8 +132,8 @@ More details:
     actually used for last :py:class:`~aiida_fleur.workflows.scf.FleurScfWorkChain`.
     It usually differs from the input :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`
     because there are some hard-coded modifications in the SCF workchain.
-  * ``last_fleur_calc_output``: :py:class:`~aiida.orm.Dict` - A link to the output node
-    of the last Fleur calculation.
+  * ``last_calc``: namespace - A link to the output nodes
+    of the last Fleur calculation. This includes the retrieved files, remote folder and output dictionary
   * ``output_scf_wc_para``: :py:class:`~aiida.orm.Dict` -  Main results of the workchain. Contains
     errors, warnings, convergence history and other information. An example:
 
@@ -167,7 +167,7 @@ on the setup of the inputs, one of the four supported scenarios will happen:
       Generated :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` will
       be used as an input for the first FLEUR calculation.
 
-3. **structure** + **inpgen** + *calc_parameters* + **remote_data** (FLEUR):
+4. **structure** + **inpgen** + *calc_parameters* + **remote_data** (FLEUR):
 
       inpgen code and optional *calc_parameters* will be used to generate a
       new :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` using a given **structure**.

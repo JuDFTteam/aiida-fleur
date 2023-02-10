@@ -19,13 +19,12 @@ automatic way if an expected failure occurred.
 from aiida.common import AttributeDict
 from aiida.common.exceptions import ValidationError
 from aiida.engine import while_
-from aiida.orm import load_node, Dict, WorkChainNode
+from aiida.orm import Dict, WorkChainNode
 from aiida.plugins import WorkflowFactory, DataFactory
 from aiida.engine.processes.workchains import BaseRestartWorkChain
 from aiida.engine.processes.workchains.utils import process_handler, ProcessHandlerReport
 
-from aiida_fleur.data.fleurinpmodifier import modify_fleurinpdata
-from aiida_fleur.tools.common_fleur_wf import find_last_submitted_workchain
+from masci_tools.util.schema_dict_util import evaluate_attribute
 
 # pylint: disable=invalid-name
 RelaxProcess = WorkflowFactory('fleur.relax')
@@ -128,7 +127,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
             raise ValidationError('Stashed methods are not used and fixing_methods is not empty')
 
         wf_param['inpxml_changes'] = new_changes
-        self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_param)
+        self.ctx.inputs.scf.wf_parameters = Dict(wf_param)
 
     # @process_handler(priority=50, exit_codes=RelaxProcess.exit_codes.ERROR_DID_NOT_RELAX)
     # def _handle_not_conv_error(self, calculation):
@@ -171,8 +170,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
         self.ctx.is_finished = False
         self.report('It is time to switch from straight to BFGS relaxation')
-        last_scf_calc = load_node(calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid'])
-        remote = last_scf_calc.outputs.last_calc.remote_folder
+        remote = calculation.outputs.last_scf.last_calc.remote_folder
         if 'wf_parameters' in self.ctx.inputs:
             parameters = self.ctx.inputs.wf_parameters
             run_final = parameters.get_dict().get('run_final_scf', False)
@@ -183,7 +181,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
         scf_para = self.ctx.inputs.scf.wf_parameters.get_dict()
         scf_para['force_dict']['forcemix'] = 'BFGS'
-        self.ctx.inputs.scf.wf_parameters = Dict(dict=scf_para)
+        self.ctx.inputs.scf.wf_parameters = Dict(scf_para)
 
         if 'structure' in self.ctx.inputs.scf:
             del self.ctx.inputs.scf.structure
@@ -240,7 +238,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
         wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
         if wf_para_dict['force_dict']['forcemix'] != self.ctx.initial_mixing:
             wf_para_dict['force_dict']['forcemix'] = self.ctx.initial_mixing
-            self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
+            self.ctx.inputs.scf.wf_parameters = Dict(wf_para_dict)
 
         self.ctx.use_stashed_shift_methods = True
         self.ctx.fixing_methods = [('shift_value', {'change_dict': {'dTilda': 0.2, 'dVac': 0.2}})]
@@ -264,9 +262,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
                 if len(inputs) == 3:
                     self.ctx.inputs.scf.calc_parameters = inputs[2]
 
-        last_scf_wc_uuid = calculation.outputs.output_relax_wc_para.get_dict()['last_scf_wc_uuid']
-        last_scf = load_node(last_scf_wc_uuid)
-        error_params = last_scf.outputs.last_calc.error_params.get_dict()
+        error_params = calculation.outputs.last_scf.last_calc.error_params.get_dict()
         label1 = int(error_params['overlapped_indices'][0])
         label2 = int(error_params['overlapped_indices'][1])
         value = -(float(error_params['overlaping_value']) + 0.01) / 2
@@ -275,27 +271,17 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
         self.report('Relax WC failed because MT overlapped during relaxation. Try to fix this')
         wf_para_dict = self.ctx.inputs.scf.wf_parameters.get_dict()
 
-        relax_wc = load_node(find_last_submitted_workchain(self.node))
-        scf_wc = load_node(find_last_submitted_workchain(relax_wc))
-        mixing = ''
-        for link in scf_wc.get_outgoing().all():
-            try:
-                if link.node.process_class is modify_fleurinpdata:
-                    tasks = link.node.inputs.modifications.get_dict()['tasks']
-                    for task in tasks:
-                        try:
-                            mixing = task[1][0]['forcemix']
-                        except (IndexError, KeyError):
-                            pass
-            except AttributeError:
-                pass
+        xmltree, schema_dict = calculation.outputs.last_scf.fleurinp.load_inpxml()
+        mixing = evaluate_attribute(xmltree, schema_dict, 'forcemix', optional=True)
+        if not mixing:
+            mixing = 'BFGS'
 
         if value < -0.2 and error_params['iteration_number'] >= 3 and mixing == 'BFGS':
             self.ctx.initial_mixing = 'straight'
 
             self_wf_para = self.ctx.inputs.wf_parameters.get_dict()
             self_wf_para['change_mixing_criterion'] = self_wf_para['change_mixing_criterion'] / 1.4
-            self.ctx.inputs.wf_parameters = Dict(dict=self_wf_para)
+            self.ctx.inputs.wf_parameters = Dict(self_wf_para)
             self.report('Seems it is too early for BFGS. I switch back to straight mixing'
                         ' and reduce change_mixing_criterion by a factor of 1.25')
         elif error_params['iteration_number'] == 2:
@@ -322,7 +308,7 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
         if wf_para_dict['force_dict']['forcemix'] != self.ctx.initial_mixing:
             wf_para_dict['force_dict']['forcemix'] = self.ctx.initial_mixing
-            self.ctx.inputs.scf.wf_parameters = Dict(dict=wf_para_dict)
+            self.ctx.inputs.scf.wf_parameters = Dict(wf_para_dict)
 
         return ProcessHandlerReport(True)
 

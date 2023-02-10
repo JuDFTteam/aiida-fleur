@@ -25,7 +25,8 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
+def test_fleur_band_fleurinp_Si(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
+                                show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -64,19 +65,17 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
     builder.scf.options = orm.Dict(dict=options).store()
     #print(builder)
 
-    with with_export_cache('fleur_band_fleurinp_Si.tar.gz'):
+    with enable_archive_cache('fleur_band_fleurinp_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_banddos_wc_para']
     n = n.get_dict()
-
-    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
     #print(n)
     efermi = 0.2034799610
@@ -86,15 +85,16 @@ def test_fleur_band_fleurinp_Si(with_export_cache, fleur_local_code, create_fleu
     assert n.get('mode') == 'band'
     if with_hdf5:
         assert 'output_banddos_wc_bands' in out
-    assert 'last_calc_retrieved' in out
-    res_files = out['last_calc_retrieved'].list_object_names()
+    assert 'banddos_calc' in out
+    res_files = out['banddos_calc']['retrieved'].list_object_names()
     assert any(
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
+def test_fleur_dos_fleurinp_Si(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
+                               show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -137,20 +137,17 @@ def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
     #print(builder)
 
     # now run calculation
-    #run_with_cache(builder)
-    with with_export_cache('fleur_dos_fleurinp_Si.tar.gz'):
+    with enable_archive_cache('fleur_dos_fleurinp_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_banddos_wc_para']
     n = n.get_dict()
-
-    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
     #print(n)
     efermi = 0.2034799610
@@ -160,16 +157,16 @@ def test_fleur_dos_fleurinp_Si(with_export_cache, fleur_local_code, create_fleur
     assert n.get('mode') == 'dos'
     if with_hdf5:
         assert 'output_banddos_wc_dos' in out
-    assert 'last_calc_retrieved' in out
-    res_files = out['last_calc_retrieved'].list_object_names()
+    assert 'banddos_calc' in out
+    res_files = out['banddos_calc']['retrieved'].list_object_names()
     assert any(
         file in res_files for file in ('banddos.hdf', 'Local.1', 'DOS.1')), f'No bands file retrieved: {res_files}'
 
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, create_fleurinp, clear_database,
-                                         aiida_caplog):
+def test_fleur_band_fleurinp_Si_seekpath(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database,
+                                         aiida_caplog, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Uses seekpath to determine the path for the bandstructure
@@ -212,19 +209,17 @@ def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, cr
     builder.scf.options = orm.Dict(dict=options).store()
     #print(builder)
 
-    with with_export_cache('fleur_band_fleurinp_Si_seek.tar.gz'):
+    with enable_archive_cache('fleur_band_fleurinp_Si_seek.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_banddos_wc_para']
     n = n.get_dict()
-
-    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
     #print(n)
     efermi = 0.2034799610
@@ -234,15 +229,16 @@ def test_fleur_band_fleurinp_Si_seekpath(with_export_cache, fleur_local_code, cr
     assert n.get('mode') == 'band'
     if with_hdf5:
         assert 'output_banddos_wc_bands' in out
-    assert 'last_calc_retrieved' in out
-    res_files = out['last_calc_retrieved'].list_object_names()
+    assert 'banddos_calc' in out
+    res_files = out['banddos_calc']['retrieved'].list_object_names()
     assert any(
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog):
+def test_fleur_band_fleurinp_Si_ase(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database,
+                                    aiida_caplog, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Uses ase bandpath to determine the path through the briloouin zone
@@ -285,19 +281,17 @@ def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_
     builder.scf.options = orm.Dict(dict=options).store()
     #print(builder)
 
-    with with_export_cache('fleur_band_fleurinp_Si_ase.tar.gz'):
+    with enable_archive_cache('fleur_band_fleurinp_Si_ase.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_banddos_wc_para']
     n = n.get_dict()
-
-    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
     #print(n)
     efermi = 0.2034799610
@@ -307,16 +301,16 @@ def test_fleur_band_fleurinp_Si_ase(with_export_cache, fleur_local_code, create_
     assert n.get('mode') == 'band'
     if with_hdf5:
         assert 'output_banddos_wc_bands' in out
-    assert 'last_calc_retrieved' in out
-    res_files = out['last_calc_retrieved'].list_object_names()
+    assert 'banddos_calc' in out
+    res_files = out['banddos_calc']['retrieved'].list_object_names()
     assert any(
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_band_remote_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
-                              get_remote_data_si):
+def test_fleur_band_remote_Si(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
+                              get_remote_data_si, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -353,19 +347,17 @@ def test_fleur_band_remote_Si(with_export_cache, fleur_local_code, create_fleuri
     builder.remote = get_remote_data_si()
     #print(builder)
 
-    with with_export_cache('fleur_band_remote_Si.tar.gz'):
+    with enable_archive_cache('fleur_band_remote_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_banddos_wc_para']
     n = n.get_dict()
-
-    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
     #print(n)
     efermi = 0.2034799610
@@ -375,16 +367,16 @@ def test_fleur_band_remote_Si(with_export_cache, fleur_local_code, create_fleuri
     assert n.get('mode') == 'band'
     if with_hdf5:
         assert 'output_banddos_wc_bands' in out
-    assert 'last_calc_retrieved' in out
-    res_files = out['last_calc_retrieved'].list_object_names()
+    assert 'banddos_calc' in out
+    res_files = out['banddos_calc']['retrieved'].list_object_names()
     assert any(
         file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
 
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_dos_remote_Si(with_export_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
-                             get_remote_data_si):
+def test_fleur_dos_remote_Si(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database, aiida_caplog,
+                             get_remote_data_si, show_workchain_summary):
     """
     Full example using the band dos workchain with just a fleurinp data as input.
     Calls scf, Several fleur runs needed till convergence
@@ -425,20 +417,17 @@ def test_fleur_dos_remote_Si(with_export_cache, fleur_local_code, create_fleurin
     #print(builder)
 
     # now run calculation
-    #run_with_cache(builder)
-    with with_export_cache('fleur_dos_remote_Si.tar.gz'):
+    with enable_archive_cache('fleur_dos_remote_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_banddos_wc_para']
     n = n.get_dict()
-
-    print(get_calcjob_report(orm.load_node(n['last_calc_uuid'])))
 
     #print(n)
     efermi = 0.2034799610
@@ -448,8 +437,8 @@ def test_fleur_dos_remote_Si(with_export_cache, fleur_local_code, create_fleurin
     assert n.get('mode') == 'dos'
     if with_hdf5:
         assert 'output_banddos_wc_dos' in out
-    assert 'last_calc_retrieved' in out
-    res_files = out['last_calc_retrieved'].list_object_names()
+    assert 'banddos_calc' in out
+    res_files = out['banddos_calc']['retrieved'].list_object_names()
     assert any(
         file in res_files for file in ('banddos.hdf', 'Local.1', 'DOS.1')), f'No bands file retrieved: {res_files}'
 

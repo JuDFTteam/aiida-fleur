@@ -44,7 +44,7 @@ class FleurBandDosWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = '0.5.2'
+    _workflowversion = '0.7.0'
 
     _default_options = {
         'resources': {
@@ -101,7 +101,7 @@ class FleurBandDosWorkChain(WorkChain):
                      ), cls.return_results)
 
         spec.output('output_banddos_wc_para', valid_type=Dict)
-        spec.output('last_calc_retrieved', valid_type=FolderData)
+        spec.expose_outputs(FleurBaseWorkChain, namespace='banddos_calc')
         spec.output('output_banddos_wc_bands', valid_type=BandsData, required=False)
         spec.output('output_banddos_wc_dos', valid_type=XyData, required=False)
 
@@ -487,22 +487,15 @@ class FleurBandDosWorkChain(WorkChain):
         # TODO more here
         self.report('BandDOS workflow Done')
 
-        from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
         if self.ctx.banddos_calc:
             self.report(f'A bandstructure/DOS was calculated and is found under pk={self.ctx.banddos_calc.pk}, '
                         f'calculation {self.ctx.banddos_calc}')
-            try:
-                last_calc_uuid = find_last_submitted_calcjob(self.ctx.banddos_calc)
-            except NotExistent:
-                last_calc_uuid = None
-        else:
-            last_calc_uuid = None
 
         try:  # if something failed, we still might be able to retrieve something
             last_calc_out = self.ctx.banddos_calc.outputs.output_parameters
             retrieved = self.ctx.banddos_calc.outputs.retrieved
-            if 'fleurinpdata' in self.ctx.banddos_calc.inputs:
-                fleurinp = self.ctx.banddos_calc.inputs.fleurinpdata
+            if 'fleurinp' in self.ctx.banddos_calc.inputs:
+                fleurinp = self.ctx.banddos_calc.inputs.fleurinp
             else:
                 fleurinp = get_fleurinp_from_remote_data(self.ctx.banddos_calc.inputs.parent_folder)
             last_calc_out_dict = last_calc_out.get_dict()
@@ -556,7 +549,6 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['Warnings'] = self.ctx.warnings
         outputnode_dict['successful'] = self.ctx.successful
-        outputnode_dict['last_calc_uuid'] = last_calc_uuid
         outputnode_dict['mode'] = self.ctx.wf_dict.get('mode')
         outputnode_dict['fermi_energy_band'] = efermi_band
         outputnode_dict['bandgap_band'] = bandgap_band
@@ -567,7 +559,7 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict['bandgap_units'] = 'eV'
         outputnode_dict['fermi_energy_units'] = 'Htr'
 
-        outputnode_t = Dict(dict=outputnode_dict)
+        outputnode_t = Dict(outputnode_dict)
         if last_calc_out:
             outdict = create_band_result_node(outpara=outputnode_t,
                                               last_calc_out=last_calc_out,
@@ -585,8 +577,8 @@ class FleurBandDosWorkChain(WorkChain):
         else:
             outdict = create_band_result_node(outpara=outputnode_t)
 
-        if retrieved:
-            outdict['last_calc_retrieved'] = retrieved
+        if self.ctx.banddos_calc:
+            self.out_many(self.exposed_outputs(self.ctx.banddos_calc, FleurBaseWorkChain, namespace='banddos_calc'))
 
         #TODO parse Bandstructure
         for link_name, node in outdict.items():

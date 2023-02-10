@@ -19,46 +19,40 @@ from aiida_fleur.workflows.dmi import FleurDMIWorkChain
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(2000, method='thread')
-def test_fleur_dmi_FePt_film(
-        clear_database,
-        with_export_cache,  #run_with_cache,
-        fleur_local_code,
-        inpgen_local_code):
+def test_fleur_dmi_FePt_film(clear_database, enable_archive_cache, fleur_local_code, inpgen_local_code):
     """
     full example using mae workflow with FePt film structure as input.
     """
     pytest.importorskip('masci_tools', minversion='0.7.3')
     from aiida.orm import Dict, StructureData
 
-    options = Dict(
-        dict={
-            'resources': {
-                'num_machines': 1,
-                'num_mpiprocs_per_machine': 1
-            },
-            'max_wallclock_seconds': 60 * 60,
-            'queue_name': '',
-            'custom_scheduler_commands': '',
-            'withmpi': False,
-        })
+    options = Dict({
+        'resources': {
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
+        },
+        'max_wallclock_seconds': 60 * 60,
+        'queue_name': '',
+        'custom_scheduler_commands': '',
+        'withmpi': False,
+    })
 
     wf_para_scf = {'fleur_runmax': 2, 'itmax_per_run': 120, 'density_converged': 0.3, 'mode': 'density'}
 
-    wf_para_scf = Dict(dict=wf_para_scf)
+    wf_para_scf = Dict(wf_para_scf)
 
-    wf_para = Dict(
-        dict={
-            'beta': {
-                'all': 1.57079
-            },
-            'sqas_theta': [0.0, 1.57079, 1.57079],
-            'sqas_phi': [0.0, 0.0, 1.57079],
-            'soc_off': [],
-            # 'prop_dir': [1.0, 0.0, 0.0],
-            'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
-            'ref_qss': [0.0, 0.0, 0.0],
-            'inpxml_changes': [],
-        })
+    wf_para = Dict({
+        'beta': {
+            'all': 1.57079
+        },
+        'sqas_theta': [0.0, 1.57079, 1.57079],
+        'sqas_phi': [0.0, 0.0, 1.57079],
+        'soc_off': [],
+        # 'prop_dir': [1.0, 0.0, 0.0],
+        'q_vectors': [[0.0, 0.0, 0.0], [0.125, 0.0, 0.0], [0.250, 0.0, 0.0], [0.375, 0.0, 0.0]],
+        'ref_qss': [0.0, 0.0, 0.0],
+        'inpxml_changes': [],
+    })
 
     bohr_a_0 = 0.52917721092  # A
     a = 7.497 * bohr_a_0
@@ -69,25 +63,24 @@ def test_fleur_dmi_FePt_film(
     structure.append_atom(position=(0., 0., 2.65059 * bohr_a_0), symbols='Pt')
     structure.pbc = (True, True, False)
 
-    parameters = Dict(
-        dict={
-            'atom': {
-                'element': 'Pt',
-                'lmax': 6
-            },
-            'atom2': {
-                'element': 'Fe',
-                'lmax': 6,
-            },
-            'comp': {
-                'kmax': 3.2,
-            },
-            'kpt': {
-                'div1': 8,  #20,
-                'div2': 12,  #24,
-                'div3': 1
-            }
-        })
+    parameters = Dict({
+        'atom': {
+            'element': 'Pt',
+            'lmax': 6
+        },
+        'atom2': {
+            'element': 'Fe',
+            'lmax': 6,
+        },
+        'comp': {
+            'kmax': 3.2,
+        },
+        'kpt': {
+            'div1': 8,  #20,
+            'div2': 12,  #24,
+            'div3': 1
+        }
+    })
 
     FleurCode = fleur_local_code
     InpgenCode = inpgen_local_code
@@ -106,7 +99,7 @@ def test_fleur_dmi_FePt_film(
         'options': options
     }
 
-    with with_export_cache('fleur_dmi_FePt.tar.gz'):
+    with enable_archive_cache('fleur_dmi_FePt.tar.gz'):
         out, node = run_get_node(FleurDMIWorkChain, **inputs)
     print(out)
     print(node)
@@ -114,7 +107,7 @@ def test_fleur_dmi_FePt_film(
 
     assert node.is_finished_ok
 
-    outpara = out.get('out', None)
+    outpara = out.get('output_dmi_wc_para', None)
     assert outpara is not None
     outpara = outpara.get_dict()
     print(outpara)

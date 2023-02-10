@@ -5,8 +5,20 @@ on: [push, pull_request]
 jobs:
 
   docs:
-
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - name: docs
+            sphinx-options: '' 
+            allow-failure: false
+          - name: docs-nitpicky
+            sphinx-options: '-nW'
+            allow-failure: true
+
+    name: ${{ matrix.name }}
+    continue-on-error: ${{ matrix.allow-failure }}
 
     steps:
     - uses: actions/checkout@v2
@@ -21,20 +33,21 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache/pip
-        key: pip-docs-${{ hashFiles('**/setup.json') }}
+        key: pip-docs-${{ hashFiles('**/pyproject.toml') }}
         restore-keys: |
           pip-docs-
 
     - name: Install python dependencies
       run: |
         pip install -e .[docs]
-        reentry scan
+        reentry scan || true
 
     - name: Build documentation
       env:
         READTHEDOCS: 'True'
+        SPHINXOPTS: ${{ matrix.sphinx-options }}
       run: |
-        SPHINXOPTS='-nW' make -C docs html
+        make -C docs html
 
   pre-commit:
 
@@ -49,14 +62,14 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache/pip
-        key: pip-pre-commit-${{ hashFiles('**/setup.json') }}
+        key: pip-pre-commit-${{ hashFiles('**/pyproject.toml') }}
         restore-keys: |
           pip-pre-commit-
 
-    - name: Set up Python 3.7
+    - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 3.8
 
     - name: Install python dependencies
       run: |
@@ -74,8 +87,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
-        aiida: [{version: 'aiida-core==1.6.8', name: '1.6.8'}, {version: 'aiida-core==2.0.1', name: '2.0.1'}]
+        python-version: ["3.8", "3.9", "3.10"]
+        aiida: [{version: 'aiida-core==2.0.1', name: '2.0.1'},{version: 'aiida-core==2.1.2', name: '2.1.2'}]
         masci-tools: [{version: 'masci-tools', name: 'stable'}]
         allowed-to-fail: [false]
         include:
@@ -84,14 +97,9 @@ jobs:
             masci-tools: {version: 'masci-tools', name: 'stable'}
             allowed-to-fail: true
           - python-version: 3.9
-            aiida: {version: 'aiida-core==1.6.8', name: '1.6.8'}
+            aiida: {version: 'aiida-core==2.0.1', name: '2.0.1'}
             masci-tools: {version: 'git+https://github.com/JuDFTteam/masci-tools.git@develop', name: 'develop'}
             allowed-to-fail: true
-        exclude:
-          - python-version: 3.7
-            aiida: {version: 'aiida-core==2.0.1', name: '2.0.1'}
-            masci-tools: {version: 'masci-tools', name: 'stable'}
-            allowed-to-fail: false
 
       fail-fast: false
 
@@ -120,7 +128,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache/pip
-        key: pip-${{ matrix.python-version }}-${{ matrix.aiida.name }}-tests-${{ hashFiles('**/setup.json') }}
+        key: pip-${{ matrix.python-version }}-${{ matrix.aiida.name }}-tests-${{ hashFiles('**/pyproject.toml') }}
         restore-keys: |
           pip-${{ matrix.python-version }}-${{ matrix.aiida.name }}-tests
 
@@ -137,10 +145,10 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install --upgrade wheel setuptools
-        pip install git+https://github.com/JuDFTteam/aiida-testing.git@export_cache_config
+        pip install git+https://github.com/aiidateam/aiida-testing.git@main
+        pip install --no-deps git+https://github.com/aiidateam/aiida-common-workflows.git@master
         pip install .[testing,graphs]
-        pip install ${{ matrix.aiida.version }}
-        pip install ${{ matrix.masci-tools.version }}
+        pip install ${{ matrix.aiida.version }} ${{ matrix.masci-tools.version }}
         reentry scan || true
 
     - name: Run pytest
@@ -149,10 +157,16 @@ jobs:
        # create fake codes for tests to work on ci
        touch local_exe/inpgen && chmod +x local_exe/inpgen
        touch local_exe/fleur && chmod +x local_exe/fleur
-       ./run_all_cov.sh --local-exe-hdf5 --export-cache-allow-migration
+       ./run_all_cov.sh --local-exe-hdf5
 
     - name: Upload report to Codecov
       uses: codecov/codecov-action@v1
       with:
         file: ./tests/coverage.xml
         fail_ci_if_error: False
+
+    - uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: matplotlib-comparison-${{ matrix.python-version }}
+        path: tests/mpl-results

@@ -30,7 +30,7 @@ from aiida_fleur.tools.xml_aiida_modifiers import set_kpointsdata_f
 
 from masci_tools.io.fleurxmlmodifier import ModifierTask, FleurXMLModifier
 from masci_tools.util.xml.common_functions import serialize_xml_objects
-from typing import Any, Generator
+from typing import Any, Generator, Callable
 
 __all__ = ('FleurinpModifier', 'inpxml_changes', 'modify_fleurinpdata')
 
@@ -101,7 +101,7 @@ def inpxml_changes(wf_parameters: dict | orm.Dict | ProcessBuilderNamespace,
         if isinstance(wf_parameters, orm.Dict):
             wf_parameters = wf_parameters.get_dict()
 
-        changes = wf_parameters.get(_INPXML_CHANGES_KEY, [])
+        changes = wf_parameters.get(_INPXML_CHANGES_KEY, [])  #type: ignore[call-arg]
         if append:
             changes.extend(fm.task_list)
         else:
@@ -120,7 +120,7 @@ class FleurinpModifier(FleurXMLModifier):
 
     _extra_functions = {'schema_dict': {'set_kpointsdata': set_kpointsdata_f}}
 
-    def __init__(self, original=None):
+    def __init__(self, original: FleurinpData | None = None) -> None:
         """
         Initiation of FleurinpModifier.
 
@@ -139,7 +139,7 @@ class FleurinpModifier(FleurXMLModifier):
                 )
 
         self._original = original
-        self._other_nodes = {}
+        self._other_nodes: dict[str, orm.Node] = {}
 
         super().__init__()
 
@@ -170,7 +170,7 @@ class FleurinpModifier(FleurXMLModifier):
         return kwargs_complete
 
     @classmethod
-    def apply_fleurinp_modifications(cls, new_fleurinp, modification_tasks):
+    def apply_fleurinp_modifications(cls, new_fleurinp: FleurinpData, modification_tasks: list[ModifierTask]) -> None:
         """
         Apply the modifications working directly on the cloned
         FleurinpData instance. The functions will warn the user if one of the methods
@@ -193,37 +193,32 @@ class FleurinpModifier(FleurXMLModifier):
             if task.name in fleurinp_mod_functions:
                 modification_tasks.remove(task)
                 action = fleurinp_mod_functions[task.name]
-                action(*task.args, **task.kwargs)
+                action(*task.args, **task.kwargs)  #type:ignore[operator]
                 if warn:
                     warnings.warn('The modification methods operating directly adding/removing files '
                                   'are performed before any XML modification methods')
             else:
                 warn = True
 
-    def get_avail_actions(self):
+    def get_avail_actions(self) -> dict[str, Callable]:
         """
         Returns the allowed functions from FleurinpModifier
         """
         outside_actions_fleurinp = {
             'set_kpointsdata': self.set_kpointsdata,
-            'set_atomgr_att': self.set_atomgr_att,
-            'set_atomgr_att_label': self.set_atomgr_att_label,
-            'xml_set_attribv_occ': self.xml_set_attribv_occ,
-            'xml_set_first_attribv': self.xml_set_first_attribv,
-            'xml_set_all_attribv': self.xml_set_all_attribv,
-            'xml_set_text_occ': self.xml_set_text_occ,
-            'xml_set_text': self.xml_set_text,
-            'xml_set_all_text': self.xml_set_all_text,
-            'add_num_to_att': self.add_num_to_att,
             'set_file': self.set_file,
             'del_file': self.del_file
         }
 
         outside_actions_fleurxml = super().get_avail_actions().copy()
 
-        return {**outside_actions_fleurxml, **outside_actions_fleurinp}
+        return {**outside_actions_fleurxml, **outside_actions_fleurinp}  #type: ignore[arg-type]
 
-    def set_kpointsdata(self, kpointsdata_uuid, name=None, switch=False, kpoint_type='path'):
+    def set_kpointsdata(self,
+                        kpointsdata_uuid: int | str | orm.KpointsData,
+                        name: str | None = None,
+                        switch: bool = False,
+                        kpoint_type: str = 'path') -> None:
         """
         Appends a :py:func:`~aiida_fleur.tools.xml_aiida_modifiers.set_kpointsdata_f()` to
         the list of tasks that will be done on the FleurinpData.
@@ -233,16 +228,15 @@ class FleurinpModifier(FleurXMLModifier):
         :param switch: bool if True the entered kpoint list will be used directly (only Max5 or later)
         :param kpoint_type: str of the type of kpoint list given (mesh, path, etc.) only Max5 or later
         """
-        from aiida.orm import KpointsData, load_node
 
-        if isinstance(kpointsdata_uuid, KpointsData):
+        if isinstance(kpointsdata_uuid, orm.KpointsData):
             kpointsdata_uuid = kpointsdata_uuid.uuid
         # Be more careful? Needs to be stored, otherwise we cannot load it
 
         num_nodes = sum('kpoints' in label for label in self._other_nodes) + 1
         node_label = f'kpoints_{num_nodes}'
 
-        self._other_nodes[node_label] = load_node(kpointsdata_uuid)
+        self._other_nodes[node_label] = orm.load_node(kpointsdata_uuid)
         self._tasks.append(
             ModifierTask('set_kpointsdata',
                          args=(kpointsdata_uuid,),
@@ -252,182 +246,8 @@ class FleurinpModifier(FleurXMLModifier):
                              'kpoint_type': kpoint_type
                          }))
 
-    #Modification functions that were renamed in masci-tools
-
-    def shift_value_species_label(self, *args, **kwargs):
-        """
-        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.shift_value_species_label()` to
-        the list of tasks that will be done on the xmltree.
-
-        :param atom_label: string, a label of the atom which specie will be changed. 'all' if set up all species
-        :param attributename: name of the attribute to change
-        :param value_given: value to add or to multiply by
-        :param mode: 'rel' for multiplication or 'abs' for addition
-
-        Kwargs if the attributename does not correspond to a unique path:
-            :param contains: str, this string has to be in the final path
-            :param not_contains: str, this string has to NOT be in the final path
-
-        """
-        if 'label' in kwargs:
-            warnings.warn("The argument label is deprecated. Use 'atom_label' instead", DeprecationWarning)
-            kwargs['atom_label'] = kwargs.pop('label')
-
-        if 'att_name' in kwargs:
-            warnings.warn("The argument att_name is deprecated. Use 'attributename' instead", DeprecationWarning)
-            kwargs['attributename'] = kwargs.pop('att_name')
-
-        if 'value' in kwargs:
-            warnings.warn("The argument value is deprecated. Use 'value_given' instead", DeprecationWarning)
-            kwargs['value_given'] = kwargs.pop('value')
-
-        super().shift_value_species_label(*args, **kwargs)
-
-    def set_species_label(self, *args, **kwargs):
-        """
-        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.set_species_label()` to
-        the list of tasks that will be done on the xmltree.
-
-        :param atom_label: string, a label of the atom which specie will be changed. 'all' to change all the species
-        :param attributedict: a python dict specifying what you want to change.
-
-        """
-        if 'at_label' in kwargs:
-            warnings.warn("The argument at_label is deprecated. Use 'atom_label' instead", DeprecationWarning)
-            kwargs['atom_label'] = kwargs.pop('at_label')
-
-        super().set_species_label(*args, **kwargs)
-
-    def set_atomgr_att(self, *args, **kwargs):
-        """
-        Deprecated method for setting attributes on atomgroups
-        """
-        warnings.warn('This modification method is deprecated.'
-                      "Use the 'set_atomgroup' method instead", DeprecationWarning)
-
-        self.set_atomgroup(*args, **kwargs)
-
-    def set_atomgr_att_label(self, *args, **kwargs):
-        """
-        Deprecated method for setting attributes on atomgroups identified by an atom label
-        """
-        warnings.warn('This modification method is deprecated.'
-                      "Use the 'set_atomgroup_label' method instead", DeprecationWarning)
-
-        if 'atom_label' not in kwargs:
-            if len(args) == 2:
-                kwargs['atom_label'], args = args[1], args[:1]
-            elif len(args) > 2:
-                kwargs['atom_label'], args = args[1], args[:1] + args[2:]
-
-        self.set_atomgroup_label(*args, **kwargs)
-
-    def xml_set_attribv_occ(self, *args, **kwargs):
-        """
-        Deprecated method for setting attributes for occurrences on a specific xpath
-        """
-
-        warnings.warn(
-            'This modification method is deprecated.'
-            "Use the 'xml_set_attrib_value_no_create' or"
-            "'set_attrib_value' method instead", DeprecationWarning)
-
-        if 'xpathn' in kwargs:
-            kwargs['xpath'] = kwargs.pop('xpathn')
-
-        occ = kwargs.pop('occ', None)
-        kwargs.pop('create', None)
-
-        self.xml_set_attrib_value_no_create(*args, **kwargs, occurrences=occ)
-
-    def xml_set_first_attribv(self, *args, **kwargs):
-        """
-        Deprecated method for setting the first attribute on a specific xpath
-        """
-
-        warnings.warn(
-            'This modification method is deprecated.'
-            "Use the 'xml_set_first_attrib_value_no_create' with 'occurrences=0' or"
-            "'set_first_attrib_value' method instead", DeprecationWarning)
-
-        if 'xpathn' in kwargs:
-            kwargs['xpath'] = kwargs.pop('xpathn')
-        kwargs.pop('create', None)
-
-        self.xml_set_attrib_value_no_create(*args, occurrences=0, **kwargs)
-
-    def xml_set_all_attribv(self, *args, **kwargs):
-        """
-        Deprecated method for setting all attributes on a specific xpath
-        """
-
-        warnings.warn(
-            'This modification method is deprecated.'
-            "Use the 'xml_set_attrib_value_no_create' or"
-            "'set_attrib_value' method instead", DeprecationWarning)
-
-        if 'xpathn' in kwargs:
-            kwargs['xpath'] = kwargs.pop('xpathn')
-        kwargs.pop('create', None)
-
-        self.xml_set_attrib_value_no_create(*args, **kwargs)
-
-    def xml_set_text_occ(self, *args, **kwargs):
-        """
-        Deprecated method for setting texts for occurrences on a specific xpath
-        """
-
-        warnings.warn(
-            'This modification method is deprecated.'
-            "Use the 'xml_set_text_no_create' or"
-            "'set_text' method instead", DeprecationWarning)
-
-        if 'xpathn' in kwargs:
-            kwargs['xpath'] = kwargs.pop('xpathn')
-        occ = kwargs.pop('occ', None)
-        kwargs.pop('create', None)
-        kwargs.pop('place_index', None)
-        kwargs.pop('tag_order', None)
-
-        self.xml_set_text_no_create(*args, **kwargs, occurrences=occ)
-
-    def xml_set_text(self, *args, **kwargs):
-        """
-        Deprecated method for setting attributes for occurrences on a specific xpath
-        """
-
-        warnings.warn(
-            'This modification method is deprecated.'
-            "Use the 'xml_set_text_no_create' with 'occurrences=0' or"
-            "'set_first_text' method instead", DeprecationWarning)
-
-        if 'xpathn' in kwargs:
-            kwargs['xpath'] = kwargs.pop('xpathn')
-        kwargs.pop('create', None)
-        kwargs.pop('place_index', None)
-        kwargs.pop('tag_order', None)
-
-        self.xml_set_text_no_create(*args, occurrences=0, **kwargs)
-
-    def xml_set_all_text(self, *args, **kwargs):
-        """
-        Deprecated method for setting attributes for occurrences on a specific xpath
-        """
-
-        warnings.warn(
-            'This modification method is deprecated.'
-            "Use the 'xml_set_text_no_create' or"
-            "'set_text' method instead", DeprecationWarning)
-
-        if 'xpathn' in kwargs:
-            kwargs['xpath'] = kwargs.pop('xpathn')
-        kwargs.pop('create', None)
-        kwargs.pop('place_index', None)
-        kwargs.pop('tag_order', None)
-
-        self.xml_set_text_no_create(*args, **kwargs)
-
-    def xml_create_tag(self, *args, **kwargs):
+    #Modification functions that accept XML elements, which have to be serialized beforehand
+    def xml_create_tag(self, *args: Any, **kwargs: Any) -> None:
         """
         Appends a :py:func:`~masci_tools.util.xml.xml_setters_basic.xml_create_tag()` to
         the list of tasks that will be done on the xmltree.
@@ -443,11 +263,8 @@ class FleurinpModifier(FleurXMLModifier):
         args, kwargs = serialize_xml_objects(args, kwargs)
         super().xml_create_tag(*args, **kwargs)
 
-    def create_tag(self, *args, **kwargs):
+    def create_tag(self, *args: Any, **kwargs: Any) -> None:
         """
-        Deprecation layer for create_tag if there are slashes in the first positional argument or xpath is is in kwargs.
-        We know that it is the old usage.
-
         Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.create_tag()` to
         the list of tasks that will be done on the xmltree.
 
@@ -462,114 +279,11 @@ class FleurinpModifier(FleurXMLModifier):
             :param contains: str, this string has to be in the final path
             :param not_contains: str, this string has to NOT be in the final path
         """
+        self._validate_arguments('create_tag', args, kwargs)
+        args, kwargs = serialize_xml_objects(args, kwargs)
+        super().create_tag(*args, **kwargs)
 
-        old_interface = 'xpath' in kwargs
-        if args:
-            old_interface = old_interface or '/' in args[0]
-
-        if old_interface:
-            warnings.warn(
-                "The 'create_tag' method no longer requires an explicit xpath. "
-                'This Usage is deprecated. '
-                "Use the 'xml_create_tag' method instead or only pass in the name of the tag, you want to use",
-                DeprecationWarning)
-
-            if 'xpath' in kwargs:
-                xpath = kwargs.pop('xpath')
-            else:
-                xpath, args = args[0], args[1:]
-
-            if 'newelement' in kwargs:
-                element = kwargs.pop('newelement')
-            else:
-                element, args = args[0], args[1:]
-
-            self.xml_create_tag(xpath, element, *args, **kwargs)
-        else:
-            self._validate_arguments('create_tag', args, kwargs)
-            args, kwargs = serialize_xml_objects(args, kwargs)
-            super().create_tag(*args, **kwargs)
-
-    def delete_tag(self, *args, **kwargs):
-        """
-        Deprecation layer for delete_tag if there are slashes in the first positional argument or xpath is is in kwargs.
-        We know that it is the old usage.
-
-        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.delete_tag()` to
-        the list of tasks that will be done on the xmltree.
-
-        :param tag: str of the tag to delete
-        :param complex_xpath: an optional xpath to use instead of the simple xpath for the evaluation
-        :param occurrences: int or list of int. Which occurence of the parent nodes to delete a tag.
-                            By default all nodes are used.
-
-        Kwargs:
-            :param contains: str, this string has to be in the final path
-            :param not_contains: str, this string has to NOT be in the final path
-        """
-
-        old_interface = 'xpath' in kwargs
-        if args:
-            old_interface = old_interface or '/' in args[0]
-
-        if old_interface:
-            warnings.warn(
-                "The 'delete_tag' method no longer requires an explicit xpath. "
-                'This Usage is deprecated. '
-                "Use the 'xml_delete_tag' method instead or only pass in the name of the tag, you want to use",
-                DeprecationWarning)
-
-            if 'xpath' in kwargs:
-                xpath = kwargs.pop('xpath')
-            else:
-                xpath, args = args[0], args[1:]
-
-            self.xml_delete_tag(xpath, *args, **kwargs)
-        else:
-            super().delete_tag(*args, **kwargs)
-
-    def delete_att(self, *args, **kwargs):
-        """
-        Deprecation layer for delete_att if there are slashes in the first positional argument or xpath is is in kwargs.
-        We know that it is the old usage.
-
-        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.delete_att()` to
-        the list of tasks that will be done on the xmltree.
-
-        :param tag: str of the attribute to delete
-        :param complex_xpath: an optional xpath to use instead of the simple xpath for the evaluation
-        :param occurrences: int or list of int. Which occurence of the parent nodes to delete a attribute.
-                            By default all nodes are used.
-
-        Kwargs:
-            :param tag_name: str, name of the tag where the attribute should be parsed
-            :param contains: str, this string has to be in the final path
-            :param not_contains: str, this string has to NOT be in the final path
-            :param exclude: list of str, here specific types of attributes can be excluded
-                            valid values are: settable, settable_contains, other
-        """
-
-        old_interface = 'xpath' in kwargs
-        if args:
-            old_interface = old_interface or '/' in args[0]
-
-        if old_interface:
-            warnings.warn(
-                "The 'delete_att' method no longer requires an explicit xpath. "
-                'This Usage is deprecated. '
-                "Use the 'xml_delete_att' method instead or only pass in the name of the attribute, you want to use",
-                DeprecationWarning)
-
-            if 'xpath' in kwargs:
-                xpath = kwargs.pop('xpath')
-            else:
-                xpath, args = args[0], args[1:]
-
-            self.xml_delete_att(xpath, *args, **kwargs)
-        else:
-            super().delete_att(*args, **kwargs)
-
-    def xml_replace_tag(self, *args, **kwargs):
+    def xml_replace_tag(self, *args: Any, **kwargs: Any) -> None:
         """
         Appends a :py:func:`~masci_tools.util.xml.xml_setters_basic.xml_replace_tag()` to
         the list of tasks that will be done on the xmltree.
@@ -583,7 +297,7 @@ class FleurinpModifier(FleurXMLModifier):
         args, kwargs = serialize_xml_objects(args, kwargs)
         super().xml_replace_tag(*args, **kwargs)
 
-    def replace_tag(self, *args, **kwargs):
+    def replace_tag(self, *args: Any, **kwargs: Any) -> None:
         """
         Deprecation layer for replace_tag if there are slashes in the first positional argument or xpath is is in kwargs.
         We know that it is the old usage.
@@ -601,73 +315,14 @@ class FleurinpModifier(FleurXMLModifier):
             :param contains: str, this string has to be in the final path
             :param not_contains: str, this string has to NOT be in the final path
         """
+        self._validate_arguments('replace_tag', args, kwargs)
+        args, kwargs = serialize_xml_objects(args, kwargs)
+        super().replace_tag(*args, **kwargs)
 
-        old_interface = 'xpath' in kwargs
-        if args:
-            old_interface = old_interface or '/' in args[0]
-
-        if old_interface:
-            warnings.warn(
-                "The 'delete_att' method no longer requires an explicit xpath. "
-                'This Usage is deprecated. '
-                "Use the 'xml_delete_att' method instead or only pass in the name of the attribute, you want to use",
-                DeprecationWarning)
-
-            if 'xpath' in kwargs:
-                xpath = kwargs.pop('xpath')
-            else:
-                xpath, args = args[0], args[1:]
-
-            self.xml_replace_tag(xpath, *args, **kwargs)
-        else:
-            self._validate_arguments('replace_tag', args, kwargs)
-            args, kwargs = serialize_xml_objects(args, kwargs)
-            super().replace_tag(*args, **kwargs)
-
-    def add_num_to_att(self, *args, **kwargs):
-        """
-        Deprecated method for adding a number to a attribute at a specific xpath
-        """
-
-        warnings.warn(
-            'This modification method is deprecated.'
-            "Use the 'add_number_to_attrib' or 'add_number_to_first_attrib' method instead", DeprecationWarning)
-
-        #Since the new method takes only an attribute we extract the xpath and pass it in as complex_xpath
-
-        if len(args) == 0:
-            xpath = kwargs.pop('xpathn')
-        else:
-            xpath, args = args[0], args[1:]
-
-        if 'occ' not in kwargs:
-            self.add_number_to_first_attrib(*args, **kwargs, complex_xpath=xpath)
-        else:
-            occ = kwargs.pop('occ')
-            self.add_number_to_attrib(*args, **kwargs, complex_xpath=xpath, occurrences=occ)
-
-    def set_nmmpmat(self, *args, **kwargs):
-        """
-        Appends a :py:func:`~masci_tools.util.xml.xml_setters_nmmpmat.set_nmmpmat()` to
-        the list of tasks that will be done on the xmltree.
-
-        :param species_name: string, name of the species you want to change
-        :param orbital: integer, orbital quantum number of the LDA+U procedure to be modified
-        :param spin: integer, specifies which spin block should be modified
-        :param state_occupations: list, sets the diagonal elements of the density matrix and everything
-                          else to zero
-        :param denmat: matrix, specify the density matrix explicitely
-        :param phi: float, optional angle (radian), by which to rotate the density matrix before writing it
-        :param theta: float, optional angle (radian), by which to rotate the density matrix before writing it
-        """
-
-        if 'occStates' in kwargs:
-            warnings.warn("The argument occStates is deprecated. Use 'state_occupations' instead", DeprecationWarning)
-            kwargs['state_occupations'] = kwargs.pop('occStates')
-
-        super().set_nmmpmat(*args, **kwargs)
-
-    def set_file(self, filename, dst_filename=None, node=None):
+    def set_file(self,
+                 filename: str,
+                 dst_filename: str | None = None,
+                 node: int | str | orm.Data | None = None) -> None:
         """
         Appends a :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.set_file()` to
         the list of tasks that will be done on the FleurinpData instance.
@@ -677,17 +332,17 @@ class FleurinpModifier(FleurXMLModifier):
                              to store it
         :param node: a :class:`~aiida.orm.FolderData` node containing the file
         """
-        from aiida.orm import load_node, Data
 
-        node_uuid = None
+        node_uuid: None | int | str = None
         if node is not None:
-            node_uuid = node
-            if isinstance(node, Data):
+            if isinstance(node, orm.Data):
                 node_uuid = node.uuid
+            else:
+                node_uuid = node
             num_nodes = sum('folder' in label for label in self._other_nodes) + 1
             node_label = f'folder_{num_nodes}'
             # Be more careful? Needs to be stored, otherwise we cannot load it
-            self._other_nodes[node_label] = load_node(node_uuid)
+            self._other_nodes[node_label] = orm.load_node(node_uuid)
 
         self._tasks.append(
             ModifierTask('set_file', args=(filename,), kwargs={
@@ -695,7 +350,7 @@ class FleurinpModifier(FleurXMLModifier):
                 'node': node_uuid
             }))
 
-    def del_file(self, filename):
+    def del_file(self, filename: str) -> None:
         """
         Appends a :py:func:`~aiida_fleur.data.fleurinp.FleurinpData.del_file()` to
         the list of tasks that will be done on the FleurinpData instance.
@@ -704,7 +359,7 @@ class FleurinpModifier(FleurXMLModifier):
         """
         self._tasks.append(ModifierTask('del_file', args=(filename,), kwargs={}))
 
-    def validate(self):
+    def validate(self) -> etree._ElementTree:
         """
         Extracts the schema-file.
         Makes a test if all the changes lead to an inp.xml file that is validated against the
@@ -738,7 +393,7 @@ class FleurinpModifier(FleurXMLModifier):
 
         return xmltree
 
-    def show(self, display=True, validate=False):
+    def show(self, display: bool = True, validate: bool = False) -> etree._ElementTree:
         """
         Applies the modifications and displays/prints the resulting ``inp.xml`` file.
         Does not generate a new
@@ -775,7 +430,7 @@ class FleurinpModifier(FleurXMLModifier):
             print(xmltreestring)
         return xmltree
 
-    def freeze(self):
+    def freeze(self) -> FleurinpData:
         """
         This method applies all the modifications to the input and
         returns a new stored fleurinpData object.
@@ -786,27 +441,29 @@ class FleurinpModifier(FleurXMLModifier):
             raise ValueError('The freeze() method can only be used if a original FleurinpData'
                              ' was given on initialization')
         from aiida.orm import Dict
-        modifications = Dict(dict={'tasks': self._tasks})
+        modifications = Dict({'tasks': self._tasks})
         modifications.description = 'Fleurinpmodifier Tasks and inputs of these.'
         modifications.label = 'Fleurinpdata modifications'
         # This runs in a inline calculation to keep provenance
-        inputs = dict(original=self._original,
-                      modifications=modifications,
-                      metadata={
-                          'label': 'fleurinp modifier',
-                          'description': 'This calcfunction modified an Fleurinpdataobject'
-                      },
-                      **self._other_nodes)
-        out = modify_fleurinpdata(**inputs)
+        inputs = {
+            'original': self._original,
+            'modifications': modifications,
+            'metadata': {
+                'label': 'fleurinp modifier',
+                'description': 'This calcfunction modified an Fleurinpdataobject'
+            },
+            **self._other_nodes
+        }
+        out = modify_fleurinpdata(**inputs)  #type: ignore[arg-type]
         return out
 
     #Deactivate modify_xmlfile method from FleurXMLModifier (Only modify fleurinp)
     def modify_xmlfile(self, *args, **kwargs):  #pylint: disable=missing-function-docstring
-        raise Exception(f'modify_xmlfile is disabled on {self.__class__.__name__}')
+        raise Exception(f'modify_xmlfile is disabled on {self.__class__.__name__}')  #pylint: disable=broad-exception-raised
 
 
 @cf
-def modify_fleurinpdata(original, modifications, **kwargs):
+def modify_fleurinpdata(original: FleurinpData, modifications: orm.Dict, **kwargs: orm.Node) -> FleurinpData:
     """
     A CalcFunction that performs the modification of the given FleurinpData and stores
     the result in a database.

@@ -598,7 +598,7 @@ class FleurCoreholeWorkChain(WorkChain):
         calcs = []
         for corehole in corehole_to_create:
             para = self.ctx.ref_para
-            wf_para = Dict(dict=corehole)
+            wf_para = Dict(corehole)
             #print(corehole)
             #print(base_supercell)
             #print(para)
@@ -620,7 +620,7 @@ class FleurCoreholeWorkChain(WorkChain):
             wf_parameter['add_comp_para'] = self.ctx.add_comp_para
             wf_parameter['inpxml_changes'] = corehole['inpxml_changes']
 
-            wf_parameters = Dict(dict=wf_parameter)
+            wf_parameters = Dict(wf_parameter)
             calcs.append([moved_struc, calc_para, wf_parameters])
         self.ctx.calcs_torun = calcs
         #print('ctx.calcs_torun {}'.format(self.ctx.calcs_torun))
@@ -665,8 +665,8 @@ class FleurCoreholeWorkChain(WorkChain):
         else:
             wf_parameter = para
         wf_parameter['add_comp_para'] = self.ctx.add_comp_para
-        wf_parameters = Dict(dict=wf_parameter)
-        options = Dict(dict=self.ctx.options)
+        wf_parameters = Dict(wf_parameter)
+        options = Dict(self.ctx.options)
         '''
         #res_all = []
         calcs = {}
@@ -811,8 +811,8 @@ class FleurCoreholeWorkChain(WorkChain):
         wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         #wf_parameter['queue_name'] = self.ctx.queue
         #wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
-        wf_parameters = Dict(dict=wf_parameter)
-        options = Dict(dict=self.ctx.options)
+        wf_parameters = Dict(wf_parameter)
+        options = Dict(self.ctx.options)
         #res_all = []
         calcs = {}
         scf_label = 'FleurCoreholeWorkChain cell'
@@ -993,13 +993,13 @@ class FleurCoreholeWorkChain(WorkChain):
         outputnode_dict['errors'] = self.ctx.errors
         outputnode_dict['hints'] = self.ctx.hints
 
-        outputnode = Dict(dict=outputnode_dict)
+        outputnode = Dict(outputnode_dict)
         outdict = {}
         outdict['output_corehole_wc_para'] = outputnode
 
         # To have to ouput node linked to the calculation output nodes
         outnodedict = {}
-        outnode = Dict(dict=outputnode_dict)
+        outnode = Dict(outputnode_dict)
         outnodedict['results_node'] = outnode
 
         # TODO: bad design, make bullet proof.
@@ -1008,7 +1008,7 @@ class FleurCoreholeWorkChain(WorkChain):
             #print(calc)
             #print(calc.get_outgoing().all())
             try:
-                calc_dict = calc.get_outgoing().get_node_by_label(
+                calc_dict = calc.base.links.get_outgoing().get_node_by_label(
                     'output_scf_wc_para')  #calc.outputs.output_scf_wc_para
             except (KeyError, ValueError):
                 print('continue 2')
@@ -1086,11 +1086,13 @@ def prepare_struc_corehole_wf(
     npos = -np.array(pos)
 
     # break the symmetry, make corehole atoms its own species. # pos has to be tuple, unpack problem here.. #TODO rather not so nice
-    inputs = dict(structure=base_supercell,
-                  atoms=[],
-                  site=[],
-                  pos=[(pos[0], pos[1], pos[2])],
-                  new_kinds_names=new_kinds_names)
+    inputs = {
+        'structure': base_supercell,
+        'atoms': [],
+        'site': [],
+        'pos': [(pos[0], pos[1], pos[2])],
+        'new_kinds_names': new_kinds_names
+    }
     if para is not None:
         inputs['parameterdata'] = para
     new_struc, new_para = break_symmetry(**inputs)
@@ -1124,11 +1126,11 @@ def extract_results_corehole(calcs):
 
     calc_uuids = []
     for calc in calcs:
-        print(calc)
-        print(calc.exit_status, calc.exit_message)
-        print(calc.get_outgoing().all())
+        # print(calc)
+        # print(calc.exit_status, calc.exit_message)
+        # print(calc.get_outgoing().all())
         try:
-            calc_uuid = calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
+            calc_uuid = calc.outputs.last_calc.remote_folder.creator.uuid
         except (KeyError, AttributeError):
             print('continue')
             continue

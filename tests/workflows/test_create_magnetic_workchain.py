@@ -34,7 +34,7 @@ class Test_FleurCreateMagneticWorkChain:
                       '(probably) has a different hash due to numerical differences')
     @pytest.mark.regression_test
     @pytest.mark.timeout(9000, method='thread')
-    def test_fleur_create_mag_FePt(self, with_export_cache, fleur_local_code, inpgen_local_code,
+    def test_fleur_create_mag_FePt(self, enable_archive_cache, fleur_local_code, inpgen_local_code,
                                    show_workchain_summary):
         """
         full example using scf workflow with just a fleurinp data as input.
@@ -64,15 +64,15 @@ class Test_FleurCreateMagneticWorkChain:
             'num_relaxed_layers': 3
         }
 
-        wf_para = Dict(dict=wf_para)
+        wf_para = Dict(wf_para)
 
         wf_eos = {'points': 5, 'step': 0.015, 'guess': 1.00}
 
         wf_eos_scf = {'fleur_runmax': 4, 'density_converged': 0.002, 'itmax_per_run': 50, 'inpxml_changes': []}
 
-        wf_eos_scf = Dict(dict=wf_eos_scf)
+        wf_eos_scf = Dict(wf_eos_scf)
 
-        wf_eos = Dict(dict=wf_eos)
+        wf_eos = Dict(wf_eos)
 
         calc_eos = {
             'comp': {
@@ -85,7 +85,7 @@ class Test_FleurCreateMagneticWorkChain:
             }
         }
 
-        calc_eos = Dict(dict=calc_eos)
+        calc_eos = Dict(calc_eos)
 
         options_eos = {
             'resources': {
@@ -99,7 +99,7 @@ class Test_FleurCreateMagneticWorkChain:
             'withmpi': False
         }
 
-        options_eos = Dict(dict=options_eos)
+        options_eos = Dict(options_eos)
 
         wf_relax = {'film_distance_relaxation': False, 'force_criterion': 0.049}  #, 'use_relax_xml': True}
 
@@ -118,8 +118,8 @@ class Test_FleurCreateMagneticWorkChain:
             'inpxml_changes': []
         }
 
-        wf_relax = Dict(dict=wf_relax)
-        wf_relax_scf = Dict(dict=wf_relax_scf)
+        wf_relax = Dict(wf_relax)
+        wf_relax_scf = Dict(wf_relax_scf)
 
         calc_relax = {
             'comp': {
@@ -146,7 +146,7 @@ class Test_FleurCreateMagneticWorkChain:
             },
         }
 
-        calc_relax = Dict(dict=calc_relax)
+        calc_relax = Dict(calc_relax)
 
         options_relax = {
             'resources': {
@@ -160,9 +160,9 @@ class Test_FleurCreateMagneticWorkChain:
             'withmpi': False
         }
 
-        options_relax = Dict(dict=options_relax)
+        options_relax = Dict(options_relax)
 
-        settings = Dict(dict={})
+        settings = Dict({})
 
         inputs = {
             'eos': {
@@ -189,7 +189,7 @@ class Test_FleurCreateMagneticWorkChain:
                 'max_iterations': Int(5)
             },
             'wf_parameters': wf_para,
-            'distance_suggestion': Dict(dict={
+            'distance_suggestion': Dict({
                 'Pt': {
                     'Pt': 4.0,
                     'Fe': 4.0
@@ -201,7 +201,7 @@ class Test_FleurCreateMagneticWorkChain:
             })
         }
 
-        with with_export_cache('fleur_create_magnetic_FePt.tar.gz'):
+        with enable_archive_cache('fleur_create_magnetic_FePt.tar.gz'):
             # now run calculation
             out, node = run_get_node(FleurCreateMagneticWorkChain, **inputs)
 
@@ -275,7 +275,7 @@ class Test_FleurCreateMagneticWorkChain:
         }
         options = Dict(dict=options).store()
 
-        wf_parameters = Dict(dict={'points': 9, 'step': 0.002, 'guess': 1.00, 'wrong_key': None})
+        wf_parameters = Dict({'points': 9, 'step': 0.002, 'guess': 1.00, 'wrong_key': None})
         wf_parameters.store()
         structure = generate_structure2()
         structure.store()

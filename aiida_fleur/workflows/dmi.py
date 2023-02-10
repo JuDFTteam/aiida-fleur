@@ -41,7 +41,7 @@ class FleurDMIWorkChain(WorkChain):
     This workflow calculates DMI energy dispersion of a structure.
     """
 
-    _workflowversion = '0.2.1'
+    _workflowversion = '0.3.0'
 
     _default_options = {
         'resources': {
@@ -97,7 +97,7 @@ class FleurDMIWorkChain(WorkChain):
                          cls.force_wo_scf,
                      ), cls.get_results, cls.return_results)
 
-        spec.output('out', valid_type=Dict)
+        spec.output('output_dmi_wc_para', valid_type=Dict)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -253,7 +253,7 @@ class FleurDMIWorkChain(WorkChain):
             sum_vec = np.array([np.pi / 4.0, np.e / 3.0, np.euler_gamma])
             calc_parameters['qss'] = {'x': sum_vec[0], 'y': sum_vec[1], 'z': sum_vec[2]}
             calc_parameters['soc'] = {'theta': 0.7, 'phi': 0.7}
-            input_scf.calc_parameters = Dict(dict=calc_parameters)
+            input_scf.calc_parameters = Dict(calc_parameters)
         return input_scf
 
     def change_fleurinp(self):
@@ -517,7 +517,7 @@ class FleurDMIWorkChain(WorkChain):
         }
 
         out = save_output_node(Dict(dict=out))
-        self.out('out', out)
+        self.out('output_dmi_wc_para', out)
 
     def control_end_wc(self, errormsg):
         """

@@ -1,9 +1,24 @@
 """
 This module defines XML modifying functions, that require an aiida node as input
 """
+from __future__ import annotations
+
+from masci_tools.util.typing import XMLLike
+from masci_tools.io.parsers.fleur_schema import InputSchemaDict
+from aiida import orm
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal  #type: ignore[assignment]
 
 
-def set_kpointsdata_f(xmltree, schema_dict, kpointsdata_uuid, name=None, switch=False, kpoint_type='path'):
+def set_kpointsdata_f(xmltree: XMLLike,
+                      schema_dict: InputSchemaDict,
+                      kpointsdata_uuid: orm.KpointsData | int | str,
+                      name: str | None = None,
+                      switch: bool = False,
+                      kpoint_type: Literal['path', 'mesh', 'tria', 'tria-bulk', 'spex-mesh'] = 'path') -> XMLLike:
     """This function creates a kpoint list in the inp.xml from a :py:class:`~aiida.orm.KpointsData` Node
     If no weights are given the weight is distibuted equally along the kpoints
 
@@ -18,16 +33,15 @@ def set_kpointsdata_f(xmltree, schema_dict, kpointsdata_uuid, name=None, switch=
     """
     # TODO: check on weights,
     import numpy as np
-    from aiida.orm import KpointsData, load_node
     from aiida.common.exceptions import InputValidationError
     from masci_tools.util.xml.xml_setters_names import set_kpointlist
 
-    if not isinstance(kpointsdata_uuid, KpointsData):
-        KpointsDataNode = load_node(kpointsdata_uuid)
+    if not isinstance(kpointsdata_uuid, orm.KpointsData):
+        KpointsDataNode = orm.load_node(kpointsdata_uuid)
     else:
         KpointsDataNode = kpointsdata_uuid
 
-    if not isinstance(KpointsDataNode, KpointsData):
+    if not isinstance(KpointsDataNode, orm.KpointsData):
         raise InputValidationError('The node given is not a valid KpointsData node.')
 
     try:
@@ -61,6 +75,3 @@ def set_kpointsdata_f(xmltree, schema_dict, kpointsdata_uuid, name=None, switch=
                                  switch=switch)
 
     return xmltree
-
-
-FLEURINPMODIFIER_EXTRA_FUNCS = {'schema_dict': {'set_kpointsdata': set_kpointsdata_f}}

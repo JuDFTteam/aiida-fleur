@@ -231,9 +231,9 @@ class FleurStrainWorkChain(WorkChain):
         inputs['inpgen'] = self.inputs.inpgen
         inputs['fleur'] = self.inputs.fleur
 
-        inputs['options'] = Dict(dict=inputs['options'])
-        inputs['wf_parameters'] = Dict(dict=inputs['wf_parameters'])
-        inputs['calc_parameters'] = Dict(dict=inputs['calc_parameters'])
+        inputs['options'] = Dict(inputs['options'])
+        inputs['wf_parameters'] = Dict(inputs['wf_parameters'])
+        inputs['calc_parameters'] = Dict(inputs['calc_parameters'])
 
         return inputs
 
@@ -279,7 +279,7 @@ class FleurStrainWorkChain(WorkChain):
             t_energylist_peratom.append(t_e / natoms)
             vol_peratom_success.append(self.ctx.volume_peratom[label])
             distancelist.append(dis)
-            calc_uuid = outpara.get('last_calc_uuid')
+            calc_uuid = calc.outputs.last_calc.remote_folder.creator.uuid
             calc_uuids.append(calc_uuid)
             bandgaplist.append(load_node(calc_uuid).res.bandgap)
 
@@ -351,7 +351,7 @@ class FleurStrainWorkChain(WorkChain):
             self.report('Done, but something went wrong.... Probably some individual calculation failed or'
                         ' a scf-cycle did not reach the desired distance.')
 
-        outputnode_t = Dict(dict=outputnode_dict)
+        outputnode_t = Dict(outputnode_dict)
         outdict = create_strain_result_node(outpara=outputnode_t)
 
         # create link to work-chain node

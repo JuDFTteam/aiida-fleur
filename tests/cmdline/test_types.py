@@ -11,6 +11,7 @@
 '''
 Module to test all CLI types of the package.
 '''
+
 import pytest
 import os
 import click

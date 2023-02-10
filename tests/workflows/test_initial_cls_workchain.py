@@ -29,7 +29,7 @@ class Test_FleurInitialCLSWorkChain():
 
     @pytest.mark.regression_test
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_initial_cls_W(self, with_export_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
+    def test_fleur_initial_cls_W(self, enable_archive_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
                                  load_cache):
         """
         full example using FleurInitialCLSWorkChain with just elemental W as input
@@ -79,7 +79,7 @@ class Test_FleurInitialCLSWorkChain():
         structure = load_node('6c7addb7-f688-4afd-8492-7c64861efd70')
         parameters = load_node('b5275b1a-bff7-4cdc-8efc-36c5ddd67f28')
 
-        wf_para = Dict(dict={'references': {'W': [structure.uuid, parameters.uuid]}})
+        wf_para = Dict({'references': {'W': [structure.uuid, parameters.uuid]}})
 
         FleurCode = fleur_local_code
         InpgenCode = inpgen_local_code
@@ -90,7 +90,7 @@ class Test_FleurInitialCLSWorkChain():
                 'description': 'Simple FleurInitialCLSWorkChain test with W bulk',
                 'label': 'FleurInitialCLSWorkChain test_W_bulk'
             },
-            'options': Dict(dict=options),
+            'options': Dict(options),
             'fleur': FleurCode,
             'inpgen': InpgenCode,
             'wf_parameters': wf_para,
@@ -98,7 +98,7 @@ class Test_FleurInitialCLSWorkChain():
             'structure': structure
         }
 
-        with with_export_cache('fleur_initial_cls_W.tar.gz'):
+        with enable_archive_cache('fleur_initial_cls_W.tar.gz'):
             # now run calculation
             out, node = run_get_node(FleurInitialCLSWorkChain, **inputs)
 

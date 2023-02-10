@@ -308,8 +308,11 @@ else:
     configuration.BACKEND = 'django'
     configuration.AIIDADB_PROFILE = 'default'
     #Perform reentry scan
-    from reentry import manager
-    manager.scan()
+    try:
+        from reentry import manager
+        manager.scan()
+    except ImportError:
+        pass
 
 
 '''

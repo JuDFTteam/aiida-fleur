@@ -1,7 +1,7 @@
 ci:
     autoupdate_schedule: monthly
     autofix_prs: true
-    skip: [pylint, version-number]
+    skip: [pylint, mypy]
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
@@ -56,14 +56,16 @@ repos:
     language: system
     exclude: '^(docs/)|(examples/)'
 
-  - id: version-number
-    name: Check version numbers
-    entry: python ./utils/validate_version_consistency.py
-    language: system
+  - id: mypy
+    name: mypy
+    entry: mypy
+    args: [--config-file=pyproject.toml]
+    language: python
+    types: [python]
+    require_serial: true
+    pass_filenames: true
     files: >-
-      (?x)^(
-        setup.json|
-        utils/validate_version_consistency.py|
-        aiida_fleur/__init__.py
-      )$
-    pass_filenames: false
+        (?x)^(
+            aiida_fleur/data/.*py|
+            aiida_fleur/tools/xml_aiida_modifiers.py|
+        )$

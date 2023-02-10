@@ -12,6 +12,9 @@
 Collection of utility routines dealing with StructureData objects
 """
 # TODO move imports to workfuncitons namespace?
+# TODO: MPrester has a new backwards incompatible version in pymatgen
+#       Migrate and solve pylint warning deactivated below
+#pylint: disable=not-context-manager
 
 # from ase import *
 # from ase.lattice.surface import *
@@ -37,7 +40,7 @@ def is_structure(structure):
     """
     from aiida.common import NotExistent
 
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
 
     # Test if StructureData
     if isinstance(structure, StructureData):
@@ -106,7 +109,7 @@ def rescale_nowf(inp_structure, scale):
     the_ase = structure.get_ase()
     new_ase = the_ase.copy()
     new_ase.set_cell(the_ase.get_cell() * np.power(float(scale), 1.0 / 3), scale_atoms=True)
-    rescaled_structure = DataFactory('structure')(ase=new_ase)
+    rescaled_structure = DataFactory('core.structure')(ase=new_ase)
     rescaled_structure.label = f'{scale}  rescaled'  #, structure.uuid)
     #uuids in node labels are bad for caching
     rescaled_structure.pbc = structure.pbc
@@ -164,7 +167,7 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
     new_a2 = [i * na2 for i in old_a2]
     new_a3 = [i * na3 for i in old_a3]
     new_cell = [new_a1, new_a2, new_a3]
-    new_structure = DataFactory('structure')(cell=new_cell, pbc=old_pbc)
+    new_structure = DataFactory('core.structure')(cell=new_cell, pbc=old_pbc)
 
     # insert atoms
     # first create all kinds
@@ -209,64 +212,6 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
 
 # Structure util
 # after ths is in plugin code import these in fleurinp.
-def abs_to_rel(vector, cell):
-    """
-    Converts a position vector in absolute coordinates to relative coordinates.
-
-    :param vector: list or np.array of length 3, vector to be converted
-    :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
-    :return: list of legth 3 of scaled vector, or False if vector was not length 3
-    """
-    warnings.warn(
-        'abs_to_rel will be removed from StructureData_util in the future.'
-        'Use the same function from masci_tools.io.common_functions', DeprecationWarning)
-    from masci_tools.io.common_functions import abs_to_rel  #pylint: disable=redefined-outer-name
-    return abs_to_rel(vector, cell)
-
-
-def abs_to_rel_f(vector, cell, pbc):
-    """
-    Converts a position vector in absolute coordinates to relative coordinates
-    for a film system.
-
-    :param vector: list or np.array of length 3, vector to be converted
-    :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
-    :param pbc: Boundary conditions, List or Tuple of 3 Boolean
-    :return: list of legth 3 of scaled vector, or False if vector was not length 3
-    """
-    warnings.warn(
-        'abs_to_rel_f will be removed from StructureData_util in the future.'
-        'Use the same function from masci_tools.io.common_functions', DeprecationWarning)
-    from masci_tools.io.common_functions import abs_to_rel_f  #pylint: disable=redefined-outer-name
-    return abs_to_rel_f(vector, cell, pbc)
-
-
-def rel_to_abs(vector, cell):
-    """
-    Converts a position vector in internal coordinates to absolute coordinates
-    in Angstrom.
-
-    :param vector: list or np.array of length 3, vector to be converted
-    :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
-    :return: list of legth 3 of scaled vector, or False if vector was not lenth 3
-    """
-    warnings.warn(
-        'rel_to_abs will be removed from StructureData_util in the future.'
-        'Use the same function from masci_tools.io.common_functions', DeprecationWarning)
-    from masci_tools.io.common_functions import rel_to_abs  #pylint: disable=redefined-outer-name
-    return rel_to_abs(vector, cell)
-
-
-def rel_to_abs_f(vector, cell):
-    """
-    Converts a position vector in internal coordinates to absolute coordinates
-    in Angstrom for a film structure (2D).
-    """
-    warnings.warn(
-        'rel_to_abs_f will be removed from StructureData_util in the future.'
-        'Use the same function from masci_tools.io.common_functions', DeprecationWarning)
-    from masci_tools.io.common_functions import rel_to_abs_f  #pylint: disable=redefined-outer-name
-    return rel_to_abs_f(vector, cell)
 
 
 @cf
@@ -297,9 +242,9 @@ def break_symmetry_wf(structure, wf_para, parameterdata=None):
     :param parameterdata: AiiDa ParameterData
     :return: StructureData, a AiiDA crystal structure with new kind specification.
     """
-    Dict = DataFactory('dict')
+    Dict = DataFactory('core.dict')
     if parameterdata is None:
-        parameterdata = Dict(dict={})
+        parameterdata = Dict({})
     wf_dict = wf_para.get_dict()
     atoms = wf_dict.get('atoms', ['all'])
     sites = wf_dict.get('site', [])
@@ -382,7 +327,7 @@ def break_symmetry(structure,
     cell = struc.cell
     pbc = struc.pbc
     sites = struc.sites
-    new_structure = DataFactory('structure')(cell=cell, pbc=pbc)
+    new_structure = DataFactory('core.structure')(cell=cell, pbc=pbc)
 
     for sym in atoms:
         replace.append(sym)
@@ -876,7 +821,7 @@ def move_atoms_incell(structure, vector):
     :return: AiiDA structure
     """
 
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     new_structure = StructureData(cell=structure.cell)
     new_structure.pbc = structure.pbc
     sites = structure.sites
@@ -906,7 +851,7 @@ def find_primitive_cell(structure):
     # return the given structure (Is this good practise for prov?)
     from spglib import find_primitive
     from ase.atoms import Atoms
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
 
     symprec = 1e-7
     # print('old {}'.format(len(structure.sites)))
@@ -1018,7 +963,7 @@ def create_all_slabs(initial_structure,
     """
     :return: a dictionary of structures
     """
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     aiida_strucs = {}
     # pymat_struc = initial_structure.get_pymatgen_structure()
     indices = get_all_miller_indices(initial_structure, miller_index)
@@ -1044,7 +989,7 @@ def create_slap(initial_structure,
     wraps the pymatgen slab generator
     """
     # minimum slab size is in Angstrom!!!
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     pymat_struc = initial_structure.get_pymatgen_structure()
     slabg = SlabGenerator(pymat_struc,
                           miller_index,
@@ -1102,7 +1047,7 @@ def sort_atoms_z_value(structure):
     :param structure: AiiDA structure
     :return: AiiDA structure
     """
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     new_structure = StructureData(cell=structure.cell)
     new_structure.pbc = structure.pbc
     for kind in structure.kinds:
@@ -1716,14 +1661,14 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
     for sym in symbols:
         distance = 0
         partition_function = 0
-        with MPRester(user_api_key) as mat_project:
+        with MPRester(user_api_key) as mat_project:  #pylint: disable=not-context-manager
             mp_entries = mat_project.get_entries_in_chemsys([sym])
         fcc_structure = None
         bcc_structure = None
         for entry in mp_entries:
             if sym != entry.name:
                 continue
-            with MPRester(user_api_key) as mat_project:
+            with MPRester(user_api_key) as mat_project:  #pylint: disable=not-context-manager
                 structure_analyse = mat_project.get_structure_by_material_id(entry.entry_id)
                 en_per_atom = mat_project.query(entry.entry_id, ['energy_per_atom'])[0]['energy_per_atom']
                 structure_analyse.make_supercell([2, 2, 2])
@@ -1748,13 +1693,13 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
             continue
         distance = 0
         partition_function = 0
-        with MPRester(user_api_key) as mat_project:
+        with MPRester(user_api_key) as mat_project:  #pylint: disable=not-context-manager
             mp_entries = mat_project.get_entries_in_chemsys([sym1, sym2])
         for entry in mp_entries:
             name = ''.join([i for i in entry.name if not i.isdigit()])
             if name not in (sym1 + sym2, sym2 + sym1):
                 continue
-            with MPRester(user_api_key) as mat_project:
+            with MPRester(user_api_key) as mat_project:  #pylint: disable=not-context-manager
                 structure_analyse = mat_project.get_structure_by_material_id(entry.entry_id)
                 en_per_atom = mat_project.query(entry.entry_id, ['energy_per_atom'])[0]['energy_per_atom']
                 structure_analyse.make_supercell([2, 2, 2])
@@ -1772,7 +1717,7 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
         bond_data[sym2][sym1] = distance
         print(f'Request completed for {sym1} {sym2} pair')
 
-    return Dict(dict=bond_data)
+    return Dict(bond_data)
 
 
 @cf
@@ -1826,7 +1771,7 @@ def replace_elementf(inp_structure, replace_dict, replace_all):
         # TODO: log something
         return None
 
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
 
     replace_dict = replace_dict.get_dict()
 

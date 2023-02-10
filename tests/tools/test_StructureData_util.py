@@ -18,7 +18,7 @@ def test_is_structure(generate_structure):
     from aiida_fleur.tools.StructureData_util import is_structure
     from aiida.orm import Dict
 
-    dict_test = Dict(dict={})
+    dict_test = Dict({})
     dict_test.store()
 
     structure = generate_structure()
@@ -77,7 +77,7 @@ def test_rescale_nowf(generate_structure):
     for position in positions_old:
         assert tuple(pos * 1.05**(1 / 3.) for pos in position) in positions_rescaled
 
-    no_struc = Dict(dict={})
+    no_struc = Dict({})
     no_rescaled = rescale_nowf(no_struc, 1.05)
     assert no_rescaled is None
 
@@ -110,64 +110,6 @@ def test_supercell(generate_structure):
     no_struc = Int(1)
     no_supercell = supercell_ncf(no_struc, 2, 3, 4)
     assert no_supercell is None
-
-
-def test_abs_to_rel(generate_structure):
-    from aiida_fleur.tools.StructureData_util import abs_to_rel
-
-    structure = generate_structure()
-    cell = structure.cell
-
-    vector = [1.3575, 1.3575, 1.3575]
-    with pytest.deprecated_call():
-        assert np.isclose(abs_to_rel(vector, cell), np.array([0.25, 0.25, 0.25])).all()
-    with pytest.deprecated_call():
-        with pytest.raises(ValueError):
-            assert not abs_to_rel([1], cell)
-
-
-def test_abs_to_rel_f(generate_film_structure):
-    from aiida_fleur.tools.StructureData_util import abs_to_rel_f
-
-    structure = generate_film_structure()
-    cell = structure.cell
-
-    vector = [1.4026317387183, 1.9836207751336, 0.25]
-    with pytest.deprecated_call():
-        assert np.isclose(abs_to_rel_f(vector, cell, pbc=structure.pbc), np.array([0.5, 0.5, 0.25])).all()
-    with pytest.deprecated_call():
-        with pytest.raises(ValueError):
-            abs_to_rel_f([1], cell, pbc=structure.pbc)
-
-
-def test_rel_to_abs(generate_structure):
-    """Test if rel_to_abs for bulk function scales coordinates right"""
-    from aiida_fleur.tools.StructureData_util import rel_to_abs
-
-    structure = generate_structure()
-    cell = structure.cell
-
-    vector = [0.25, 0.25, 0.25]
-    with pytest.deprecated_call():
-        assert np.isclose(rel_to_abs(vector, cell), np.array([1.3575, 1.3575, 1.3575])).all()
-    with pytest.deprecated_call():
-        with pytest.raises(ValueError):
-            assert not rel_to_abs([1], cell)
-
-
-def test_rel_to_abs_f(generate_film_structure):
-    """Test if rel_to_abs film function scales coordinates right"""
-    from aiida_fleur.tools.StructureData_util import rel_to_abs_f
-
-    structure = generate_film_structure()
-    cell = structure.cell
-
-    vector = [0.5, 0.5, 0.25]
-    with pytest.deprecated_call():
-        assert np.isclose(rel_to_abs_f(vector, cell), np.array([1.4026317387183, 1.9836207751336, 0.25])).all()
-    with pytest.deprecated_call():
-        with pytest.raises(ValueError):
-            assert not rel_to_abs_f([1], cell)
 
 
 def test_break_symmetry_wf_film_structure_only(generate_film_structure):
@@ -243,11 +185,13 @@ def test_break_symmetry_corhole(generate_structure):
         }
     })
     new_kinds_names = {'Si': [kind_name + '_corehole1']}
-    inputs = dict(structure=structure,
-                  atoms=[],
-                  site=[],
-                  pos=[(pos[0], pos[1], pos[2])],
-                  new_kinds_names=new_kinds_names)
+    inputs = {
+        'structure': structure,
+        'atoms': [],
+        'site': [],
+        'pos': [(pos[0], pos[1], pos[2])],
+        'new_kinds_names': new_kinds_names
+    }
     if para is not None:
         inputs['parameterdata'] = para
     new_struc, new_para = break_symmetry(**inputs)
@@ -292,23 +236,22 @@ def test_break_symmetry_film_parameters_only_simple(generate_film_structure):
     from aiida.orm import Dict
 
     structure = generate_film_structure()
-    para = Dict(
-        dict={
-            'atom': {
-                'element': 'Fe',
-                'z': 26,
-                'rmt': 2.1,
-                'bmu': -1
-            },
-            'atom1': {
-                'element': 'Pt',
-                'rmt': 2.2,
-                'bmu': 1
-            },
-            'comp': {
-                'kmax': 5.0,
-            }
-        })
+    para = Dict({
+        'atom': {
+            'element': 'Fe',
+            'z': 26,
+            'rmt': 2.1,
+            'bmu': -1
+        },
+        'atom1': {
+            'element': 'Pt',
+            'rmt': 2.2,
+            'bmu': 1
+        },
+        'comp': {
+            'kmax': 5.0,
+        }
+    })
 
     structure_broken, para_out = break_symmetry(structure, parameterdata=para)
     should1 = {
@@ -418,24 +361,23 @@ def test_break_symmetry_film_parameters_only_complex(generate_film_structure):
     from aiida.orm import Dict
 
     structure = generate_film_structure()
-    para = Dict(
-        dict={
-            'atom': {
-                'element': 'Fe',
-                'id': 26.1,
-                'rmt': 2.1,
-                'bmu': -1
-            },
-            'atom1': {
-                'element': 'Pt',
-                'id': 78.1,
-                'rmt': 2.2,
-                'bmu': 1
-            },
-            'comp': {
-                'kmax': 5.0,
-            }
-        })
+    para = Dict({
+        'atom': {
+            'element': 'Fe',
+            'id': 26.1,
+            'rmt': 2.1,
+            'bmu': -1
+        },
+        'atom1': {
+            'element': 'Pt',
+            'id': 78.1,
+            'rmt': 2.2,
+            'bmu': 1
+        },
+        'comp': {
+            'kmax': 5.0,
+        }
+    })
 
     structure_broken, para_out = break_symmetry(structure, parameterdata=para)
     struc_b_fe, para_new_fe = break_symmetry(structure, atoms=['Fe'], parameterdata=para)

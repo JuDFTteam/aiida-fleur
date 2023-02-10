@@ -1,4 +1,4 @@
-fleurinpData:
+fleurinp:
   atomGroups:
   - force:
       calculate: true

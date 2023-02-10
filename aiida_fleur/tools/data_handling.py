@@ -30,14 +30,14 @@ def extract_structure_info(keys, structures=None):
     'init_cls', 'corehole', primitive]
 
     """
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     structure_list = []
 
     from aiida_fleur.tools.StructureData_util import get_spacegroup, is_structure
     from aiida_fleur.tools.StructureData_util import is_primitive
 
     if not structures:
-        StructureData = DataFactory('structure')
+        StructureData = DataFactory('core.structure')
         #t = time.time()
         qb = QB()
         qb.append(StructureData)

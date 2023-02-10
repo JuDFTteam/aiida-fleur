@@ -31,7 +31,7 @@ class FleurMaeConvWorkChain(WorkChain):
     This workflow calculates the Magnetic Anisotropy Energy of a structure.
     """
 
-    _workflowversion = '0.2.1'
+    _workflowversion = '0.3.0'
 
     _default_wf_para = {'sqas': {'label': [0.0, 0.0]}, 'soc_off': []}
     _default_options = {
@@ -54,7 +54,7 @@ class FleurMaeConvWorkChain(WorkChain):
 
         spec.outline(cls.start, cls.converge_scf, cls.get_results, cls.return_results)
 
-        spec.output('out', valid_type=Dict)
+        spec.output('output_mae_conv_wc_para', valid_type=Dict)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -114,7 +114,7 @@ class FleurMaeConvWorkChain(WorkChain):
             calc_parameters = {}
         calc_parameters['soc'] = {'theta': sqa[0], 'phi': sqa[1]}
 
-        input_scf.calc_parameters = Dict(dict=calc_parameters)
+        input_scf.calc_parameters = Dict(calc_parameters)
 
         return input_scf
 
@@ -205,7 +205,7 @@ class FleurMaeConvWorkChain(WorkChain):
 
         # create link to workchain node
         out = save_output_node(Dict(dict=out))
-        self.out('out', out)
+        self.out('output_mae_conv_wc_para', out)
 
         if not self.ctx.energydict:
             return self.exit_codes.ERROR_ALL_SQAS_FAILED

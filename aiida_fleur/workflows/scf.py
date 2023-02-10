@@ -17,6 +17,7 @@ cycle management of a FLEUR calculation with AiiDA.
 # you can use the pattern of the density convergence for this
 # TODO: maybe write dict schema for wf_parameter inputs, how?
 from lxml import etree
+from copy import deepcopy
 
 from aiida.orm import Code, load_node
 from aiida.orm import StructureData, RemoteData, Dict, Bool, Float
@@ -27,12 +28,11 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
-from aiida_fleur.tools.common_fleur_wf import find_last_submitted_calcjob
 from aiida_fleur.tools.create_kpoints_from_distance import create_kpoints_from_distance_parameter
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.calculation.fleur import FleurCalculation
 
-from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
+from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data_cf
 
 from masci_tools.io.parsers.fleur import outxml_parser
 
@@ -59,12 +59,14 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.5.3'
+    _workflowversion = '0.6.3'
     _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
+        'stop_if_last_distance_exceeds': None,
         'energy_converged': 0.002,
         'force_converged': 0.002,
+        'torque_converged': 0.0002,
         'kpoints_distance': None,  # in 1/A, usually 0.1
         'kpoints_force_parity': False,
         'kpoints_force_odd': False,
@@ -85,6 +87,7 @@ class FleurScfWorkChain(WorkChain):
         },
         'use_relax_xml': False,
         'inpxml_changes': [],
+        'drop_mixing_first_iteration': True,
         'straight_iterations': None,
         'initial_straight_mixing': False,
         'initial_ldau_straight_mixing': False,
@@ -123,7 +126,6 @@ class FleurScfWorkChain(WorkChain):
 
         spec.output('fleurinp', valid_type=FleurinpData)
         spec.output('output_scf_wc_para', valid_type=Dict)
-        spec.output('last_fleur_calc_output', valid_type=Dict)
         spec.expose_outputs(FleurBaseWorkChain, namespace='last_calc')
 
         # exit codes
@@ -168,12 +170,12 @@ class FleurScfWorkChain(WorkChain):
                 wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-        fleur = self.inputs.fleur
-        fleur_extras = fleur.extras
-        inpgen_extras = None
-        if 'inpgen' in self.inputs:
-            inpgen = self.inputs.inpgen
-            inpgen_extras = inpgen.extras
+        # fleur = self.inputs.fleur
+        # fleur_extras = fleur.extras
+        # inpgen_extras = None
+        # if 'inpgen' in self.inputs:
+        #     inpgen = self.inputs.inpgen
+        #     inpgen_extras = inpgen.extras
 
         defaultoptions = self._default_options.copy()
         user_options = {}
@@ -216,8 +218,13 @@ class FleurScfWorkChain(WorkChain):
         self.ctx.all_forces = []
         self.ctx.total_energy = []
         self.ctx.nmmp_distance = []
+        self.ctx.x_torques = []
+        self.ctx.y_torques = []
+        self.ctx.alpha_angles = []
+        self.ctx.beta_angles = []
         self.ctx.energydiff = 10000
         self.ctx.forcediff = 10000
+        self.ctx.torquediff = None
         self.ctx.last_charge_density = 10000
         self.ctx.last_nmmp_distance = -10000
         self.ctx.warnings = []
@@ -300,7 +307,7 @@ class FleurScfWorkChain(WorkChain):
 
         # check the mode in wf_dict
         mode = self.ctx.wf_dict['mode']
-        if mode not in ['force', 'density', 'energy', 'spex']:
+        if mode not in ['force', 'density', 'energy', 'spex', 'torque']:
             error = "ERROR: Wrong mode of convergence: one of 'force', 'density', 'energy' or 'gw' was expected."
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
@@ -370,14 +377,13 @@ class FleurScfWorkChain(WorkChain):
         # If given kpt_dist has prio over given calc_parameters
         kpt_dist = self.ctx.wf_dict['kpoints_distance']
         if kpt_dist is not None:
-            cf_para_kpt = Dict(
-                dict={
-                    'distance': kpt_dist,
-                    'force_parity': self.ctx.wf_dict['kpoints_force_parity'],
-                    'force_even': self.ctx.wf_dict['kpoints_force_even'],
-                    'force_odd': self.ctx.wf_dict['kpoints_force_odd'],
-                    'include_gamma': self.ctx.wf_dict['kpoints_force_gamma']
-                })
+            cf_para_kpt = Dict({
+                'distance': kpt_dist,
+                'force_parity': self.ctx.wf_dict['kpoints_force_parity'],
+                'force_even': self.ctx.wf_dict['kpoints_force_even'],
+                'force_odd': self.ctx.wf_dict['kpoints_force_odd'],
+                'include_gamma': self.ctx.wf_dict['kpoints_force_gamma']
+            })
             inputs = {
                 'structure': structure,
                 'calc_parameters': params,
@@ -464,11 +470,11 @@ class FleurScfWorkChain(WorkChain):
                 error = 'Inpgen calculation failed'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
-            fleurin = self.ctx['inpgen'].outputs.fleurinpData
+            fleurin = self.ctx['inpgen'].outputs.fleurinp
         elif 'remote_data' in inputs:
             # In this case only remote_data for input structure is given
             # fleurinp data has to be generated from the remote inp.xml file to use change_fleurinp
-            fleurin = get_fleurinp_from_remote_data(self.inputs.remote_data, store=True)
+            fleurin = get_fleurinp_from_remote_data_cf(self.inputs.remote_data)
             self.report(
                 f'INFO: generated FleurinpData from files {fleurin.files} from remote folder pk={self.inputs.remote_data.pk}'
             )
@@ -511,6 +517,45 @@ class FleurScfWorkChain(WorkChain):
                 fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'spex': 1})
             else:
                 fleurmode.set_inpchanges({'itmax': itmax, 'minDistance': 0.0, 'gw': 1})
+        elif converge_mode == 'torque':
+            #TODO: Allow to select orbitals
+            dist = wf_dict.get('density_converged')
+            fleurmode.set_inpchanges({
+                'itmax': self.ctx.default_itmax,
+                'minDistance': dist,
+                'l_noco': True,
+                # 'numbands': 'all',
+                'ctail': False
+            })
+            fleurmode.set_complex_tag('greensFunction',
+                                      changes={
+                                          'realAxis': {
+                                              'ne': 5400,
+                                              'ellow': -1,
+                                              'elup': 1.0
+                                          },
+                                          'contourSemicircle': {
+                                              'n': 128,
+                                              'eb': -1.0,
+                                              'et': 0.0,
+                                              'alpha': 1.0
+                                          }
+                                      },
+                                      create=True)
+            fleurmode.set_species('all', {
+                'torqueCalculation': {
+                    'kkintgrCutoff': 'd',
+                    'greensfElements': {
+                        's': ['F', 'F', 'F', 'F'],
+                        'p': ['F', 'T', 'T', 'F'],
+                        'd': ['F', 'T', 'T', 'F'],
+                        'f': ['F', 'F', 'F', 'F']
+                    }
+                }
+            },
+                                  create=True)
+            fleurmode.set_attrib_value('l_mperp', True, tag_name='mtNocoParams')
+            fleurmode.set_attrib_value('l_mperp', True, tag_name='greensFunction')
 
         # apply further user dependend changes
         if fchanges:
@@ -551,9 +596,17 @@ class FleurScfWorkChain(WorkChain):
             return status
 
         if 'settings' in self.inputs:
-            settings = self.inputs.settings
+            settings = deepcopy(self.inputs.settings.get_dict())
         else:
             settings = None
+
+        if self.ctx.wf_dict['drop_mixing_first_iteration'] and self.ctx.loop_count == 0:
+            if settings is None:
+                settings = {}
+            remotecopy_list = settings.get('remove_from_remotecopy_list', [])
+            if 'mixing_history*' not in remotecopy_list:
+                remotecopy_list.append('mixing_history*')
+            settings['remove_from_remotecopy_list'] = remotecopy_list
 
         if self.ctx.run_straight_mixing and self.ctx.loop_count == 1:
             status = self.reset_straight_mixing()
@@ -675,6 +728,30 @@ class FleurScfWorkChain(WorkChain):
                     for force_iter in forces:
                         self.ctx.all_forces.append([force for atom, force in force_iter])
 
+            if mode == 'torque':
+
+                with last_base_wc.outputs.retrieved.open(FleurCalculation._OUTXML_FILE_NAME, 'rb') as outxmlfile:
+                    output_dict_torque = outxml_parser(outxmlfile,
+                                                       iteration_to_parse='all',
+                                                       optional_tasks=['torques', 'noco_angles'],
+                                                       ignore_validation=True)
+
+                    x_torques = output_dict_torque.get('torque_x', [])
+                    y_torques = output_dict_torque.get('torque_y', [])
+                    if not isinstance(x_torques[0], list):  # only 1 iterations was done
+                        x_torques = [x_torques]
+                        y_torques = [y_torques]
+
+                    # extract angles from inp.xml because out.xml causes alpha and beta to jump
+                    # alpha_angles = output_dict_torque.get('noco_alpha', [])
+                    # beta_angles = output_dict_torque.get('noco_beta', [])
+                    alpha_angles = [x['nocoParams']['alpha'] for x in self.ctx.fleurinp.inp_dict['atomGroups']]
+                    beta_angles = [x['nocoParams']['beta'] for x in self.ctx.fleurinp.inp_dict['atomGroups']]
+
+                    self.ctx.x_torques.extend(x_torques)
+                    self.ctx.y_torques.extend(y_torques)
+                    self.ctx.alpha_angles = alpha_angles
+                    self.ctx.beta_angles = beta_angles
         else:
             errormsg = 'ERROR: scf wc was not successful, check log for details'
             self.control_end_wc(errormsg)
@@ -722,6 +799,16 @@ class FleurScfWorkChain(WorkChain):
         else:
             self.ctx.forcediff = 'can not be determined'
 
+        if mode == 'torque':
+            x_torques = self.ctx.x_torques
+            y_torques = self.ctx.y_torques
+            if len(x_torques) > 1 and len(y_torques) > 1:
+                max_x_torque_diff = max(abs(x_torques[-1][i] - x_torques[-2][i]) for i in range(len(x_torques[0])))
+                max_y_torque_diff = max(abs(y_torques[-1][i] - y_torques[-2][i]) for i in range(len(y_torques[0])))
+                self.ctx.torquediff = max(max_x_torque_diff, max_y_torque_diff)
+            else:
+                self.ctx.torquediff = 'can not be determined'
+
         if self.ctx.last_nmmp_distance > 0.0 and \
            self.ctx.last_nmmp_distance >= self.ctx.wf_dict['nmmp_converged']:
             ldau_notconverged = True
@@ -752,10 +839,38 @@ class FleurScfWorkChain(WorkChain):
                 else:
                     if not ldau_notconverged:
                         return False
+        elif mode == 'torque':
+            if self.ctx.torquediff == 'can not be determined' and self.ctx.wf_dict.get(
+                    'density_converged') >= self.ctx.last_charge_density:
+                if not ldau_notconverged:
+                    return False
+            elif self.ctx.wf_dict.get('torque_converged') >= self.ctx.torquediff:
+                if not ldau_notconverged:
+                    return False
 
         if self.ctx.loop_count >= self.ctx.max_number_runs:
             self.ctx.reached_conv = False
             return False
+
+        if self.ctx.wf_dict['stop_if_last_distance_exceeds'] is not None:
+            if mode == 'density' and \
+               self.ctx.last_charge_density >= self.ctx.wf_dict['stop_if_last_distance_exceeds']:
+
+                self.report(
+                    f'Stopping because last charge density distance {self.ctx.last_charge_density} me/bohr^3'
+                    f' of the last calculation exceeded the given limit of {self.ctx.wf_dict["stop_if_last_distance_exceeds"]} me/bohr^3'
+                )
+                self.ctx.reached_conv = False
+                return False
+            if mode in ('energy', 'spex') and \
+               self.ctx.energydiff >= self.ctx.wf_dict['stop_if_last_distance_exceeds']:
+
+                self.report(
+                    f'Stopping because last energy difference {self.ctx.energydiff} htr'
+                    f' of the last calculation exceeded the given limit of {self.ctx.wf_dict["stop_if_last_distance_exceeds"]} htr'
+                )
+                self.ctx.reached_conv = False
+                return False
 
         return True
 
@@ -765,13 +880,6 @@ class FleurScfWorkChain(WorkChain):
         This should run through and produce output nodes even if everything failed,
         therefore it only uses results from context.
         """
-        if self.ctx.last_base_wc:
-            try:
-                last_calc_uuid = find_last_submitted_calcjob(self.ctx.last_base_wc)
-            except NotExistent:
-                last_calc_uuid = None
-        else:
-            last_calc_uuid = None
 
         try:  # if something failed, we still might be able to retrieve something
             last_calc_out = self.ctx.last_base_wc.outputs.output_parameters
@@ -803,12 +911,17 @@ class FleurScfWorkChain(WorkChain):
         outputnode_dict['total_energy_units'] = 'Htr'
         outputnode_dict['nmmp_distance'] = last_nmmp_distance
         outputnode_dict['nmmp_distance_all'] = self.ctx.nmmp_distance
-        outputnode_dict['last_calc_uuid'] = last_calc_uuid
         outputnode_dict['total_wall_time'] = self.ctx.total_wall_time
         outputnode_dict['total_wall_time_units'] = 's'
         outputnode_dict['info'] = self.ctx.info
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['errors'] = self.ctx.errors
+
+        if self.ctx.x_torques:
+            outputnode_dict['last_x_torques'] = self.ctx.x_torques[-1]
+            outputnode_dict['last_y_torques'] = self.ctx.y_torques[-1]
+            outputnode_dict['alphas'] = self.ctx.alpha_angles
+            outputnode_dict['betas'] = self.ctx.beta_angles
 
         num_iterations = last_calc_out_dict.get('number_of_iterations_total', None)
         if self.ctx.successful and self.ctx.reached_conv:
@@ -853,11 +966,15 @@ class FleurScfWorkChain(WorkChain):
             if self.ctx.abort:  # some error occurred, do not use the output.
                 self.report('STATUS/ERROR: I abort, see logs and errors/warning/hints in output_scf_wc_para')
 
+        if self.ctx.torquediff is None:
+            self.ctx.torquediff = 9999
+        self.report(f'Torque diff {self.ctx.torquediff}')
+        outputnode_t = Dict(dict=outputnode_dict)
         if self.ctx.last_nmmp_distance > 0.0:
             self.report(f'INFO: The LDA+U density matrix is converged to {self.ctx.last_nmmp_distance} change '
                         'of all matrix elements')
 
-        outputnode_t = Dict(dict=outputnode_dict)
+        outputnode_t = Dict(outputnode_dict)
         # this is unsafe so far, because last_calc_out could not exist...
         if last_calc_out:
             outdict = create_scf_result_node(outpara=outputnode_t,
@@ -869,9 +986,6 @@ class FleurScfWorkChain(WorkChain):
         # Now it always returns changed fleurinp that was actually used in the calculation
         if self.ctx.fleurinp is not None:
             outdict['fleurinp'] = self.ctx.fleurinp
-
-        if last_calc_out:
-            outdict['last_fleur_calc_output'] = last_calc_out
 
         if self.ctx.last_base_wc:
             self.out_many(self.exposed_outputs(self.ctx.last_base_wc, FleurBaseWorkChain, namespace='last_calc'))

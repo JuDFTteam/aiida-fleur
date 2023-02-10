@@ -18,18 +18,11 @@ CONFTEST_LOCATION = Path(__file__).parent.resolve()
 RUN_REGRESSION_TESTS = True
 try:
     import aiida_testing
-    from aiida_testing.export_cache._fixtures import run_with_cache, export_cache, load_cache, hash_code_by_entrypoint
 except ImportError:
     print('AiiDA-testing not in path. Running without regression tests for Workchains and CalcJobs.')
     RUN_REGRESSION_TESTS = False
 
-if RUN_REGRESSION_TESTS:
-    pytest_plugins = [
-        'aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache',
-        'masci_tools.testing.bokeh'
-    ]  # pylint: disable=invalid-name
-else:
-    pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
+pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
 
 
 def pytest_addoption(parser):
@@ -176,22 +169,22 @@ def generate_calc_job_node(fixture_localhost):
         entry_point = format_entry_point_string('aiida.calculations', entry_point_name)
 
         node = orm.CalcJobNode(computer=computer, process_type=entry_point)
-        node.set_attribute('input_filename', 'aiida.in')
-        node.set_attribute('output_filename', 'aiida.out')
-        node.set_attribute('error_filename', 'aiida.err')
+        node.base.attributes.set('input_filename', 'aiida.in')
+        node.base.attributes.set('output_filename', 'aiida.out')
+        node.base.attributes.set('error_filename', 'aiida.err')
         node.set_option('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
         node.set_option('withmpi', True)
         node.set_option('max_wallclock_seconds', 1800)
 
         if retrieve_list is not None:
-            node.set_attribute('retrieve_list', retrieve_list)
+            node.base.attributes.set('retrieve_list', retrieve_list)
         if attributes:
-            node.set_attribute_many(attributes)
+            node.base.attributes.set_many(attributes)
 
         if inputs:
             for link_label, input_node in flatten_inputs(inputs):
                 input_node.store()
-                node.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
+                node.base.links.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
 
         if store:  # needed if test_name is not None
             node.store()
@@ -202,11 +195,11 @@ def generate_calc_job_node(fixture_localhost):
 
             retrieved = orm.FolderData()
             retrieved.put_object_from_tree(filepath)
-            retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+            retrieved.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
             retrieved.store()
 
             remote_folder = orm.RemoteData(computer=computer, remote_path='/tmp')
-            remote_folder.add_incoming(node, link_type=LinkType.CREATE, link_label='remote_folder')
+            remote_folder.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='remote_folder')
             remote_folder.store()
 
         return node
@@ -244,14 +237,15 @@ def generate_smco5_structure():
 
         a = 4.9679
         c = 3.9629
-        cell = np.array([[a, 0.0, 0.0], [a * np.cos(2 * np.pi / 3), a * np.sin(2 * np.pi / 3), 0.0], [0.0, 0.0, c]])
+        cell = np.array([[a, 0.0, 0.0], [-a / 2, a * np.sqrt(3) / 2, 0.0], [0.0, 0.0, c]])
+        cell = np.round(cell, 10)
         structure = StructureData(cell=cell)
-        structure.append_atom(position=[0.0, 0.0, 0.0], symbols='Sm', name='Sm')
-        structure.append_atom(position=np.array([1 / 3, 2 / 3, 0.0]) @ cell, symbols='Co', name='Co')
-        structure.append_atom(position=np.array([2 / 3, 1 / 3, 0.0]) @ cell, symbols='Co', name='Co')
-        structure.append_atom(position=np.array([0.0, 0.5, 0.5]) @ cell, symbols='Co', name='Co')
-        structure.append_atom(position=np.array([0.5, 0.0, 0.5]) @ cell, symbols='Co', name='Co')
-        structure.append_atom(position=np.array([0.5, 0.5, 0.5]) @ cell, symbols='Co', name='Co')
+        structure.append_atom(position=np.array([0.0, 0.0, 0.0]), symbols='Sm', name='Sm')
+        structure.append_atom(position=np.round(np.array([1 / 3, 2 / 3, 0.0]) @ cell, 10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([2 / 3, 1 / 3, 0.0]) @ cell, 10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([0.0, 0.5, 0.5]) @ cell, 10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([0.5, 0.0, 0.5]) @ cell, 10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([0.5, 0.5, 0.5]) @ cell, 10), symbols='Co', name='Co')
 
         return structure
 
@@ -276,7 +270,7 @@ def generate_retrieved_data():
 
         retrieved = orm.FolderData()
         retrieved.put_object_from_tree(filepath)
-        retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+        retrieved.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
         retrieved.store()
         return retrieved
 
@@ -395,8 +389,8 @@ def generate_inputs_base(fixture_code, create_fleurinp, generate_kpoints_mesh):
 
         inputs = {
             'code': fixture_code('fleur'),
-            'fleurinpdata': create_fleurinp(TEST_INPXML_PATH),
-            'options': Dict(dict=default_options)
+            'fleurinp': create_fleurinp(TEST_INPXML_PATH),
+            'options': Dict(default_options)
         }
 
         return inputs
@@ -768,10 +762,44 @@ def import_with_migrate(temp_dir):
     return _import_with_migrate
 
 
+@pytest.fixture
+def load_cache(absolute_archive_path):  # pylint: disable=redefined-outer-name
+
+    def _load_cache(archive_path):
+        #TODO: private import not good
+        from aiida_testing.archive_cache._utils import load_node_archive  # pylint: disable=import-error
+        full_archive_path = absolute_archive_path(archive_path, overwrite=False)
+        # check and load export
+        export_exists = os.path.isfile(full_archive_path)
+        if export_exists:
+            load_node_archive(full_archive_path)  #
+
+    return _load_cache
+
+
 @pytest.fixture(scope='function', autouse=True)
-def clear_database_aiida_fleur(clear_database):  # pylint: disable=redefined-outer-name
+def clear_database_aiida_fleur(aiida_profile_clean):  # pylint: disable=redefined-outer-name
     """Clear the database after each test.
     """
+
+
+@pytest.fixture(scope='function', autouse=True)
+def configure_aiida_loggers(caplog):
+    """
+    Configure the aiida logging to reduce noise in workchain regression tests
+    """
+    import logging
+
+    caplog.set_level(logging.CRITICAL, logger='aiida.export')
+
+    aiida_logger = logging.getLogger('aiida')
+
+    STREAM_HANDLER = [h for h in aiida_logger.handlers if isinstance(h, logging.StreamHandler)][0]
+    aiida_logger.removeHandler(STREAM_HANDLER)
+
+    yield  #Now test runs
+
+    aiida_logger.addHandler(STREAM_HANDLER)
 
 
 @pytest.fixture
@@ -787,11 +815,11 @@ def show_workchain_summary():
 
             calc_info_string = calc_info(node)
 
-            cache_source = node.get_cache_source()
+            cache_source = node.base.caching.get_cache_source()
             if cache_source is None:
                 caching_string = 'Not Cached'
                 if verbose:
-                    caching_string = f'Not Cached {node._get_objects_to_hash()}'
+                    caching_string = f'Not Cached {node.base.caching._get_objects_to_hash()}'
             else:
                 caching_string = f'Cached (Source: <{cache_source}>)'
 

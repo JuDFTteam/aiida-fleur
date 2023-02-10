@@ -31,7 +31,7 @@ class FleurSSDispConvWorkChain(WorkChain):
         This workflow calculates the Spin Spiral Dispersion of a structure.
     """
 
-    _workflowversion = '0.2.1'
+    _workflowversion = '0.3.0'
 
     _default_wf_para = {
         'beta': {
@@ -52,7 +52,7 @@ class FleurSSDispConvWorkChain(WorkChain):
 
         spec.outline(cls.start, cls.converge_scf, cls.get_results, cls.return_results)
 
-        spec.output('out', valid_type=Dict)
+        spec.output('output_ssdisp_conv_wc_para', valid_type=Dict)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -117,7 +117,7 @@ class FleurSSDispConvWorkChain(WorkChain):
             calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
         else:
             calc_parameters['qss'] = {'x': qss[0], 'y': qss[1], 'z': qss[2]}
-        input_scf.calc_parameters = Dict(dict=calc_parameters)
+        input_scf.calc_parameters = Dict(calc_parameters)
 
         return input_scf
 
@@ -208,7 +208,7 @@ class FleurSSDispConvWorkChain(WorkChain):
 
         # create link to workchain node
         out = save_output_node(Dict(dict=out))
-        self.out('out', out)
+        self.out('output_ssdisp_conv_wc_para', out)
 
         if not self.ctx.energydict:
             return self.exit_codes.ERROR_ALL_QVECTORS_FAILED

@@ -129,4 +129,4 @@ class Fleur_inputgenParser(Parser):
             return self.exit_codes.ERROR_FLEURINPDATA_NOT_VALID
 
         self.logger.info('FleurinpData initialized')
-        self.out('fleurinpData', fleurinp)
+        self.out('fleurinp', fleurinp)

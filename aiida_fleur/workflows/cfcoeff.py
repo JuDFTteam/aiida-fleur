@@ -625,7 +625,7 @@ class FleurCFCoeffWorkChain(WorkChain):
             link_label = 'rare_earth_cf'
             outnodedict[link_label] = self.ctx.rare_earth_cf.outputs.output_parameters
             cdn_retrieved = self.ctx.rare_earth_cf.outputs.retrieved
-            xmltree, schema_dict = self.ctx.rare_earth_cf.inputs.fleurinpdata.load_inpxml()
+            xmltree, schema_dict = self.ctx.rare_earth_cf.inputs.fleurinp.load_inpxml()
 
             groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup', list_return=True)
             atomTypes = []
@@ -660,7 +660,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                     pot_retrieved = self.ctx[calc_name].outputs.retrieved
                     outnodedict[link_label] = self.ctx[calc_name].outputs.output_parameters
 
-                    xmltree, schema_dict = self.ctx[calc_name].inputs.fleurinpdata.load_inpxml()
+                    xmltree, schema_dict = self.ctx[calc_name].inputs.fleurinp.load_inpxml()
                     groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup', list_return=True)
                     atomTypes = []
                     for group_index, group in enumerate(groups):
@@ -719,7 +719,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         rare_earth_site_symmetries = []
         if success and len(cf_calc_out['cf_coefficients_atomtypes']) > 0:
             #For this to work the order of the atomtype CANNOT change between the conversions
-            struc = self.ctx.rare_earth_cf.inputs.fleurinpdata.get_structuredata_ncf()
+            struc = self.ctx.rare_earth_cf.inputs.fleurinp.get_structuredata_ncf()
             site_symmetries = get_atomtype_site_symmetry(struc)
             rare_earth_site_symmetries = [
                 site_symmetries[atomtype - 1] for atomtype in cf_calc_out['cf_coefficients_atomtypes']
