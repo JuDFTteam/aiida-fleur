@@ -1434,7 +1434,7 @@ def adjust_film_relaxation(structure,
     return rebuilt_structure
 
 
-def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length=None, last_layer_factor=0.85):
+def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length=None, last_layer_factor=0.85,ILD=None):
     """
     Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
     Works only for films having z-reflection symmetry, for other films check out the adjust_film_relaxation
@@ -1536,7 +1536,9 @@ def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length
 
     prev_distance = 0
 
+    #Now iterate over all other layers
     for i, layer in enumerate(sorted_layers[1:]):
+        layer_copy = deepcopy(layer)
         add_distance1, add_distance2 = suggest_distance_to_previous(i + 1)
         if i == 0:  # the 2nd distance is the distance to the mirror image in films with no central layer
             # for a film with central layer add_distance2 == 0
@@ -1546,13 +1548,15 @@ def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length
         if add_distance1 <= 0 and add_distance2 <= 0:
             raise ValueError('error not implemented')
         prev_distance = max(add_distance1, add_distance2)
-        if i == len(sorted_layers) - 2 and last_layer_factor:
+         
+        if i == len(sorted_layers) - 2 and last_layer_factor and ILD==None:
             prev_distance = prev_distance * last_layer_factor  # last layer should be closer
 
-        layer_copy = deepcopy(layer)
+
         prev_layer_z = max(x.position[2] for x in rebuilt_structure.sites)
 
         for atom in layer_copy:
+            #TODO Hilgers Here z is set think of smth
             atom[0][2] = prev_layer_z + prev_distance  # minus because I build from bottom (inverse)
             rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
             rebuilt_structure.append_atom(position=(atom[0][0], atom[0][1], -atom[0][2]), symbols=atom[1], name=atom[1])
