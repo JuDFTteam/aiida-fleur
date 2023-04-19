@@ -384,7 +384,7 @@ def create_substrate_bulk(wf_dict_node):
 
 
 @cf
-def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node,*args):
+def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node,ild=None):
     """
     Create a film structure those interlayers will be relaxed.
     """
@@ -446,8 +446,8 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node,*args)
                                            decimals=decimals)
 
     bond_length = find_min_distance_unary_structure(tmp_substrate)
-    for ar in args:
-        ILD=ar.get_dict()
+    if ild!=None:
+        ILD=ild.get_dict()
     suggestion = suggestion_node.get_dict()
 
     if adjustment_needed:
