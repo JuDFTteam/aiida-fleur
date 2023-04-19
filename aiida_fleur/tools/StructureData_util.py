@@ -1549,7 +1549,7 @@ def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length
             raise ValueError('error not implemented')
         prev_distance = max(add_distance1, add_distance2)
          
-        if i == len(sorted_layers) - 2 and last_layer_factor and ILD==None:
+        if i == len(sorted_layers) - 2 and last_layer_factor and ILD is None:
             prev_distance = prev_distance * last_layer_factor  # last layer should be closer
 
 
