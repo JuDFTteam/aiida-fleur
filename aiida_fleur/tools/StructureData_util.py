@@ -1469,7 +1469,7 @@ def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length
     structure = sort_atoms_z_value(structure)
 
     suggestion = deepcopy(suggestion)
-    if not ILD is None: ILD=deepcopy(ILD)
+    if not (ILD is None): ILD=deepcopy(ILD)
     if scale_as:
         norm = suggestion[scale_as][scale_as]
         for sym1, sym2 in product(suggestion.keys(), suggestion.keys()):
