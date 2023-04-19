@@ -1469,6 +1469,7 @@ def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length
     structure = sort_atoms_z_value(structure)
 
     suggestion = deepcopy(suggestion)
+    if not ILD is None: ILD=deepcopy(ILD)
     if scale_as:
         norm = suggestion[scale_as][scale_as]
         for sym1, sym2 in product(suggestion.keys(), suggestion.keys()):
@@ -1554,12 +1555,22 @@ def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length
 
 
         prev_layer_z = max(x.position[2] for x in rebuilt_structure.sites)
-
+        if not ILD is None:
+            kjappa=0#Init Counting
+        
         for atom in layer_copy:
             #TODO Hilgers Here z is set think of smth
-            atom[0][2] = prev_layer_z + prev_distance  # minus because I build from bottom (inverse)
+            if ILD is None:
+                atom[0][2] = prev_layer_z + prev_distance  
+            else:
+                if ILD[kjappa]==0.0:
+                    atom[0][2] = prev_layer_z + prev_distance
+                    kjappa+=1
+                else:
+                    atom[0][2] = prev_layer_z +  ILD[kjappa]
+                    kjappa+=1
             rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
-            rebuilt_structure.append_atom(position=(atom[0][0], atom[0][1], -atom[0][2]), symbols=atom[1], name=atom[1])
+            rebuilt_structure.append_atom(position=(atom[0][0], atom[0][1], -atom[0][2]), symbols=atom[1], name=atom[1])# minus at atom[0][2] because the film is built from bottom (inverse)
 
     rebuilt_structure = center_film(rebuilt_structure)
     return rebuilt_structure
