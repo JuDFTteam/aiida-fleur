@@ -76,6 +76,7 @@ class FleurCreateMagneticWorkChain(WorkChain):
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('eos_output', valid_type=Dict, required=False)
         spec.input('optimized_structure', valid_type=StructureData, required=False)
+        spec.input('interlayer_dist', valid_type=Dict, required=False)
         spec.input('distance_suggestion', valid_type=Dict, required=False)
 
         spec.outline(cls.start,
@@ -275,7 +276,8 @@ class FleurCreateMagneticWorkChain(WorkChain):
 
             out_create_structure = create_film_to_relax(wf_dict_node=Dict(dict=self.ctx.wf_dict),
                                                         scaling_parameter=Float(scaling_param),
-                                                        suggestion_node=self.inputs.distance_suggestion)
+                                                        suggestion_node=self.inputs.distance_suggestion,
+                                                        ild=self.inputs.interlayer_distance)
             inputs.scf.structure = out_create_structure['structure']
             substrate = out_create_structure['substrate']
             # TODO: error handling might be needed
@@ -383,7 +385,7 @@ def create_substrate_bulk(wf_dict_node):
 
 
 @cf
-def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
+def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node, ild=None):
     """
     Create a film structure those interlayers will be relaxed.
     """
@@ -445,12 +447,14 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node):
                                            decimals=decimals)
 
     bond_length = find_min_distance_unary_structure(tmp_substrate)
-
+    if ild != None:
+        ILD = ild.get_dict()
     suggestion = suggestion_node.get_dict()
 
     if adjustment_needed:
         if has_z_reflection(structure):
-            structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor)
+            structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor,
+                                                   ILD)
             sym_film = True
         else:
             structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor,
