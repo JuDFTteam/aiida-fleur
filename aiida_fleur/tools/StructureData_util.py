@@ -1575,6 +1575,7 @@ def adjust_sym_film_relaxation(structure,
                     print(atom)
                     kjappa += 1
                     print(kjappa)
+            print("We're here")
             rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
             rebuilt_structure.append_atom(
                 position=(atom[0][0], atom[0][1], -atom[0][2]), symbols=atom[1],
