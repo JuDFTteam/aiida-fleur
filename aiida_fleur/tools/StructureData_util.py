@@ -1564,7 +1564,6 @@ def adjust_sym_film_relaxation(structure,
             kjappa = 0  #Init Counting
 
         for atom in layer_copy:
-            #TODO Hilgers Here z is set think of smth
             if ILD is None:
                 atom[0][2] = prev_layer_z + prev_distance
             else:
@@ -1573,7 +1572,9 @@ def adjust_sym_film_relaxation(structure,
                     kjappa += 1
                 else:
                     atom[0][2] = prev_layer_z + ILD[str(kjappa)]
+                    print(atom)
                     kjappa += 1
+                    print(kjappa)
             rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
             rebuilt_structure.append_atom(
                 position=(atom[0][0], atom[0][1], -atom[0][2]), symbols=atom[1],
