@@ -453,8 +453,10 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node, ild=N
 
     if adjustment_needed:
         if has_z_reflection(structure):
-            structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor,
-                                                   ILD)
+            if not (ild is None): 
+                structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor,ILD)
+            else: 
+                structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor)
             sym_film = True
         else:
             structure = adjust_film_relaxation(structure, suggestion, host_symbol, bond_length, last_layer_factor,
