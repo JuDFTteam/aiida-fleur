@@ -1544,7 +1544,7 @@ def adjust_sym_film_relaxation(structure,
     prev_distance = 0
     if len(ILD.keys())>0:
         kjappa = 0  #Init Counting
-        keyILD=ILD.keys()
+        keyILD=list(ILD)#List of keys
     #Now iterate over all other layers
     for i, layer in enumerate(sorted_layers[1:]):
         layer_copy = deepcopy(layer)
