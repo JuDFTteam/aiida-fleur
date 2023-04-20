@@ -1556,8 +1556,8 @@ def adjust_sym_film_relaxation(structure,
             raise ValueError('error not implemented')
         prev_distance = max(add_distance1, add_distance2)
 
-        if i == len(sorted_layers) - 2 and last_layer_factor and ILD is None:
-            prev_distance = prev_distance * last_layer_factor  # last layer should be closer
+        if i == len(sorted_layers) - 2 and last_layer_factor:
+            if ILD is None: prev_distance = prev_distance * last_layer_factor  # last layer should be closer
 
         prev_layer_z = max(x.position[2] for x in rebuilt_structure.sites)
         if not ILD is None:
