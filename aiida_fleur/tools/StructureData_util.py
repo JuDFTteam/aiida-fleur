@@ -1560,11 +1560,11 @@ def adjust_sym_film_relaxation(structure,
             if ILD is None: prev_distance = prev_distance * last_layer_factor  # last layer should be closer
 
         prev_layer_z = max(x.position[2] for x in rebuilt_structure.sites)
-        if not ILD is None:
+        if len(ILD.keys())>0:
             kjappa = 0  #Init Counting
 
         for atom in layer_copy:
-            if ILD is None:
+            if len(ILD.keys())<=0:
                 atom[0][2] = prev_layer_z + prev_distance
             else:
                 if ILD[str(kjappa)] == 0.0:
