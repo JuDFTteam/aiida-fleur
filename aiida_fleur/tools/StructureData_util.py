@@ -1566,11 +1566,15 @@ def adjust_sym_film_relaxation(structure,
         for atom in layer_copy:
             if len(ILD.keys())<=0:
                 atom[0][2] = prev_layer_z + prev_distance
+                raise ValueError('A')
+
             else:
                 if ILD[keyILD[kjappa]] == 0.0:
                     atom[0][2] = prev_layer_z + prev_distance
                 else:
                     atom[0][2] = prev_layer_z + ILD[keyILD[kjappa]]
+                    raise ValueError('error not implemented'+str(kjappa)+str(ILD)+str(keyILD))
+
                     print(atom)
                     print(kjappa)
             print("We're here")
