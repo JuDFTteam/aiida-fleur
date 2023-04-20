@@ -1568,11 +1568,11 @@ def adjust_sym_film_relaxation(structure,
             if ILD is None:
                 atom[0][2] = prev_layer_z + prev_distance
             else:
-                if ILD[kjappa] == 0.0:
+                if ILD[str(kjappa)] == 0.0:
                     atom[0][2] = prev_layer_z + prev_distance
                     kjappa += 1
                 else:
-                    atom[0][2] = prev_layer_z + ILD[kjappa]
+                    atom[0][2] = prev_layer_z + ILD[str(kjappa)]
                     kjappa += 1
             rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
             rebuilt_structure.append_atom(
