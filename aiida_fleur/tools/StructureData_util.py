@@ -1543,7 +1543,7 @@ def adjust_sym_film_relaxation(structure,
 
     prev_distance = 0
     if len(ILD.keys())>0:
-        kjappa = 0  #Init Counting
+    #Init Counting
         keyILD=list(ILD)#List of keys
     #Now iterate over all other layers
     for i, layer in enumerate(sorted_layers[1:]):
@@ -1569,20 +1569,18 @@ def adjust_sym_film_relaxation(structure,
                 raise ValueError('A')
 
             else:
-                if ILD[keyILD[kjappa]] == 0.0:
+                if ILD[keyILD[i]] == 0.0:
                     atom[0][2] = prev_layer_z + prev_distance
                 else:
-                    atom[0][2] = prev_layer_z + ILD[keyILD[kjappa]]
-                    raise ValueError('error not implemented'+str(kjappa)+str(ILD)+str(keyILD))
+                    atom[0][2] = prev_layer_z + ILD[keyILD[i]]
+                    raise ValueError('error not implemented'+str(i)+str(ILD)+str(keyILD))
 
                     print(atom)
-                    print(kjappa)
             print("We're here")
             rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
             rebuilt_structure.append_atom(
                 position=(atom[0][0], atom[0][1], -atom[0][2]), symbols=atom[1],
                 name=atom[1])  # minus at atom[0][2] because the film is built from bottom (inverse)
-        if  len(ILD.keys())>0 and ILD[keyILD[kjappa]] != 0.0: kjappa = kjappa + 1
     rebuilt_structure = center_film(rebuilt_structure)
     return rebuilt_structure
 
