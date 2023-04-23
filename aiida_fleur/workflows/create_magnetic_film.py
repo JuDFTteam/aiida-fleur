@@ -273,15 +273,14 @@ class FleurCreateMagneticWorkChain(WorkChain):
                     return self.exit_codes.ERROR_EOS_FAILED
             # print(eos_output.get_dict())
             scaling_param = eos_output.get_dict()['scaling_gs']
-
-            try:
+            if 'interlayer_dist' in self.inputs:
                 ild=self.inputs.interlayer_dist
-            except:
+            else:
                 ild=None
             out_create_structure = create_film_to_relax(wf_dict_node=Dict(dict=self.ctx.wf_dict),
                                                         scaling_parameter=Float(scaling_param),
                                                         suggestion_node=self.inputs.distance_suggestion,
-                                                        ild=self.inputs.interlayer_dist)
+                                                        ild=ild)
             
             inputs.scf.structure = out_create_structure['structure']
             substrate = out_create_structure['substrate']
@@ -452,10 +451,10 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node, ild=N
                                            decimals=decimals)
 
     bond_length = find_min_distance_unary_structure(tmp_substrate)
-    try:
-        ILD = ild.get_dict()
-    except:
+    if ild==None:
         ILD=None
+    else:
+        ILD = ild.get_dict()
     suggestion = suggestion_node.get_dict()
 
     if adjustment_needed:
