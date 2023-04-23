@@ -452,8 +452,10 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node, ild=N
                                            decimals=decimals)
 
     bond_length = find_min_distance_unary_structure(tmp_substrate)
-    if not (ild is None):
+    try:
         ILD = ild.get_dict()
+    except:
+        ILD=None
     suggestion = suggestion_node.get_dict()
 
     if adjustment_needed:
