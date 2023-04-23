@@ -275,14 +275,14 @@ class FleurCreateMagneticWorkChain(WorkChain):
             scaling_param = eos_output.get_dict()['scaling_gs']
 
             try:
-                out_create_structure = create_film_to_relax(wf_dict_node=Dict(dict=self.ctx.wf_dict),
+                ild=self.inputs.interlayer_dist
+            except:
+                ild=None
+            out_create_structure = create_film_to_relax(wf_dict_node=Dict(dict=self.ctx.wf_dict),
                                                         scaling_parameter=Float(scaling_param),
                                                         suggestion_node=self.inputs.distance_suggestion,
                                                         ild=self.inputs.interlayer_dist)
-            except:
-                out_create_structure = create_film_to_relax(wf_dict_node=Dict(dict=self.ctx.wf_dict),
-                                                        scaling_parameter=Float(scaling_param),
-                                                        suggestion_node=self.inputs.distance_suggestion)
+            
             inputs.scf.structure = out_create_structure['structure']
             substrate = out_create_structure['substrate']
             # TODO: error handling might be needed
