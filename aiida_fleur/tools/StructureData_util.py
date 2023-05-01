@@ -1542,12 +1542,12 @@ def adjust_sym_film_relaxation(structure,
             rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], atom[0][2]), name=atom[1])
 
     prev_distance = 0
-    if ILD!=None:
-        if len(ILD.keys())>0:
-    #Init Counting
-            keyILD=list(ILD)#List of keys
+    if ILD != None:
+        if len(ILD.keys()) > 0:
+            #Init Counting
+            keyILD = list(ILD)  #List of keys
     else:
-        keyILD=0
+        keyILD = 0
     #Now iterate over all other layers
     for i, layer in enumerate(sorted_layers[1:]):
         layer_copy = deepcopy(layer)
@@ -1562,12 +1562,13 @@ def adjust_sym_film_relaxation(structure,
         prev_distance = max(add_distance1, add_distance2)
 
         if i == len(sorted_layers) - 2 and last_layer_factor:
-            if ILD is None: prev_distance = prev_distance * last_layer_factor  # last layer should be closer
+            if ILD is None:
+                prev_distance = prev_distance * last_layer_factor  # last layer should be closer
 
         prev_layer_z = max(x.position[2] for x in rebuilt_structure.sites)
 
         for atom in layer_copy:
-            if ILD==None:
+            if ILD == None:
                 atom[0][2] = prev_layer_z + prev_distance
             else:
                 if ILD[keyILD[i]] == 0.0:
