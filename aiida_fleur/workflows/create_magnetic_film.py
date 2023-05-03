@@ -451,7 +451,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node, ild=N
                                            decimals=decimals)
 
     bond_length = find_min_distance_unary_structure(tmp_substrate)
-    if ild == None:
+    if ild is None:
         ILD = None
     else:
         ILD = ild.get_dict()
@@ -459,7 +459,7 @@ def create_film_to_relax(wf_dict_node, scaling_parameter, suggestion_node, ild=N
 
     if adjustment_needed:
         if has_z_reflection(structure):
-            if not (ild is None):
+            if ild is not None:
                 structure = adjust_sym_film_relaxation(structure, suggestion, host_symbol, bond_length,
                                                        last_layer_factor, ILD)
             else:

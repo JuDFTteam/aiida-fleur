@@ -1474,7 +1474,7 @@ def adjust_sym_film_relaxation(structure,
     structure = sort_atoms_z_value(structure)
 
     suggestion = deepcopy(suggestion)
-    if not (ILD is None):
+    if ILD is not None:
         ILD = deepcopy(ILD)
     if scale_as:
         norm = suggestion[scale_as][scale_as]
@@ -1542,7 +1542,7 @@ def adjust_sym_film_relaxation(structure,
             rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], atom[0][2]), name=atom[1])
 
     prev_distance = 0
-    if ILD != None:
+    if ILD is not None:
         if len(ILD.keys()) > 0:
             #Init Counting
             keyILD = list(ILD)  #List of keys
@@ -1568,7 +1568,7 @@ def adjust_sym_film_relaxation(structure,
         prev_layer_z = max(x.position[2] for x in rebuilt_structure.sites)
 
         for atom in layer_copy:
-            if ILD == None:
+            if ILD is None:
                 atom[0][2] = prev_layer_z + prev_distance
             else:
                 if ILD[keyILD[i]] == 0.0:
