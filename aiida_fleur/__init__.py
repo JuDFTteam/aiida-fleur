@@ -11,4 +11,4 @@
 """
 AiiDA Plugin for running the FLEUR code and its input generator. Also includes high-level workchains and utilities
 """
-__version__ = '2.0.0a0'
+__version__ = '2.0.0'
