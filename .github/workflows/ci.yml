@@ -88,7 +88,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
-        aiida: [{version: 'aiida-core==2.0.1', name: '2.0.1'},{version: 'aiida-core==2.1.2', name: '2.1.2'}]
+        aiida: [{version: 'aiida-core==2.0.1', name: '2.0.1'},{version: 'aiida-core==2.3.0', name: '2.3.0'}]
         masci-tools: [{version: 'masci-tools', name: 'stable'}]
         bokeh-version: ['bokeh==3.0.3']
         mpl-version: ['matplotlib==3.6.3']
