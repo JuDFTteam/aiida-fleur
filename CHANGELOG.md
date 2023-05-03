@@ -3,6 +3,7 @@
 ## v.2.0.0
 First release with official support for AiiDA version 2.0. Support for AiiDA 1.X is only
 available with releases from the 1.X series of aiida-fleur. Dropped python 3.7 support.
+Added support for python 3.11.
 
 ### Breaking changes
 - The entries `last_calc_uuid` from output dictionary of `FleurSCFWorkChain` and `last_scf_wc_uuid` from `FleurRelaxWorkChain` are removed. Reasoning for this is that having UUIDs in the output dictionary makes it impossible to take advantage of AiiDA's caching mechanism. Both workchains expose the relevant outputs of the under the namespaces `last_calc` and `last_scf` respectively
