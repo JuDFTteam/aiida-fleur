@@ -80,9 +80,7 @@ class FleurinputgenCalculation(CalcJob):
         spec.input('metadata.options.parser_name', valid_type=str, default='fleur.fleurinpgenparser')
 
         # declaration of outputs of the calclation
-        #TODO: Should this be renamed? FleurinpData inputs/outputs are called fleurinp everywhere
-        #else
-        spec.output('fleurinpData', valid_type=FleurinpData, required=True)
+        spec.output('fleurinp', valid_type=FleurinpData, required=True)
 
         # exit codes
         # spec.exit_code(251, 'ERROR_WRONG_INPUT_PARAMS',
@@ -244,17 +242,17 @@ def _lowercase_dict(dic, dict_name):
     """
     from collections import Counter
 
-    if isinstance(dic, dict):
-        new_dict = {str(k).lower(): val for k, val in dic.items()}
-        if len(new_dict) != len(dic):
-            num_items = Counter(str(k).lower() for k in dic.keys())
-            double_keys = ','.join([k for k, val in num_items if val > 1])
-            raise InputValidationError("Inside the dictionary '{}' there are the following keys that "
-                                       'are repeated more than once when compared case-insensitively:'
-                                       '{}.This is not allowed.'.format(dict_name, double_keys))
-        return new_dict
-    else:
+    if not isinstance(dic, dict):
         raise TypeError('_lowercase_dict accepts only dictionaries as argument')
+
+    new_dict = {str(k).lower(): val for k, val in dic.items()}
+    if len(new_dict) != len(dic):
+        num_items = Counter(str(k).lower() for k in dic.keys())
+        double_keys = ','.join([k for k, val in num_items if val > 1])
+        raise InputValidationError("Inside the dictionary '{}' there are the following keys that "
+                                   'are repeated more than once when compared case-insensitively:'
+                                   '{}.This is not allowed.'.format(dict_name, double_keys))
+    return new_dict
 
 
 def write_inpgen_file_aiida_struct(structure, file, input_params=None, settings=None):

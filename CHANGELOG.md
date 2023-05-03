@@ -1,5 +1,47 @@
 # Changelog
 
+## v.2.0.0
+First release with official support for AiiDA version 2.0. Support for AiiDA 1.X is only
+available with releases from the 1.X series of aiida-fleur. Dropped python 3.7 support.
+Added support for python 3.11.
+
+### Breaking changes
+- The entries `last_calc_uuid` from output dictionary of `FleurSCFWorkChain` and `last_scf_wc_uuid` from `FleurRelaxWorkChain` are removed. Reasoning for this is that having UUIDs in the output dictionary makes it impossible to take advantage of AiiDA's caching mechanism. Both workchains expose the relevant outputs of the under the namespaces `last_calc` and `last_scf` respectively
+- Several input/output port changes:
+  - `FleurBandDOSworkChain`: Removed `last_calc_retrieved`, replaced with namespace `banddos_calc`
+  - `FleurBaseWorkChain`: Removed `final_calc_uuid`
+  - Adjusted name of output dictionary to the naming schema `output_<wc_abbrev>_wc_para`: `FleurDMIWorkChain`, `FleurMAEConvWorkChain`, `FleurSSDispWorkChain`, `FleurSSDicpConvWorkChain`
+  - `FleurSCFWorkChain`: Removed `last_fleur_calc_output`. Is available under `last_calc.output_parameters`
+  - Ports for generic `FleurinpData` are renamed to consistently be `fleurinp`. Affects `FleurCalculation`, `FleurinputgenCalculation`, `FleurBaseWorkChain`
+
+### Expired Deprecations
+- `FleurinpModifier`: Removed compatibility with old method names/behaviour before introducing `masci-tools`
+- `FleurinpData`: Removed `get_tag`. Use `load_inpxml` and any evaluation routine afterwards instead
+- Coordinate conversion functions `abs_to_rel`, etc., These are available in `masci-tools`
+- Removed `constants` module. Now only available in `masci-tools`
+
+
+### Improvements
+- New workchain `FleurRelaxTorqueWorkChain` for relaxing non-collinear magnetic configurations
+- Fixes in DFT+U handling
+  - `FleurCalculation`: added `fleurinp_nmmpmat_priority` key to `settings` to control from where to take the `n_mmp_mat` file if it's in the fleurinp and parent_folder input
+  - Fixed several errors in orbcontrol workchain when handling non-converged/failed calculation
+  - Added inputs to orbcontrol to restart from intermediate charge densities
+- Added `inpxml_changes` contextmanager for easier creation of the workflow parameters input of the same name
+```python
+from aiida_fleur.data import inpxml_changes
+
+wf_parameters = {}
+
+with inpxml_changes(wf_parameters) as fm:
+  fm.set_inpchanges({'kmax': 4, 'itmax': 100})
+  fm.set_species('all', {'mtsphere': {'radius': 3}})
+
+print(wf_parameters['inpxml_changes']) #now contains the list like before
+```
+
+
+
 ## v.1.3.1
 ### release compatible with AiiDA-core 1.3.0+
 - Fix for masci-tools dependency constraint. The constraint would previously reject the next minor version of masci-tools (i.e `0.10.0`)

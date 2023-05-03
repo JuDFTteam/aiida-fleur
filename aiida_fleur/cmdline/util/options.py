@@ -27,7 +27,7 @@ STRUCTURE_OR_FILE = OverridableOption(
 
 STRUCTURE = OverridableOption('-s',
                               '--structure',
-                              type=types.DataParamType(sub_classes=('aiida.data:structure',)),
+                              type=types.DataParamType(sub_classes=('aiida.data:core.structure',)),
                               help='StructureData node, given by pk or uuid.')
 
 FULL_PROVENANCE = OverridableOption('-fp',
@@ -61,37 +61,37 @@ FLEURINP = OverridableOption('-inp',
 CALC_PARAMETERS = OverridableOption(
     '-calc_p',
     '--calc-parameters',
-    type=types.DataParamType(sub_classes=('aiida.data:dict',)),
+    type=types.DataParamType(sub_classes=('aiida.data:core.dict',)),
     help='Dict with calculation (FLAPW) parameters to build, which will be given to inpgen.')
 
 SETTINGS = OverridableOption('-set',
                              '--settings',
-                             type=types.DataParamType(sub_classes=('aiida.data:dict',)),
+                             type=types.DataParamType(sub_classes=('aiida.data:core.dict',)),
                              help='Settings node for the calcjob.')
 
 WF_PARAMETERS = OverridableOption('-wf',
                                   '--wf-parameters',
-                                  type=types.DataParamType(sub_classes=('aiida.data:dict',)),
+                                  type=types.DataParamType(sub_classes=('aiida.data:core.dict',)),
                                   help='Dict containing parameters given to the workchain.')
 
 SCF_PARAMETERS = OverridableOption('-scf',
                                    '--scf-parameters',
-                                   type=types.DataParamType(sub_classes=('aiida.data:dict',)),
+                                   type=types.DataParamType(sub_classes=('aiida.data:core.dict',)),
                                    help='Dict containing parameters given to the sub SCF workchains.')
 
 EOS_PARAMETERS = OverridableOption('-eos',
                                    '--eos-parameters',
-                                   type=types.DataParamType(sub_classes=('aiida.data:dict',)),
+                                   type=types.DataParamType(sub_classes=('aiida.data:core.dict',)),
                                    help='Dict containing wf parameters given to the sub EOS workchains.')
 
 RELAX_PARAMETERS = OverridableOption('-relax',
                                      '--relax-parameters',
-                                     type=types.DataParamType(sub_classes=('aiida.data:dict',)),
+                                     type=types.DataParamType(sub_classes=('aiida.data:core.dict',)),
                                      help='Dict containing wf parameters given to the sub relax workchains.')
 
 OPTION_NODE = OverridableOption('-opt',
                                 '--option-node',
-                                type=types.DataParamType(sub_classes=('aiida.data:dict',)),
+                                type=types.DataParamType(sub_classes=('aiida.data:core.dict',)),
                                 help='Dict, an option node for the workchain.')
 
 MAX_NUM_MACHINES = OverridableOption('-N',
@@ -132,7 +132,7 @@ WITH_MPI = OverridableOption('-I',
 REMOTE = OverridableOption('-P',
                            '--parent-folder',
                            'parent_folder',
-                           type=types.DataParamType(sub_classes=('aiida.data:remote',)),
+                           type=types.DataParamType(sub_classes=('aiida.data:core.remote',)),
                            show_default=True,
                            required=False,
                            help='The PK of a parent remote folder (for restarts).')

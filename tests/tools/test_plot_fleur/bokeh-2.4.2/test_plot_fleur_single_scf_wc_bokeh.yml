@@ -50,13 +50,17 @@ roots:
   - attributes:
       data:
         distance_0:
-        - 61.1110641131
-        - 43.7556515683
-        - 43.7556515683
+          __ndarray__: Z/LNNjeOTkB4nKIjueBFQHicoiO54EVA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_0:
-        - -38166.542950054
-        - -38166.345602746
-        - -38166.345602746
+          __ndarray__: rK3YX9Gi4sAwuycPy6LiwDC7Jw/LouLA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_diff_0:
           __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
           dtype: float64
@@ -79,13 +83,17 @@ roots:
   - attributes:
       data:
         distance_0:
-        - 61.1110641131
-        - 43.7556515683
-        - 43.7556515683
+          __ndarray__: Z/LNNjeOTkB4nKIjueBFQHicoiO54EVA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_0:
-        - -38166.542950054
-        - -38166.345602746
-        - -38166.345602746
+          __ndarray__: rK3YX9Gi4sAwuycPy6LiwDC7Jw/LouLA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_diff_0:
           __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
           dtype: float64
@@ -108,13 +116,17 @@ roots:
   - attributes:
       data:
         distance_0:
-        - 61.1110641131
-        - 43.7556515683
-        - 43.7556515683
+          __ndarray__: Z/LNNjeOTkB4nKIjueBFQHicoiO54EVA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_0:
-        - -38166.542950054
-        - -38166.345602746
-        - -38166.345602746
+          __ndarray__: rK3YX9Gi4sAwuycPy6LiwDC7Jw/LouLA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_diff_0:
           __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
           dtype: float64
@@ -137,13 +149,17 @@ roots:
   - attributes:
       data:
         distance_0:
-        - 61.1110641131
-        - 43.7556515683
-        - 43.7556515683
+          __ndarray__: Z/LNNjeOTkB4nKIjueBFQHicoiO54EVA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_0:
-        - -38166.542950054
-        - -38166.345602746
-        - -38166.345602746
+          __ndarray__: rK3YX9Gi4sAwuycPy6LiwDC7Jw/LouLA
+          dtype: float64
+          order: little
+          shape:
+          - 3
         energy_diff_0:
           __ndarray__: +8vuycNCyT8AAAAAAAAAAAAAAAAAAPh/
           dtype: float64
@@ -235,13 +251,6 @@ roots:
         value: distance
     type: LegendItem
   - attributes:
-      line_width: 2.0
-      x:
-        field: iteration_0
-      y:
-        field: distance_0
-    type: Line
-  - attributes:
       line_alpha: 0.1
       line_width: 2.0
       x:
@@ -258,13 +267,6 @@ roots:
         field: distance_0
     type: Line
   - attributes:
-      line_width: 2.0
-      x:
-        field: iteration_energy_0
-      y:
-        field: energy_diff_0
-    type: Line
-  - attributes:
       line_alpha: 0.1
       line_width: 2.0
       x:
@@ -274,6 +276,20 @@ roots:
     type: Line
   - attributes:
       line_alpha: 0.2
+      line_width: 2.0
+      x:
+        field: iteration_energy_0
+      y:
+        field: energy_diff_0
+    type: Line
+  - attributes:
+      line_width: 2.0
+      x:
+        field: iteration_0
+      y:
+        field: distance_0
+    type: Line
+  - attributes:
       line_width: 2.0
       x:
         field: iteration_energy_0
@@ -398,6 +414,38 @@ roots:
         field: distance_0
     type: Scatter
   - attributes:
+      fill_alpha:
+        value: 0.1
+      fill_color:
+        value: black
+      hatch_alpha:
+        value: 0.1
+      line_alpha:
+        value: 0.1
+      size:
+        value: 6
+      x:
+        field: iteration_energy_0
+      y:
+        field: energy_diff_0
+    type: Scatter
+  - attributes:
+      fill_alpha:
+        value: 0.2
+      fill_color:
+        value: black
+      hatch_alpha:
+        value: 0.2
+      line_alpha:
+        value: 0.2
+      size:
+        value: 6
+      x:
+        field: iteration_energy_0
+      y:
+        field: energy_diff_0
+    type: Scatter
+  - attributes:
       fill_color:
         value: black
       size:
@@ -406,38 +454,6 @@ roots:
         field: iteration_0
       y:
         field: distance_0
-    type: Scatter
-  - attributes:
-      fill_alpha:
-        value: 0.1
-      fill_color:
-        value: black
-      hatch_alpha:
-        value: 0.1
-      line_alpha:
-        value: 0.1
-      size:
-        value: 6
-      x:
-        field: iteration_energy_0
-      y:
-        field: energy_diff_0
-    type: Scatter
-  - attributes:
-      fill_alpha:
-        value: 0.2
-      fill_color:
-        value: black
-      hatch_alpha:
-        value: 0.2
-      line_alpha:
-        value: 0.2
-      size:
-        value: 6
-      x:
-        field: iteration_energy_0
-      y:
-        field: energy_diff_0
     type: Scatter
   - attributes:
       fill_color:
@@ -479,4 +495,3 @@ roots:
   - type: ZoomOutTool
   - type: ZoomOutTool
 title: Bokeh Application
-version: 2.4.2

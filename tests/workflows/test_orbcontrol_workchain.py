@@ -10,20 +10,17 @@
 ###############################################################################
 ''' Contains tests for the FleurOrbControlWorkChain '''
 import pytest
-import aiida_fleur
 from aiida_fleur.workflows.orbcontrol import FleurOrbControlWorkChain
 from aiida import orm
 from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
 import os
 
-aiida_path = os.path.dirname(aiida_fleur.__file__)
-
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(2000, method='thread')
-def test_fleur_orbcontrol_structure(with_export_cache, fleur_local_code, inpgen_local_code, generate_smco5_structure,
-                                    clear_database, aiida_caplog):
+def test_fleur_orbcontrol_structure(enable_archive_cache, fleur_local_code, inpgen_local_code, generate_smco5_structure,
+                                    clear_database, aiida_caplog, show_workchain_summary):
     """
     Full example using the OrbControl workchain with just a structure as input.
     """
@@ -86,18 +83,16 @@ def test_fleur_orbcontrol_structure(with_export_cache, fleur_local_code, inpgen_
             },
         })
 
-    # now run calculation
-    #run_with_cache(builder)
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_orbcontrol_structure.tar.gz')
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with enable_archive_cache('fleur_orbcontrol_structure.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
+    assert 'output_orbcontrol_wc_para' in out
     n = out['output_orbcontrol_wc_para']
     n = n.get_dict()
     assert 'groundstate_scf' in out

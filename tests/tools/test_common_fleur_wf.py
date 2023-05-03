@@ -64,7 +64,7 @@ def test_get_inputs_fleur():
     out_settings = results['settings'].get_dict()
 
     assert results['code'] == 'code'
-    assert results['fleurinpdata'] == 'fleurinp'
+    assert results['fleurinp'] == 'fleurinp'
     assert results['parent_folder'] == 'remote'
     assert results['description'] == 'description'
     assert results['label'] == 'label'
@@ -118,7 +118,7 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
     code = fixture_code('fleur.inpgen')
     structure = generate_structure()
 
-    params = Dict(dict={'test': 1})
+    params = Dict({'test': 1})
 
     inputs = {
         'structure': structure,
@@ -145,10 +145,7 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
         'structure': structure
     }
 
-    res = get_inputs_inpgen(**inputs)
-    #Remove keys that are not necessary for comparison
-    res['metadata']['options'].pop('stash', None)
-
+    res = get_inputs_inpgen(**inputs)._inputs(prune=True)
     assert res == returns
 
     # repeat without a label and description
@@ -170,10 +167,7 @@ def test_get_inputs_inpgen(fixture_code, generate_structure):
         'structure': structure
     }
 
-    res = get_inputs_inpgen(**inputs)
-    #Remove keys that are not necessary for comparison
-    res['metadata']['options'].pop('stash', None)
-
+    res = get_inputs_inpgen(**inputs)._inputs(prune=True)
     assert res == returns
 
 
@@ -202,14 +196,15 @@ def test_test_and_get_codenode_inpgen(fixture_code):
 
     assert isinstance(test_and_get_codenode(code, expected), Code)
     with pytest.raises(ValueError) as msg:
-        test_and_get_codenode(code, nonexpected, use_exceptions=True)
-    assert str(msg.value) == ('Given Code node is not of expected code type.\n'
+        test_and_get_codenode(code, nonexpected)
+    assert str(msg.value) == ('Expected Code of type fleur.fleur. Got: fleur.inpgen\n'
                               'Valid labels for a fleur.fleur executable are:\n'
-                              '* fleur_test@localhost-test')
+                              f'* {code_fleur.full_label}')
 
     with pytest.raises(ValueError) as msg:
-        test_and_get_codenode(code, not_existing, use_exceptions=True)
-    assert str(msg.value) == ('Code not valid, and no valid codes for fleur.not_existing.\n'
+        test_and_get_codenode(code, not_existing)
+    assert str(msg.value) == ('Expected Code of type fleur.not_existing. Got: fleur.inpgen\n'
+                              'No valid labels for a fleur.not_existing executable are available\n'
                               'Configure at least one first using\n'
                               '    verdi code setup')
 
@@ -262,68 +257,67 @@ def test_performance_extract_calcs(fixture_localhost, generate_calc_job_node):
     from aiida_fleur.tools.common_fleur_wf import performance_extract_calcs
     from aiida.common.links import LinkType
     from aiida.orm import Dict
-    out = Dict(
-        dict={
-            'title': 'A Fleur input generator calculation with aiida',
-            'energy': -138529.7052157,
-            'bandgap': 6.0662e-06,
-            'end_date': {
-                'date': '2019/11/12',
-                'time': '16:12:08'
-            },
-            'unparsed': [],
-            'walltime': 43,
-            'warnings': {
-                'info': {},
-                'debug': {},
-                'error': {},
-                'warning': {}
-            },
-            'start_date': {
-                'date': '2019/11/12',
-                'time': '16:11:25'
-            },
-            'parser_info': 'AiiDA Fleur Parser v0.2beta',
-            'CalcJob_uuid': '3dc62d43-b607-4415-920f-e0d34e805711',
-            'creator_name': 'fleur 30',
-            'energy_units': 'eV',
-            'kmax': 4.2,
-            'fermi_energy': 0.0605833326,
-            'spin_density_convergence': 0.0792504665,
-            'bandgap_units': 'eV',
-            'force_largest': 0.0,
-            'energy_hartree': -5090.8728101494,
-            'walltime_units': 'seconds',
-            'density_convergence': [0.0577674505, 0.0461840944],
-            'number_of_atoms': 4,
-            'parser_warnings': [],
-            'magnetic_moments': [3.3720063737, 3.3719345944, 3.3719329177, 3.3719329162],
-            'number_of_kpoints': 8,
-            'number_of_species': 1,
-            'fermi_energy_units': 'Htr',
-            'sum_of_eigenvalues': -2973.4129786677,
-            'output_file_version': '0.27',
-            'energy_hartree_units': 'Htr',
-            'number_of_atom_types': 4,
-            'number_of_iterations': 11,
-            'number_of_symmetries': 8,
-            'energy_core_electrons': -2901.8120489845,
-            'magnetic_moment_units': 'muBohr',
-            'overall_density_convergence': 0.0682602474,
-            'creator_target_structure': ' ',
-            'energy_valence_electrons': -71.6009296831,
-            'magnetic_spin_up_charges': [9.1494766577, 9.1494806151, 9.1494806833, 9.1494806834],
-            'orbital_magnetic_moments': [],
-            'density_convergence_units': 'me/bohr^3',
-            'number_of_spin_components': 2,
-            'charge_den_xc_den_integral': -223.295208608,
-            'magnetic_spin_down_charges': [5.777470284, 5.7775460208, 5.7775477657, 5.7775477672],
-            'number_of_iterations_total': 11,
-            'creator_target_architecture': 'GEN',
-            'orbital_magnetic_moment_units': 'muBohr',
-            'orbital_magnetic_spin_up_charges': [],
-            'orbital_magnetic_spin_down_charges': []
-        })
+    out = Dict({
+        'title': 'A Fleur input generator calculation with aiida',
+        'energy': -138529.7052157,
+        'bandgap': 6.0662e-06,
+        'end_date': {
+            'date': '2019/11/12',
+            'time': '16:12:08'
+        },
+        'unparsed': [],
+        'walltime': 43,
+        'warnings': {
+            'info': {},
+            'debug': {},
+            'error': {},
+            'warning': {}
+        },
+        'start_date': {
+            'date': '2019/11/12',
+            'time': '16:11:25'
+        },
+        'parser_info': 'AiiDA Fleur Parser v0.2beta',
+        'CalcJob_uuid': '3dc62d43-b607-4415-920f-e0d34e805711',
+        'creator_name': 'fleur 30',
+        'energy_units': 'eV',
+        'kmax': 4.2,
+        'fermi_energy': 0.0605833326,
+        'spin_density_convergence': 0.0792504665,
+        'bandgap_units': 'eV',
+        'force_largest': 0.0,
+        'energy_hartree': -5090.8728101494,
+        'walltime_units': 'seconds',
+        'density_convergence': [0.0577674505, 0.0461840944],
+        'number_of_atoms': 4,
+        'parser_warnings': [],
+        'magnetic_moments': [3.3720063737, 3.3719345944, 3.3719329177, 3.3719329162],
+        'number_of_kpoints': 8,
+        'number_of_species': 1,
+        'fermi_energy_units': 'Htr',
+        'sum_of_eigenvalues': -2973.4129786677,
+        'output_file_version': '0.27',
+        'energy_hartree_units': 'Htr',
+        'number_of_atom_types': 4,
+        'number_of_iterations': 11,
+        'number_of_symmetries': 8,
+        'energy_core_electrons': -2901.8120489845,
+        'magnetic_moment_units': 'muBohr',
+        'overall_density_convergence': 0.0682602474,
+        'creator_target_structure': ' ',
+        'energy_valence_electrons': -71.6009296831,
+        'magnetic_spin_up_charges': [9.1494766577, 9.1494806151, 9.1494806833, 9.1494806834],
+        'orbital_magnetic_moments': [],
+        'density_convergence_units': 'me/bohr^3',
+        'number_of_spin_components': 2,
+        'charge_den_xc_den_integral': -223.295208608,
+        'magnetic_spin_down_charges': [5.777470284, 5.7775460208, 5.7775477657, 5.7775477672],
+        'number_of_iterations_total': 11,
+        'creator_target_architecture': 'GEN',
+        'orbital_magnetic_moment_units': 'muBohr',
+        'orbital_magnetic_spin_up_charges': [],
+        'orbital_magnetic_spin_down_charges': []
+    })
     out.store()
 
     node = generate_calc_job_node('fleur.fleur', fixture_localhost)
@@ -342,7 +336,7 @@ def test_performance_extract_calcs(fixture_localhost, generate_calc_job_node):
         'walltime_sec_per_it': [3.909090909090909],
         'n_iterations_total': [11],
         'density_distance': [0.0682602474],
-        'computer': ['localhost-test'],
+        'computer': [fixture_localhost.label],
         'n_atoms': [4],
         'kmax': [4.2],
         'cost': [75866.11200000001],
@@ -389,6 +383,17 @@ def test_optimize_calc_options(inputs, result_correct):
 
     result = optimize_calc_options(*inputs)
     assert result == result_correct
+
+
+def test_optimize_calc_options_forbid_single_mpi():
+    from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
+
+    nodes, mpi, omp, _ = optimize_calc_options(10, 4, 6, True, 1, None, 1033, forbid_single_mpi=False)
+    assert nodes == 1
+    assert mpi == 1
+    assert omp == 24
+    with pytest.raises(ValueError):
+        optimize_calc_options(10, 4, 6, True, 1, None, 1033, forbid_single_mpi=True)
 
 
 def test_find_last_submitted_calcjob(fixture_localhost, generate_calc_job_node, generate_work_chain_node):

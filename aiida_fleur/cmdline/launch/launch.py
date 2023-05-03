@@ -16,7 +16,7 @@ Module with CLI commands to launch for calcjob and workflows of aiida-fleur.
 import click
 from ..util import options, utils, defaults
 from aiida_fleur.tools.dict_util import clean_nones
-from aiida.orm import Code, load_node, Dict
+from aiida.orm import Dict
 from aiida.plugins import WorkflowFactory
 from aiida.plugins import CalculationFactory
 
@@ -116,7 +116,7 @@ def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machi
 
     inputs = {
         'code': fleur,
-        'fleurinpdata': fleurinp,
+        'fleurinp': fleurinp,
         'parent_folder': parent_folder,
         'settings': settings,
         'metadata': {
@@ -130,19 +130,18 @@ def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machi
         builder.update(inputs)
     else:
         if option_node is None:
-            option_node = Dict(
-                dict={
-                    'withmpi': with_mpi,
-                    'max_wallclock_seconds': max_wallclock_seconds,
-                    'resources': {
-                        'num_machines': max_num_machines,
-                        'num_mpiprocs_per_machine': num_mpiprocs_per_machine
-                    }
-                })
+            option_node = Dict({
+                'withmpi': with_mpi,
+                'max_wallclock_seconds': max_wallclock_seconds,
+                'resources': {
+                    'num_machines': max_num_machines,
+                    'num_mpiprocs_per_machine': num_mpiprocs_per_machine
+                }
+            })
 
         inputs_base = {
             'code': fleur,
-            'fleurinpdata': fleurinp,
+            'fleurinp': fleurinp,
             'parent_folder': parent_folder,
             'settings': settings,
             'options': option_node

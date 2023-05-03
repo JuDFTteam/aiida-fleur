@@ -12,11 +12,15 @@
 Collection of utility routines dealing with StructureData objects
 """
 # TODO move imports to workfuncitons namespace?
+# TODO: MPrester has a new backwards incompatible version in pymatgen
+#       Migrate and solve pylint warning deactivated below
+#pylint: disable=not-context-manager
 
 # from ase import *
 # from ase.lattice.surface import *
 # from ase.io import *
 
+import warnings
 from pymatgen.core.surface import generate_all_slabs  #, get_symmetrically_distinct_miller_indices
 from pymatgen.core.surface import SlabGenerator
 
@@ -36,7 +40,7 @@ def is_structure(structure):
     """
     from aiida.common import NotExistent
 
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
 
     # Test if StructureData
     if isinstance(structure, StructureData):
@@ -46,8 +50,7 @@ def is_structure(structure):
         structure = load_node(structure)
         if isinstance(structure, StructureData):
             return structure
-        else:
-            return None
+        return None
     except NotExistent:
         return None
 
@@ -106,7 +109,7 @@ def rescale_nowf(inp_structure, scale):
     the_ase = structure.get_ase()
     new_ase = the_ase.copy()
     new_ase.set_cell(the_ase.get_cell() * np.power(float(scale), 1.0 / 3), scale_atoms=True)
-    rescaled_structure = DataFactory('structure')(ase=new_ase)
+    rescaled_structure = DataFactory('core.structure')(ase=new_ase)
     rescaled_structure.label = f'{scale}  rescaled'  #, structure.uuid)
     #uuids in node labels are bad for caching
     rescaled_structure.pbc = structure.pbc
@@ -164,7 +167,7 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
     new_a2 = [i * na2 for i in old_a2]
     new_a3 = [i * na3 for i in old_a3]
     new_cell = [new_a1, new_a2, new_a3]
-    new_structure = DataFactory('structure')(cell=new_cell, pbc=old_pbc)
+    new_structure = DataFactory('core.structure')(cell=new_cell, pbc=old_pbc)
 
     # insert atoms
     # first create all kinds
@@ -209,96 +212,6 @@ def supercell_ncf(inp_structure, n_a1, n_a2, n_a3):
 
 # Structure util
 # after ths is in plugin code import these in fleurinp.
-def abs_to_rel(vector, cell):
-    """
-    Converts a position vector in absolute coordinates to relative coordinates.
-
-    :param vector: list or np.array of length 3, vector to be converted
-    :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
-    :return: list of legth 3 of scaled vector, or False if vector was not length 3
-    """
-
-    if len(vector) == 3:
-        cell_np = np.array(cell)
-        inv_cell_np = np.linalg.inv(cell_np)
-        postionR = np.array(vector)
-        # np.matmul(inv_cell_np, postionR)#
-        new_rel_post = np.matmul(postionR, inv_cell_np)
-        new_rel_pos = list(new_rel_post)
-        return new_rel_pos
-    else:
-        return False
-
-
-def abs_to_rel_f(vector, cell, pbc):
-    """
-    Converts a position vector in absolute coordinates to relative coordinates
-    for a film system.
-
-    :param vector: list or np.array of length 3, vector to be converted
-    :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
-    :param pbc: Boundary conditions, List or Tuple of 3 Boolean
-    :return: list of legth 3 of scaled vector, or False if vector was not length 3
-    """
-    # TODO this currently only works if the z-coordinate is the one with no pbc
-    # Therefore if a structure with x non pbc is given this should also work.
-    # maybe write a 'tranform film to fleur_film routine'?
-    if len(vector) == 3:
-        if not pbc[2]:
-            # leave z coordinate absolute
-            # convert only x and y.
-            postionR = np.array(vector)
-            postionR_f = np.array(postionR[:2])
-            cell_np = np.array(cell)
-            cell_np = np.array(cell_np[0:2, 0:2])
-            inv_cell_np = np.linalg.inv(cell_np)
-            # np.matmul(inv_cell_np, postionR_f)]
-            new_xy = np.matmul(postionR_f, inv_cell_np)
-            new_rel_pos_f = [new_xy[0], new_xy[1], postionR[2]]
-            return new_rel_pos_f
-        else:
-            print('FLEUR can not handle this type of film coordinate')
-    else:
-        return False
-
-
-def rel_to_abs(vector, cell):
-    """
-    Converts a position vector in internal coordinates to absolute coordinates
-    in Angstrom.
-
-    :param vector: list or np.array of length 3, vector to be converted
-    :param cell: Bravais matrix of a crystal 3x3 Array, List of list or np.array
-    :return: list of legth 3 of scaled vector, or False if vector was not lenth 3
-    """
-    if len(vector) == 3:
-        cell_np = np.array(cell)
-        postionR = np.array(vector)
-        new_abs_post = np.matmul(postionR, cell_np)
-        new_abs_pos = list(new_abs_post)
-        return new_abs_pos
-    else:
-        return False
-
-
-def rel_to_abs_f(vector, cell):
-    """
-    Converts a position vector in internal coordinates to absolute coordinates
-    in Angstrom for a film structure (2D).
-    """
-    # TODO this currently only works if the z-coordinate is the one with no pbc
-    # Therefore if a structure with x non pbc is given this should also work.
-    # maybe write a 'tranform film to fleur_film routine'?
-    if len(vector) == 3:
-        postionR = np.array(vector)
-        postionR_f = np.array(postionR[:2])
-        cell_np = np.array(cell)
-        cell_np = np.array(cell_np[0:2, 0:2])
-        new_xy = np.matmul(postionR_f, cell_np)
-        new_abs_pos_f = [new_xy[0], new_xy[1], postionR[2]]
-        return new_abs_pos_f
-    else:
-        return False
 
 
 @cf
@@ -329,9 +242,9 @@ def break_symmetry_wf(structure, wf_para, parameterdata=None):
     :param parameterdata: AiiDa ParameterData
     :return: StructureData, a AiiDA crystal structure with new kind specification.
     """
-    Dict = DataFactory('dict')
+    Dict = DataFactory('core.dict')
     if parameterdata is None:
-        parameterdata = Dict(dict={})
+        parameterdata = Dict({})
     wf_dict = wf_para.get_dict()
     atoms = wf_dict.get('atoms', ['all'])
     sites = wf_dict.get('site', [])
@@ -414,7 +327,7 @@ def break_symmetry(structure,
     cell = struc.cell
     pbc = struc.pbc
     sites = struc.sites
-    new_structure = DataFactory('structure')(cell=cell, pbc=pbc)
+    new_structure = DataFactory('core.structure')(cell=cell, pbc=pbc)
 
     for sym in atoms:
         replace.append(sym)
@@ -838,7 +751,12 @@ def find_equi_atoms(structure):  # , sitenumber=0, position=None):
     k_symbols = {}
 
     s_ase = structure.get_ase()
-    sym = spglib.get_symmetry(s_ase, symprec=1e-5)
+
+    lattice = s_ase.get_cell()
+    positions = s_ase.get_scaled_positions()
+    numbers = s_ase.get_atomic_numbers()
+
+    sym = spglib.get_symmetry((lattice, positions, numbers), symprec=1e-5)
     equi = sym['equivalent_atoms']
     unique = np.unique(equi)
 
@@ -867,7 +785,10 @@ def get_spacegroup(structure):
     """
     import spglib
     s_ase = structure.get_ase()
-    spacegroup = spglib.get_spacegroup(s_ase, symprec=1e-5)
+    lattice = s_ase.get_cell()
+    positions = s_ase.get_scaled_positions()
+    numbers = s_ase.get_atomic_numbers()
+    spacegroup = spglib.get_spacegroup((lattice, positions, numbers), symprec=1e-5)
     return spacegroup
 
 
@@ -900,7 +821,7 @@ def move_atoms_incell(structure, vector):
     :return: AiiDA structure
     """
 
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     new_structure = StructureData(cell=structure.cell)
     new_structure.pbc = structure.pbc
     sites = structure.sites
@@ -930,12 +851,15 @@ def find_primitive_cell(structure):
     # return the given structure (Is this good practise for prov?)
     from spglib import find_primitive
     from ase.atoms import Atoms
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
 
     symprec = 1e-7
     # print('old {}'.format(len(structure.sites)))
     ase_structure = structure.get_ase()
-    lattice, scaled_positions, numbers = find_primitive(ase_structure, symprec=symprec)
+    lattice = ase_structure.get_cell()
+    positions = ase_structure.get_scaled_positions()
+    numbers = ase_structure.get_atomic_numbers()
+    lattice, scaled_positions, numbers = find_primitive((lattice, positions, numbers), symprec=symprec)
     new_structure_ase = Atoms(numbers, scaled_positions=scaled_positions, cell=lattice, pbc=True)
     new_structure = StructureData(ase=new_structure_ase)
     # print('new {}'.format(len(new_structure.sites)))
@@ -1039,7 +963,7 @@ def create_all_slabs(initial_structure,
     """
     :return: a dictionary of structures
     """
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     aiida_strucs = {}
     # pymat_struc = initial_structure.get_pymatgen_structure()
     indices = get_all_miller_indices(initial_structure, miller_index)
@@ -1065,7 +989,7 @@ def create_slap(initial_structure,
     wraps the pymatgen slab generator
     """
     # minimum slab size is in Angstrom!!!
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     pymat_struc = initial_structure.get_pymatgen_structure()
     slabg = SlabGenerator(pymat_struc,
                           miller_index,
@@ -1123,7 +1047,7 @@ def sort_atoms_z_value(structure):
     :param structure: AiiDA structure
     :return: AiiDA structure
     """
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     new_structure = StructureData(cell=structure.cell)
     new_structure.pbc = structure.pbc
     for kind in structure.kinds:
@@ -1510,7 +1434,12 @@ def adjust_film_relaxation(structure,
     return rebuilt_structure
 
 
-def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length=None, last_layer_factor=0.85):
+def adjust_sym_film_relaxation(structure,
+                               suggestion,
+                               scale_as=None,
+                               bond_length=None,
+                               last_layer_factor=0.85,
+                               ILD=None):
     """
     Tries to optimize interlayer distances. Can be used before RelaxWC to improve its behaviour.
     Works only for films having z-reflection symmetry, for other films check out the adjust_film_relaxation
@@ -1545,6 +1474,8 @@ def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length
     structure = sort_atoms_z_value(structure)
 
     suggestion = deepcopy(suggestion)
+    if ILD is not None:
+        ILD = deepcopy(ILD)
     if scale_as:
         norm = suggestion[scale_as][scale_as]
         for sym1, sym2 in product(suggestion.keys(), suggestion.keys()):
@@ -1611,8 +1542,15 @@ def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length
             rebuilt_structure.append_atom(symbols=atom[1], position=(atom[0][0], atom[0][1], atom[0][2]), name=atom[1])
 
     prev_distance = 0
-
+    if ILD is not None:
+        if len(ILD.keys()) > 0:
+            #Init Counting
+            keyILD = list(ILD)  #List of keys
+    else:
+        keyILD = 0
+    #Now iterate over all other layers
     for i, layer in enumerate(sorted_layers[1:]):
+        layer_copy = deepcopy(layer)
         add_distance1, add_distance2 = suggest_distance_to_previous(i + 1)
         if i == 0:  # the 2nd distance is the distance to the mirror image in films with no central layer
             # for a film with central layer add_distance2 == 0
@@ -1622,17 +1560,27 @@ def adjust_sym_film_relaxation(structure, suggestion, scale_as=None, bond_length
         if add_distance1 <= 0 and add_distance2 <= 0:
             raise ValueError('error not implemented')
         prev_distance = max(add_distance1, add_distance2)
-        if i == len(sorted_layers) - 2 and last_layer_factor:
-            prev_distance = prev_distance * last_layer_factor  # last layer should be closer
 
-        layer_copy = deepcopy(layer)
+        if i == len(sorted_layers) - 2 and last_layer_factor:
+            if ILD is None:
+                prev_distance = prev_distance * last_layer_factor  # last layer should be closer
+
         prev_layer_z = max(x.position[2] for x in rebuilt_structure.sites)
 
         for atom in layer_copy:
-            atom[0][2] = prev_layer_z + prev_distance  # minus because I build from bottom (inverse)
+            if ILD is None:
+                atom[0][2] = prev_layer_z + prev_distance
+            else:
+                if ILD[keyILD[i]] == 0.0:
+                    atom[0][2] = prev_layer_z + prev_distance
+                else:
+                    atom[0][2] = prev_layer_z + ILD[keyILD[i]]
+                    print(atom)
+            print("We're here")
             rebuilt_structure.append_atom(position=atom[0], symbols=atom[1], name=atom[1])
-            rebuilt_structure.append_atom(position=(atom[0][0], atom[0][1], -atom[0][2]), symbols=atom[1], name=atom[1])
-
+            rebuilt_structure.append_atom(
+                position=(atom[0][0], atom[0][1], -atom[0][2]), symbols=atom[1],
+                name=atom[1])  # minus at atom[0][2] because the film is built from bottom (inverse)
     rebuilt_structure = center_film(rebuilt_structure)
     return rebuilt_structure
 
@@ -1737,14 +1685,14 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
     for sym in symbols:
         distance = 0
         partition_function = 0
-        with MPRester(user_api_key) as mat_project:
+        with MPRester(user_api_key) as mat_project:  #pylint: disable=not-context-manager
             mp_entries = mat_project.get_entries_in_chemsys([sym])
         fcc_structure = None
         bcc_structure = None
         for entry in mp_entries:
             if sym != entry.name:
                 continue
-            with MPRester(user_api_key) as mat_project:
+            with MPRester(user_api_key) as mat_project:  #pylint: disable=not-context-manager
                 structure_analyse = mat_project.get_structure_by_material_id(entry.entry_id)
                 en_per_atom = mat_project.query(entry.entry_id, ['energy_per_atom'])[0]['energy_per_atom']
                 structure_analyse.make_supercell([2, 2, 2])
@@ -1769,13 +1717,13 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
             continue
         distance = 0
         partition_function = 0
-        with MPRester(user_api_key) as mat_project:
+        with MPRester(user_api_key) as mat_project:  #pylint: disable=not-context-manager
             mp_entries = mat_project.get_entries_in_chemsys([sym1, sym2])
         for entry in mp_entries:
             name = ''.join([i for i in entry.name if not i.isdigit()])
             if name not in (sym1 + sym2, sym2 + sym1):
                 continue
-            with MPRester(user_api_key) as mat_project:
+            with MPRester(user_api_key) as mat_project:  #pylint: disable=not-context-manager
                 structure_analyse = mat_project.get_structure_by_material_id(entry.entry_id)
                 en_per_atom = mat_project.query(entry.entry_id, ['energy_per_atom'])[0]['energy_per_atom']
                 structure_analyse.make_supercell([2, 2, 2])
@@ -1793,7 +1741,7 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
         bond_data[sym2][sym1] = distance
         print(f'Request completed for {sym1} {sym2} pair')
 
-    return Dict(dict=bond_data)
+    return Dict(bond_data)
 
 
 @cf
@@ -1847,7 +1795,7 @@ def replace_elementf(inp_structure, replace_dict, replace_all):
         # TODO: log something
         return None
 
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
 
     replace_dict = replace_dict.get_dict()
 
@@ -1905,8 +1853,7 @@ def simplify_kind_name(kind_name):
     '''
     if '(' in kind_name:
         return kind_name[kind_name.find('(') + 1:kind_name.find(')')]
-    else:
-        return kind_name.split('-')[0]
+    return kind_name.split('-')[0]
 
 
 def define_AFM_structures(structure,

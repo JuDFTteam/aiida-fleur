@@ -113,7 +113,7 @@ class fleur_dos_wc(WorkChain):
 
         if 'fleur' in inputs:
             try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur')
             except ValueError:
                 error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
                 # self.control_end_wc(error)
@@ -203,7 +203,7 @@ class fleur_dos_wc(WorkChain):
         # add nkpoints, emin, emax, sigma, tria
 
         # print outputnode_dict
-        outputnode = Dict(dict=outputnode_dict)
+        outputnode = Dict(outputnode_dict)
         outdict = {}
         # TODO parse dos to dosnode
         #dosnode = ''

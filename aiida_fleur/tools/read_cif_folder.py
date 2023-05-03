@@ -48,7 +48,7 @@ def read_cif_folder(path=os.getcwd(),
     """
     # TODO check for duplicates in the database, so that reruning the functions
     # won't import anything else in the database
-    cifdata = DataFactory('cif')
+    cifdata = DataFactory('core.cif')
     ############ parameters for the user to set ########
 
     parent_cif_folder = path  # folder path
@@ -158,7 +158,7 @@ def wf_struc_from_cif(cif):
 
 def struc_from_cif(cif):
     asecell = cif.get_ase()
-    struc = DataFactory('structure')(ase=asecell)
+    struc = DataFactory('core.structure')(ase=asecell)
     return struc
 
 

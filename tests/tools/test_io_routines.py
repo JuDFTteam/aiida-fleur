@@ -19,7 +19,7 @@ def test_write_results_to_file_interface():
     destination = './outputfiletest'
     write_results_to_file(inputhead, data, destination=destination)
     isfile_ = isfile(abspath('./outputfiletest'))
-    with open(destination) as test_file:
+    with open(destination, encoding='utf-8') as test_file:
         content = test_file.read()
 
     content_exp = 'head\n1.00000000  3.00000000\n2.00000000  4.00000000\n'

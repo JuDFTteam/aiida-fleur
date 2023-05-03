@@ -1,3 +1,8 @@
 mock_code: 
-    inpgen: ./local_exe/inpgen #~/codes/aiida/inpgen/max_r4/inpgen
-    fleur: ./local_exe/fleur #./local_exe/fleur #~/codes/aiida/fleur/max_r4/serial/fleur 
+    inpgen: ./local_exe/inpgen
+    fleur: ./local_exe/fleur
+archive_cache:
+    ignore:
+        calcjob_attributes: 
+            - environment_variables_double_quotes
+            - metadata_inputs

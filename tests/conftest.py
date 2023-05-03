@@ -18,18 +18,11 @@ CONFTEST_LOCATION = Path(__file__).parent.resolve()
 RUN_REGRESSION_TESTS = True
 try:
     import aiida_testing
-    from aiida_testing.export_cache._fixtures import run_with_cache, export_cache, load_cache, hash_code_by_entrypoint
 except ImportError:
     print('AiiDA-testing not in path. Running without regression tests for Workchains and CalcJobs.')
     RUN_REGRESSION_TESTS = False
 
-if RUN_REGRESSION_TESTS:
-    pytest_plugins = [
-        'aiida.manage.tests.pytest_fixtures', 'aiida_testing.mock_code', 'aiida_testing.export_cache',
-        'masci_tools.testing.bokeh'
-    ]  # pylint: disable=invalid-name
-else:
-    pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
+pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
 
 
 def pytest_addoption(parser):
@@ -55,17 +48,17 @@ def pytest_collection_modifyitems(session, config, items):
 
     skip_regression = pytest.mark.skip(
         reason='Workflow regression test is skipped, because aiida-testing is not available')
-    aiida_version_skip = pytest.mark.skipif(
-        aiida.get_version().startswith('2.'),
-        reason='Workflow regression test is skipped, because aiida-testing is not compatible with AiiDA 2.0')
+    # aiida_version_skip = pytest.mark.skipif(
+    #     aiida.get_version().startswith('2.'),
+    #     reason='Workflow regression test is skipped, because aiida-testing is not compatible with AiiDA 2.0')
 
     regression_items = [item for item in items if 'regression_test' in item.keywords]
     if not RUN_REGRESSION_TESTS:
         for item in regression_items:
             item.add_marker(skip_regression)
 
-    for item in regression_items:
-        item.add_marker(aiida_version_skip)
+    # for item in regression_items:
+    #     item.add_marker(aiida_version_skip)
 
 
 @pytest.fixture(scope='function')
@@ -176,22 +169,22 @@ def generate_calc_job_node(fixture_localhost):
         entry_point = format_entry_point_string('aiida.calculations', entry_point_name)
 
         node = orm.CalcJobNode(computer=computer, process_type=entry_point)
-        node.set_attribute('input_filename', 'aiida.in')
-        node.set_attribute('output_filename', 'aiida.out')
-        node.set_attribute('error_filename', 'aiida.err')
+        node.base.attributes.set('input_filename', 'aiida.in')
+        node.base.attributes.set('output_filename', 'aiida.out')
+        node.base.attributes.set('error_filename', 'aiida.err')
         node.set_option('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
         node.set_option('withmpi', True)
         node.set_option('max_wallclock_seconds', 1800)
 
         if retrieve_list is not None:
-            node.set_attribute('retrieve_list', retrieve_list)
+            node.base.attributes.set('retrieve_list', retrieve_list)
         if attributes:
-            node.set_attribute_many(attributes)
+            node.base.attributes.set_many(attributes)
 
         if inputs:
             for link_label, input_node in flatten_inputs(inputs):
                 input_node.store()
-                node.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
+                node.base.links.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
 
         if store:  # needed if test_name is not None
             node.store()
@@ -202,11 +195,11 @@ def generate_calc_job_node(fixture_localhost):
 
             retrieved = orm.FolderData()
             retrieved.put_object_from_tree(filepath)
-            retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+            retrieved.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
             retrieved.store()
 
             remote_folder = orm.RemoteData(computer=computer, remote_path='/tmp')
-            remote_folder.add_incoming(node, link_type=LinkType.CREATE, link_label='remote_folder')
+            remote_folder.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='remote_folder')
             remote_folder.store()
 
         return node
@@ -244,14 +237,15 @@ def generate_smco5_structure():
 
         a = 4.9679
         c = 3.9629
-        cell = np.array([[a, 0.0, 0.0], [a * np.cos(2 * np.pi / 3), a * np.sin(2 * np.pi / 3), 0.0], [0.0, 0.0, c]])
+        cell = np.array([[a, 0.0, 0.0], [-a / 2, a * np.sqrt(3) / 2, 0.0], [0.0, 0.0, c]])
+        cell = np.round(cell, 10)
         structure = StructureData(cell=cell)
-        structure.append_atom(position=[0.0, 0.0, 0.0], symbols='Sm', name='Sm')
-        structure.append_atom(position=np.array([1 / 3, 2 / 3, 0.0]) @ cell, symbols='Co', name='Co')
-        structure.append_atom(position=np.array([2 / 3, 1 / 3, 0.0]) @ cell, symbols='Co', name='Co')
-        structure.append_atom(position=np.array([0.0, 0.5, 0.5]) @ cell, symbols='Co', name='Co')
-        structure.append_atom(position=np.array([0.5, 0.0, 0.5]) @ cell, symbols='Co', name='Co')
-        structure.append_atom(position=np.array([0.5, 0.5, 0.5]) @ cell, symbols='Co', name='Co')
+        structure.append_atom(position=np.array([0.0, 0.0, 0.0]), symbols='Sm', name='Sm')
+        structure.append_atom(position=np.round(np.array([1 / 3, 2 / 3, 0.0]) @ cell, 10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([2 / 3, 1 / 3, 0.0]) @ cell, 10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([0.0, 0.5, 0.5]) @ cell, 10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([0.5, 0.0, 0.5]) @ cell, 10), symbols='Co', name='Co')
+        structure.append_atom(position=np.round(np.array([0.5, 0.5, 0.5]) @ cell, 10), symbols='Co', name='Co')
 
         return structure
 
@@ -276,7 +270,7 @@ def generate_retrieved_data():
 
         retrieved = orm.FolderData()
         retrieved.put_object_from_tree(filepath)
-        retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+        retrieved.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
         retrieved.store()
         return retrieved
 
@@ -362,17 +356,11 @@ def create_fleurinp():
 def inpxml_etree():
     """Returns the etree generator"""
 
-    def _get_etree(path, return_schema=False):
+    def _get_etree(path):
         from lxml import etree
-        from masci_tools.io.parsers.fleur_schema import InputSchemaDict
-        with open(path) as inpxmlfile:
+        with open(path, encoding='utf-8') as inpxmlfile:
             tree = etree.parse(inpxmlfile)
-            version = tree.getroot().attrib['fleurInputVersion']
-            schema_dict = InputSchemaDict.fromVersion(version)
-        if return_schema:
-            return tree, schema_dict
-        else:
-            return tree
+        return tree
 
     return _get_etree
 
@@ -401,8 +389,8 @@ def generate_inputs_base(fixture_code, create_fleurinp, generate_kpoints_mesh):
 
         inputs = {
             'code': fixture_code('fleur'),
-            'fleurinpdata': create_fleurinp(TEST_INPXML_PATH),
-            'options': Dict(dict=default_options)
+            'fleurinp': create_fleurinp(TEST_INPXML_PATH),
+            'options': Dict(default_options)
         }
 
         return inputs
@@ -505,8 +493,7 @@ def generate_work_chain_node():
 
         if test_name is not None:
             basepath = os.path.dirname(os.path.abspath(__file__))
-            filepath = os.path.join(basepath, 'parsers', 'fixtures', entry_point_name[len('quantumespresso.'):],
-                                    test_name)
+            filepath = os.path.join(basepath, 'parsers', 'fixtures', entry_point_name[len('fleur.'):], test_name)
 
             retrieved = orm.FolderData()
             retrieved.put_object_from_tree(filepath)
@@ -529,7 +516,7 @@ def generate_film_structure():
     def _generate_film_structure():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
-        from aiida_fleur.common.constants import BOHR_A
+        from masci_tools.util.constants import BOHR_A
         a = 7.497 * BOHR_A
         cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
         structure = StructureData(cell=cell)
@@ -550,7 +537,7 @@ def generate_sym_film_structure():
     def _generate_film_structure():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
-        from aiida_fleur.common.constants import BOHR_A
+        from masci_tools.util.constants import BOHR_A
         a = 7.497 * BOHR_A
         cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
         structure = StructureData(cell=cell)
@@ -564,13 +551,25 @@ def generate_sym_film_structure():
     return _generate_film_structure
 
 
-@pytest.fixture(scope='function', autouse=True)
-def clear_database_aiida_fleur(clear_database):  # pylint: disable=redefined-outer-name
-    """Clear the database before each test.
-    """
-    #aiida_profile.reset_db()
-    #yield
-    #aiida_profile.reset_db()
+@pytest.fixture
+def get_remote_data_si(import_with_migrate):
+    """Return the remote folder output node of a SCF workchain for Si bulk"""
+
+    def _get_remote_data_si():
+        """Return the remote folder output node of a SCF workchain for Si bulk"""
+        from aiida import orm
+
+        SCF_NODE_UUID = 'f44623bf-d8a3-41f0-b4ee-6562b5f9b027'
+        basepath = os.path.dirname(os.path.abspath(__file__))
+        filepath = os.path.join(basepath, 'files', 'exports', 'fleur_scf_fleurinp_Si.tar.gz')
+
+        import_with_migrate(filepath)
+
+        scf_node = orm.load_node(SCF_NODE_UUID)
+
+        return scf_node.outputs.last_calc.remote_folder
+
+    return _get_remote_data_si
 
 
 @pytest.fixture
@@ -582,7 +581,7 @@ def read_dict_from_file():
         import json
 
         node_dict = {}
-        with open(jsonfilepath) as jfile:
+        with open(jsonfilepath, encoding='utf-8') as jfile:
             node_dict = json.load(jfile)
 
         return node_dict
@@ -597,22 +596,7 @@ def generate_structure2():
     def _generate_structure2():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
-
-        def rel_to_abs(vector, cell):
-            """
-            converts interal coordinates to absolut coordinates in Angstroem.
-            """
-            if len(vector) == 3:
-                postionR = vector
-                row1 = cell[0]
-                row2 = cell[1]
-                row3 = cell[2]
-                new_abs_pos = [
-                    postionR[0] * row1[0] + postionR[1] * row2[0] + postionR[2] * row3[0],
-                    postionR[0] * row1[1] + postionR[1] * row2[1] + postionR[2] * row3[1],
-                    postionR[0] * row1[2] + postionR[1] * row2[2] + postionR[2] * row3[2]
-                ]
-                return new_abs_pos
+        from masci_tools.io.common_functions import rel_to_abs
 
         bohr_a_0 = 0.52917721092  # A
         a = 5.167355275190 * bohr_a_0
@@ -681,7 +665,7 @@ def inpgen_local_code(mock_code_factory, request):
     InpgenCode = mock_code_factory(label='inpgen',
                                    data_dir_abspath=data_dir,
                                    entry_point='fleur.inpgen',
-                                   ignore_files=[
+                                   ignore_paths=[
                                        '_aiidasubmit.sh', 'FleurInputSchema.xsd', 'scratch', 'usage.json', '*.config',
                                        '*.econfig', 'struct.xsf'
                                    ])
@@ -703,7 +687,7 @@ def fleur_local_code(mock_code_factory, pytestconfig, request):
     FleurCode = mock_code_factory(label='fleur',
                                   data_dir_abspath=data_dir,
                                   entry_point='fleur.fleur',
-                                  ignore_files=[
+                                  ignore_paths=[
                                       '_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'FleurOutputSchema.xsd',
                                       'cdn.hdf', 'usage.json', 'cdn*', 'mixing_history*', 'juDFT_times.json',
                                       '*.config', '*.econfig', 'struct*.xsf', 'band.gnu'
@@ -713,3 +697,137 @@ def fleur_local_code(mock_code_factory, pytestconfig, request):
         FleurCode.description = 'Local executable with HDF5'
 
     return FleurCode
+
+
+@pytest.fixture
+def import_with_migrate(temp_dir):
+    """Import an aiida export file and migrate it
+
+    We want to be able to run the test with several aiida versions,
+    therefore imports have to be migrate, but we also do not want to use verdi
+    """
+    # This function has some deep aiida imports which might change in the future
+    _DEFAULT_IMPORT_KWARGS = {'group': None}
+
+    try:
+        from aiida.tools.importexport import import_data
+
+        def _import_with_migrate(filename, tempdir=temp_dir, import_kwargs=None, try_migration=True):
+            from click import echo
+            from aiida.tools.importexport import import_data
+            from aiida.tools.importexport import EXPORT_VERSION, IncompatibleArchiveVersionError
+            # these are only availbale after aiida >= 1.5.0, maybe rely on verdi import instead
+            from aiida.tools.importexport import detect_archive_type
+            from aiida.tools.importexport.archive.migrators import get_migrator
+            from aiida.tools.importexport.common.config import ExportFileFormat
+            if import_kwargs is None:
+                import_kwargs = _DEFAULT_IMPORT_KWARGS
+            archive_path = filename
+
+            try:
+                import_data(archive_path, **import_kwargs)
+            except IncompatibleArchiveVersionError:
+                #raise ValueError
+                if try_migration:
+                    echo(f'incompatible version detected for {archive_path}, trying migration')
+                    migrator = get_migrator(detect_archive_type(archive_path))(archive_path)
+                    archive_path = migrator.migrate(EXPORT_VERSION, None, out_compression='none', work_dir=tempdir)
+                    import_data(archive_path, **import_kwargs)
+                else:
+                    raise
+
+    except ImportError:
+        # This is the case for aiida >= 2.0.0
+        def _import_with_migrate(filename, import_kwargs=None, try_migration=True):
+            from click import echo
+            from aiida.tools.archive import import_archive, get_format
+            from aiida.common.exceptions import IncompatibleStorageSchema
+
+            if import_kwargs is None:
+                import_kwargs = _DEFAULT_IMPORT_KWARGS
+            archive_path = filename
+
+            try:
+                import_archive(archive_path, **import_kwargs)
+            except IncompatibleStorageSchema:
+                if try_migration:
+                    echo(f'incompatible version detected for {archive_path}, trying migration')
+                    archive_format = get_format()
+                    version = archive_format.latest_version
+                    archive_format.migrate(archive_path, archive_path, version, force=True, compression=6)
+                    import_archive(archive_path, **import_kwargs)
+                else:
+                    raise
+
+    return _import_with_migrate
+
+
+@pytest.fixture
+def load_cache(absolute_archive_path):  # pylint: disable=redefined-outer-name
+
+    def _load_cache(archive_path):
+        #TODO: private import not good
+        from aiida_testing.archive_cache._utils import load_node_archive  # pylint: disable=import-error
+        full_archive_path = absolute_archive_path(archive_path, overwrite=False)
+        # check and load export
+        export_exists = os.path.isfile(full_archive_path)
+        if export_exists:
+            load_node_archive(full_archive_path)  #
+
+    return _load_cache
+
+
+@pytest.fixture(scope='function', autouse=True)
+def clear_database_aiida_fleur(aiida_profile_clean):  # pylint: disable=redefined-outer-name
+    """Clear the database after each test.
+    """
+
+
+@pytest.fixture(scope='function', autouse=True)
+def configure_aiida_loggers(caplog):
+    """
+    Configure the aiida logging to reduce noise in workchain regression tests
+    """
+    import logging
+
+    caplog.set_level(logging.CRITICAL, logger='aiida.export')
+
+    aiida_logger = logging.getLogger('aiida')
+
+    STREAM_HANDLER = [h for h in aiida_logger.handlers if isinstance(h, logging.StreamHandler)][0]
+    aiida_logger.removeHandler(STREAM_HANDLER)
+
+    yield  #Now test runs
+
+    aiida_logger.addHandler(STREAM_HANDLER)
+
+
+@pytest.fixture
+def show_workchain_summary():
+
+    def _show_workchain_summary(calc_node, verbose=False):
+
+        from aiida.cmdline.utils.ascii_vis import format_call_graph, calc_info
+        from aiida.cmdline.utils import echo
+        from aiida.cmdline.utils.common import get_workchain_report
+
+        def calc_and_caching_info(node):
+
+            calc_info_string = calc_info(node)
+
+            cache_source = node.base.caching.get_cache_source()
+            if cache_source is None:
+                caching_string = 'Not Cached'
+                if verbose:
+                    caching_string = f'Not Cached {node.base.caching._get_objects_to_hash()}'
+            else:
+                caching_string = f'Cached (Source: <{cache_source}>)'
+
+            return f'{calc_info_string} | {caching_string}'
+
+        echo.echo('Call Graph:')
+        echo.echo(format_call_graph(calc_node, info_fn=calc_and_caching_info))
+        echo.echo('Workchain report:')
+        echo.echo(get_workchain_report(calc_node, 'REPORT'))
+
+    return _show_workchain_summary

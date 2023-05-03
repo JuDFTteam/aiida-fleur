@@ -500,46 +500,45 @@ def balance_equation(equation_string, allow_negativ=False, allow_zero=False, eva
     #Qs + [Ys['a'] - a]
 
     k = solve(Qs, *Ys)
-    if k:  # if a solution is found multiply by gcd
-        # TODO? check if solution has linear dependence: and evaluate
-        #for c in k.values():
-        #    for char in list(letters):
-        #        if char in str(c):
-        #             pass
-        N = []  #[k[Ys[s]]for s in sorted(Ys)]
-        rescale_N = False
-        denom_list = []
-        for s in sorted(Ys):
-            n = k[Ys[s]]
-            # idea: check if char in n, then linear depended, then
-            try:  # since solver gives also a linear depended solution if correct, but code fails then
-                if n < 0 and not allow_negativ:  # We allow for 0 but might be an other case to think about
-                    return None
-            except TypeError:
-                return None  # TODO Maybe other return value... maybe list of some values for
-                # linear dependencies, d,e,....? also choose them that the value is positive...?
-            if n == 0 and not allow_zero:
-                return None
-            N.append(n)
-
-            # Rationals are a problem in gcd, so we have to get rid of them
-            if isinstance(n, Rational):
-                rescale_N = True
-                denom_list.append(n.as_numer_denom()[1])
-        if rescale_N:
-            multiplier = 1
-            for denom in denom_list:
-                multiplier = multiplier * int(denom)
-            N = [int(n * multiplier) for n in N]
-        g = N[0]
-        for a1, a2 in zip(N[0::2], N[0::2]):
-            g = gcd(g, a2)
-        N = [int(i / g) for i in N]
-        pM = lambda c: str(c) + '*'  # if c!=1 else ''
-        res = '->'.join('+'.join(pM(N.pop(0)) + str(t) for t in p.split('+')) for p in eq.split('->'))
-        return res
-    else:
+    if not k:  # if a solution is found multiply by gcd
         return None
+    # TODO? check if solution has linear dependence: and evaluate
+    #for c in k.values():
+    #    for char in list(letters):
+    #        if char in str(c):
+    #             pass
+    N = []  #[k[Ys[s]]for s in sorted(Ys)]
+    rescale_N = False
+    denom_list = []
+    for s in sorted(Ys):
+        n = k[Ys[s]]
+        # idea: check if char in n, then linear depended, then
+        try:  # since solver gives also a linear depended solution if correct, but code fails then
+            if n < 0 and not allow_negativ:  # We allow for 0 but might be an other case to think about
+                return None
+        except TypeError:
+            return None  # TODO Maybe other return value... maybe list of some values for
+            # linear dependencies, d,e,....? also choose them that the value is positive...?
+        if n == 0 and not allow_zero:
+            return None
+        N.append(n)
+
+        # Rationals are a problem in gcd, so we have to get rid of them
+        if isinstance(n, Rational):
+            rescale_N = True
+            denom_list.append(n.as_numer_denom()[1])
+    if rescale_N:
+        multiplier = 1
+        for denom in denom_list:
+            multiplier = multiplier * int(denom)
+        N = [int(n * multiplier) for n in N]
+    g = N[0]
+    for a1, a2 in zip(N[0::2], N[0::2]):
+        g = gcd(g, a2)
+    N = [int(i / g) for i in N]
+    pM = lambda c: str(c) + '*'  # if c!=1 else '' #pylint: disable=unnecessary-lambda-assignment
+    res = '->'.join('+'.join(pM(N.pop(0)) + str(t) for t in p.split('+')) for p in eq.split('->'))
+    return res
 
 
 def check_eos_energies(energylist):

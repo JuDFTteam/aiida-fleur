@@ -3,6 +3,8 @@
 FleurinpModifier
 ================
 
+.. contents::
+
 Description
 -----------
 The :py:class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier` class has
@@ -39,7 +41,7 @@ object when the freeze method is executed. A code example:
 
 .. code-block:: python
 
-  from aiida_fleur.data.fleurinpmodifier import  FleurinpModifier
+  from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 
   F = FleurinpData(files=['inp.xml'])
   fm = FleurinpModifier(F)                                # Initialise FleurinpModifier class
@@ -164,14 +166,14 @@ The figure below shows a comparison between the use of XML and shortcut methods.
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_num_to_att()` was renamed to :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_number_to_attrib()` or :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.add_number_to_first_attrib()`. However, these are also higher-level functions now longer requiring a concrete xpath
     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgr_att()` and :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgr_att_label()` were renamed to :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgroup()` and :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_atomgroup_label()`. These functions now also take the changes in the form ``attributedict={'nocoParams':{'beta': val}}`` instead of ``attributedict={'nocoParams':[('beta': val)]}``
 
-.. warning:: Passing XML Elements to modification functions
+.. .. warning:: Passing XML Elements to modification functions
 
-    Some of the low-level implementations of the XML modification functions accept explicit XML elements as arguments for replacing/inserting. However, these can only be used within limits in the :py:class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier` at the moment. The reason for this is that there is currently no support for serializing these objects for the input of the Aiida calcfunction. The following functions are affected by this:
+..     Some of the low-level implementations of the XML modification functions accept explicit XML elements as arguments for replacing/inserting. However, these can only be used within limits in the :py:class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier` at the moment. The reason for this is that there is currently no support for serializing these objects for the input of the Aiida calcfunction. The following functions are affected by this:
 
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_replace_tag()` (Only usable with show and validate)
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.replace_tag()` (Only usable with show and validate)
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_create_tag()` (Can only be used with string names of tags)
-    * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.create_tag()`  (Can only be used with string names of tags)
+..     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_replace_tag()` (Only usable with show and validate)
+..     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.replace_tag()` (Only usable with show and validate)
+..     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.xml_create_tag()` (Can only be used with string names of tags)
+..     * :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.create_tag()`  (Can only be used with string names of tags)
 
 Modifying the density matrix for LDA+U calculations
 ---------------------------------------------------
@@ -188,7 +190,7 @@ an initial guess for the density matrix.
 
 .. code-block:: python
 
-  from aiida_fleur.data.fleurinpmodifier import  FleurinpModifier
+  from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 
   F = FleurinpData(files=['inp.xml'])
   fm = FleurinpModifier(F)                                             # Initialise FleurinpModifier class
@@ -208,6 +210,74 @@ an initial guess for the density matrix.
     Furthermore the :py:func:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier.set_nmmpmat()` should always be called 
     after any modifications to the LDA+U configuration.
     
+Usage in Workflows
+-------------------
+
+The :py:class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier` class can be used nicely to explicitly
+modify the :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` instances in scripts. However, when a ``inp.xml``
+file should be modified during the run of a aiida-fleur workflow this class cannot be used directly.
+Each workflow specifies a ``wf_parameters`` dictionary input (potentially more in sub workflows), which contains
+a ``inpxml_changes`` entry. This entry can be used to modify the used inputs inside the workchain at points
+defined by the workflow itself. The syntax for the ``inpxml_changes`` entry is as follows:
+
+Explicit definition
+___________________
+
+.. code-block:: python
+
+  wf_parameters = {
+    'inpxml_changes': [
+      ('set_inpchanges', {'changes': {'dos': True}}),
+      ('set_species', {'species_name': 'Fe-1', {'changes': {'electronConfig': {'flipspins': True}}}})
+    ]
+  }
+
+is equivalent to
+
+.. code-block:: python
+
+  from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+
+  F = FleurinpData(files=['inp.xml'])
+  fm = FleurinpModifier(F)
+  fm.set_inpchanges({'dos': True})
+  fm.set_species('Fe-1', {'electronConfig': {'flipspins': True}})
+
+Using :py:func:`~aiida_fleur.data.fleurinpmodifier.inpxml_changes()`
+____________________________________________________________________
+
+As can be seen from the above example, the syntax for the ``inpxml_changes`` entry is quite verbose,
+especially if compared with the more compact formulation using the :py:class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier`
+directly.
+For this reason a helper function :py:func:`~aiida_fleur.data.fleurinpmodifier.inpxml_changes()` is implemented
+to construct the ``inpxml_changes`` entry with the exact same syntax as the :py:class:`~aiida_fleur.data.fleurinpmodifier.FleurinpModifier`
+
+It is used as a contextmanager, which behaves exactly like the Modifier inside it's with block and
+enters a ``inpxml_changes`` entry into the dictionary passed to this function after the with block
+is terminated.
+
+.. code-block:: python
+
+  from aiida_fleur.data.fleurinpmodifier import inpxml_changes
+
+  parameters = {}
+  with inpxml_changes(parameters) as fm:
+    fm.set_inpchanges({'dos': True})
+    fm.set_species('Fe-1', {'electronConfig': {'flipspins': True}})
+  
+  print(parameters)
+
+.. code-block:: python
+
+  from aiida_fleur.data.fleurinpmodifier import inpxml_changes
+  from aiida import plugins
+
+  FleurBandDOS = plugins.WorkflowFactory('fleur.banddos')
+  inputs = FleurBandDOS.get_builder()
+
+  with inpxml_changes(inputs) as fm:
+    fm.set_inpchanges({'dos': True})
+    fm.set_species('Fe-1', {'electronConfig': {'flipspins': True}})
 
 .. Node graphs
 .. -----------

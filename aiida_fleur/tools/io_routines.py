@@ -23,7 +23,7 @@ def write_results_to_file(headerstring, data, destination='./outputfile', sepera
     param data: 2D array (numpy,scipy) with data [colum1 colum2, ...]
     """
 
-    with open(destination, 'w') as thefile:
+    with open(destination, 'w', encoding='utf-8') as thefile:
         thefile.write(headerstring)
         datastring = ''
         #seperator = seperator  # '\t'
@@ -123,7 +123,7 @@ def compress_fleuroutxml(outxmlfilepath, dest_file_path=None, delete_eig=True, i
     from masci_tools.util.xml.xml_setters_names import delete_tag
     from masci_tools.util.schema_dict_util import get_number_of_nodes
     from masci_tools.util.schema_dict_util import eval_simple_xpath
-    from masci_tools.io.io_fleurxml import load_outxml
+    from masci_tools.io.fleur_xml import load_outxml
     from lxml import etree
 
     xmltree, schema_dict = load_outxml(outxmlfilepath)

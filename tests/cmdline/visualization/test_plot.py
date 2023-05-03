@@ -33,15 +33,15 @@ def test_cmd_plot(run_cli_command, temp_dir, import_with_migrate):
 
     # import an an aiida export, this does not migrate
     import_with_migrate(EXPORTFILE_FILE)
-    process_uuid = '7f9f4cfb-4170-48ea-801d-4269f88792e0'
+    process_uuid = 'f44623bf-d8a3-41f0-b4ee-6562b5f9b027'
 
     options = [process_uuid, '--no-show']
     result = run_cli_command(cmd_plot, options=options)
 
     # provide a file with ids
     tempfile_name = os.path.join(temp_dir, 'test_uuids.txt')
-    with open(tempfile_name, 'w') as file1:
-        file1.write('7f9f4cfb-4170-48ea-801d-4269f88792e0\n7f9f4cfb-4170-48ea-801d-4269f88792e0')
+    with open(tempfile_name, 'w', encoding='utf-8') as file1:
+        file1.write(f'{process_uuid}\n{process_uuid}')
     options = [process_uuid, '--no-show', '-f', tempfile_name]
     result = run_cli_command(cmd_plot, options=options)
     os.remove(tempfile_name)

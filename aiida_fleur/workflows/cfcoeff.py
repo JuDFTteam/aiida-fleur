@@ -21,7 +21,7 @@ from aiida.common.constants import elements as PeriodicTableElements
 
 from aiida_fleur.tools.StructureData_util import replace_element, mark_atoms, get_atomtype_site_symmetry
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
-from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.data.fleurinpmodifier import FleurinpModifier, inpxml_changes
 from aiida_fleur.calculation.fleur import FleurCalculation
 
 from aiida_fleur.workflows.scf import FleurScfWorkChain
@@ -210,7 +210,8 @@ class FleurCFCoeffWorkChain(WorkChain):
             error = 'ERROR: Missing input. Provide one of the scf or orbcontrol inputs.'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        elif 'scf' in inputs and 'orbcontrol' in inputs:
+
+        if 'scf' in inputs and 'orbcontrol' in inputs:
             error = 'ERROR: Invalid Input. Provide only one of the scf or orbcontrol inputs.'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
@@ -221,11 +222,11 @@ class FleurCFCoeffWorkChain(WorkChain):
             error = f'ERROR: Invalid Input. Element not a valid element: {element}'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
-        else:
-            if atomic_numbers[element] < 57 and atomic_numbers[element] > 70:
-                error = 'ERROR: Invalid Input. CF coefficient workflow only implemented for 4f rare-earths'
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+
+        if atomic_numbers[element] < 57 and atomic_numbers[element] > 70:
+            error = 'ERROR: Invalid Input. CF coefficient workflow only implemented for 4f rare-earths'
+            self.report(error)
+            return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
     def run_scfcalculations(self):
 
@@ -321,15 +322,8 @@ class FleurCFCoeffWorkChain(WorkChain):
                 else:
                     scf_wf_dict = inputs_analogue.wf_parameters.get_dict()
 
-                scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
-                    'attributedict': {
-                        'special': {
-                            'socscale': 0.0
-                        }
-                    },
-                    'species_name':
-                    f"all-{self.ctx.wf_dict['analogue_element']}"
-                }))
+                with inpxml_changes(scf_wf_dict) as fm:
+                    fm.set_species(f"all-{self.ctx.wf_dict['analogue_element']}", {'special': {'socscale': 0}})
 
             inputs_analogue.wf_parameters = orm.Dict(dict=scf_wf_dict)
             inputs_analogue.metadata.call_link_label = f'analogue_scf_{index}'
@@ -346,15 +340,8 @@ class FleurCFCoeffWorkChain(WorkChain):
                 scf_wf_dict = {}
             else:
                 scf_wf_dict = input_scf.wf_parameters.get_dict()
-
-            scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
-                'species_name': f"all-{self.ctx.wf_dict['element']}",
-                'attributedict': {
-                    'special': {
-                        'socscale': 0.0
-                    }
-                }
-            }))
+            with inpxml_changes(scf_wf_dict) as fm:
+                fm.set_species(f"all-{self.ctx.wf_dict['element']}", {'special': {'socscale': 0}})
 
             input_scf.wf_parameters = orm.Dict(dict=scf_wf_dict)
         input_scf.metadata.call_link_label = 'rare_earth_scf'
@@ -371,14 +358,8 @@ class FleurCFCoeffWorkChain(WorkChain):
             else:
                 scf_wf_dict = input_orbcontrol['scf_no_ldau'].wf_parameters.get_dict()
 
-            scf_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
-                'species_name': f"all-{self.ctx.wf_dict['element']}",
-                'attributedict': {
-                    'special': {
-                        'socscale': 0.0
-                    }
-                }
-            }))
+            with inpxml_changes(scf_wf_dict) as fm:
+                fm.set_species(f"all-{self.ctx.wf_dict['element']}", {'special': {'socscale': 0}})
 
             input_orbcontrol.scf_no_ldau.wf_parameters = orm.Dict(dict=scf_wf_dict)
         elif self.ctx.wf_dict['soc_off']:
@@ -387,14 +368,8 @@ class FleurCFCoeffWorkChain(WorkChain):
             else:
                 orbcontrol_wf_dict = input_orbcontrol.wf_parameters.get_dict()
 
-            orbcontrol_wf_dict.setdefault('inpxml_changes', []).append(('set_species', {
-                'species_name': f"all-{self.ctx.wf_dict['element']}",
-                'attributedict': {
-                    'special': {
-                        'socscale': 0.0
-                    }
-                }
-            }))
+            with inpxml_changes(orbcontrol_wf_dict) as fm:
+                fm.set_species(f"all-{self.ctx.wf_dict['element']}", {'special': {'socscale': 0}})
 
             input_orbcontrol.wf_parameters = orm.Dict(dict=orbcontrol_wf_dict)
         input_orbcontrol.metadata.call_link_label = 'rare_earth_orbcontrol'
@@ -497,7 +472,7 @@ class FleurCFCoeffWorkChain(WorkChain):
 
             fm = FleurinpModifier(fleurinp_scf)
 
-            fm.set_atomgroup(attributedict={'cFCoeffs': {
+            fm.set_atomgroup({'cFCoeffs': {
                 'chargeDensity': False,
                 'potential': True
             }},
@@ -564,14 +539,10 @@ class FleurCFCoeffWorkChain(WorkChain):
         element = self.ctx.wf_dict['element']
         if self.ctx.wf_dict['rare_earth_analogue']:
             #Only charge density
-            fm.set_atomgroup(attributedict={'cFCoeffs': {
-                'chargeDensity': True,
-                'potential': False
-            }},
-                             species=f'all-{element}')
+            fm.set_atomgroup({'cFCoeffs': {'chargeDensity': True, 'potential': False}}, species=f'all-{element}')
         else:
             #Both potential and charge density
-            fm.set_atomgroup(attributedict={'cFCoeffs': {
+            fm.set_atomgroup({'cFCoeffs': {
                 'chargeDensity': True,
                 'potential': True,
                 'remove4f': True
@@ -654,7 +625,7 @@ class FleurCFCoeffWorkChain(WorkChain):
             link_label = 'rare_earth_cf'
             outnodedict[link_label] = self.ctx.rare_earth_cf.outputs.output_parameters
             cdn_retrieved = self.ctx.rare_earth_cf.outputs.retrieved
-            xmltree, schema_dict = self.ctx.rare_earth_cf.inputs.fleurinpdata.load_inpxml()
+            xmltree, schema_dict = self.ctx.rare_earth_cf.inputs.fleurinp.load_inpxml()
 
             groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup', list_return=True)
             atomTypes = []
@@ -689,7 +660,7 @@ class FleurCFCoeffWorkChain(WorkChain):
                     pot_retrieved = self.ctx[calc_name].outputs.retrieved
                     outnodedict[link_label] = self.ctx[calc_name].outputs.output_parameters
 
-                    xmltree, schema_dict = self.ctx[calc_name].inputs.fleurinpdata.load_inpxml()
+                    xmltree, schema_dict = self.ctx[calc_name].inputs.fleurinp.load_inpxml()
                     groups = eval_simple_xpath(xmltree, schema_dict, 'atomGroup', list_return=True)
                     atomTypes = []
                     for group_index, group in enumerate(groups):
@@ -748,7 +719,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         rare_earth_site_symmetries = []
         if success and len(cf_calc_out['cf_coefficients_atomtypes']) > 0:
             #For this to work the order of the atomtype CANNOT change between the conversions
-            struc = self.ctx.rare_earth_cf.inputs.fleurinpdata.get_structuredata_ncf()
+            struc = self.ctx.rare_earth_cf.inputs.fleurinp.get_structuredata_ncf()
             site_symmetries = get_atomtype_site_symmetry(struc)
             rare_earth_site_symmetries = [
                 site_symmetries[atomtype - 1] for atomtype in cf_calc_out['cf_coefficients_atomtypes']
@@ -1014,7 +985,7 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
 
     y_names, y_arrays = zip(*potentials.items())
     y_units = ['htr'] * len(y_names)
-    pot_data.set_y(y_arrays, y_names, y_units=y_units)
+    pot_data.set_y([d.real for d in y_arrays], y_names, y_units=y_units)
 
     pot_data.label = 'cfcoeff_pot_data'
     pot_data.description = ('Contains XyData for the Poteintials used in the crystal field calculation')
@@ -1028,7 +999,7 @@ def _calculate_single_atomtype(cf_cdn_folder, cf_pot_folder, convert, **kwargs):
     """
     CRYSTAL_FIELD_FILE = FleurCalculation._CFDATA_HDF5_FILE_NAME
 
-    cfcalc = CFCalculation(quiet=True)
+    cfcalc = CFCalculation()
     #Reading in the HDF files
     if CRYSTAL_FIELD_FILE in cf_cdn_folder.list_object_names():
         try:

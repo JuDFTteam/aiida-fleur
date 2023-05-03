@@ -9,6 +9,7 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 ''' Contains tests for the FleurRelaxWorkChain. '''
+
 import pytest
 import aiida_fleur
 import os
@@ -27,7 +28,8 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(500, method='thread')
-def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, create_fleurinp, clear_database):
+def test_fleur_relax_fleurinp_Si_bulk(enable_archive_cache, fleur_local_code, create_fleurinp, clear_database,
+                                      show_workchain_summary):
     """
     full example using FleurRelaxWorkChain with just a fleurinp data as input.
     Several fleur runs needed till convergence
@@ -53,22 +55,17 @@ def test_fleur_relax_fleurinp_Si_bulk(with_export_cache, fleur_local_code, creat
     builder.scf.fleur = FleurCode
     #print(builder)
 
-    # now run calculation
-    #run_with_cache(builder)
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_relax_fleurinp_Si.tar.gz')
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with enable_archive_cache('fleur_relax_fleurinp_Si.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
     n = out['output_relax_wc_para']
     n = n.get_dict()
-
-    print(get_workchain_report(orm.load_node(n['last_scf_wc_uuid']), 'REPORT'))
 
     print(n)
     #Dummy checks
@@ -103,7 +100,7 @@ def test_fleur_relax_validation_wrong_inputs(fleur_local_code, inpgen_local_code
     FleurCode = fleur_local_code
     InpgenCode = inpgen_local_code
 
-    wf_parameters = Dict(dict={
+    wf_parameters = Dict({
         'relax_iter': 5,
         'film_distance_relaxation': False,
         'force_criterion': 0.001,

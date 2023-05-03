@@ -23,11 +23,12 @@ from aiida.engine.processes.workchains.utils import process_handler, ProcessHand
 
 from aiida_fleur.tools.common_fleur_wf import optimize_calc_options
 from aiida_fleur.calculation.fleur import FleurCalculation
+from aiida_fleur.data.fleurinp import get_fleurinp_from_remote_data
 
 
 class FleurBaseWorkChain(BaseRestartWorkChain):
     """Workchain to run a FLEUR calculation with automated error handling and restarts"""
-    _workflowversion = '0.2.0'
+    _workflowversion = '0.2.1'
     _process_class = FleurCalculation
 
     @classmethod
@@ -43,6 +44,7 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             valid_type=orm.Dict,
             default=lambda: orm.Dict(dict={
                 'only_even_MPI': False,
+                'forbid_single_mpi': False,
                 'max_queue_nodes': 20,
                 'max_queue_wallclock_sec': 86400
             }),
@@ -64,7 +66,6 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         )
 
         spec.expose_outputs(FleurCalculation)
-        spec.output('final_calc_uuid', valid_type=orm.Str, required=False)
 
         spec.exit_code(311,
                        'ERROR_VACUUM_SPILL_RELAX',
@@ -124,12 +125,12 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
                 self.ctx.use_omp = False
                 self.ctx.suggest_mpi_omp_ratio = 1
 
-            try:
-                self.check_kpts()
+            status = self.check_kpts()
+            if status is None:
                 self.ctx.can_be_optimised = True
-            except Warning:
+            else:
                 self.report('ERROR: Not optimal computational resources.')
-                return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES
+                return status
 
     def check_kpts(self):
         """
@@ -139,33 +140,35 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         If suggested number of num_mpiprocs_per_machine is 60% smaller than
         requested, it throws an exit code and calculation stop withour submission.
         """
-        fleurinp = self.ctx.inputs.fleurinpdata
-        machines = self.ctx.num_machines
-        mpi_proc = self.ctx.num_mpiprocs_per_machine
-        omp_per_mpi = self.ctx.num_cores_per_mpiproc
+        if 'fleurinp' in self.ctx.inputs:
+            fleurinp = self.ctx.inputs.fleurinp
+        else:
+            fleurinp = get_fleurinp_from_remote_data(self.ctx.inputs.parent_folder)
+
         only_even_MPI = self.inputs.add_comp_para['only_even_MPI']
+        forbid_single_mpi = self.inputs.add_comp_para['forbid_single_mpi']
         try:
-            adv_nodes, adv_mpi_tasks, adv_omp_per_mpi, message = optimize_calc_options(machines,
-                                                                                       mpi_proc,
-                                                                                       omp_per_mpi,
-                                                                                       self.ctx.use_omp,
-                                                                                       self.ctx.suggest_mpi_omp_ratio,
-                                                                                       fleurinp,
-                                                                                       only_even_MPI=only_even_MPI)
+            machines, mpi_tasks, omp_threads, message = optimize_calc_options(self.ctx.num_machines,
+                                                                              self.ctx.num_mpiprocs_per_machine,
+                                                                              self.ctx.num_cores_per_mpiproc,
+                                                                              self.ctx.use_omp,
+                                                                              self.ctx.suggest_mpi_omp_ratio,
+                                                                              fleurinp,
+                                                                              only_even_MPI=only_even_MPI,
+                                                                              forbid_single_mpi=forbid_single_mpi)
         except ValueError as exc:
-            raise Warning('Not optimal computational resources, load less than 60%') from exc
+            self.report(exc)
+            return self.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES
 
         self.report(message)
 
-        self.ctx.inputs.metadata.options['resources']['num_machines'] = adv_nodes
-        self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = adv_mpi_tasks
+        self.ctx.inputs.metadata.options['resources']['num_machines'] = machines
+        self.ctx.inputs.metadata.options['resources']['num_mpiprocs_per_machine'] = mpi_tasks
         if self.ctx.use_omp:
-            self.ctx.inputs.metadata.options['resources']['num_cores_per_mpiproc'] = adv_omp_per_mpi
-            if 'environment_variables' in self.ctx.inputs.metadata.options:
-                self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(adv_omp_per_mpi)
-            else:
+            self.ctx.inputs.metadata.options['resources']['num_cores_per_mpiproc'] = omp_threads
+            if 'environment_variables' not in self.ctx.inputs.metadata.options:
                 self.ctx.inputs.metadata.options['environment_variables'] = {}
-                self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(adv_omp_per_mpi)
+            self.ctx.inputs.metadata.options['environment_variables']['OMP_NUM_THREADS'] = str(omp_threads)
 
     @process_handler(priority=1,
                      exit_codes=[
@@ -197,8 +200,8 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         # try to drop remote folder and see if it helps
         is_fleurinp_from_relax = False
-        if 'fleurinpdata' in self.ctx.inputs:
-            if 'relax.xml' in self.ctx.inputs.fleurinpdata.files:
+        if 'fleurinp' in self.ctx.inputs:
+            if 'relax.xml' in self.ctx.inputs.fleurinp.files:
                 is_fleurinp_from_relax = True
 
         if 'parent_folder' in self.ctx.inputs and is_fleurinp_from_relax:
@@ -246,36 +249,51 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
         Probably works for JURECA only, has to be tested for other systems.
         """
 
-        if self.ctx.can_be_optimised:
-            self.ctx.restart_calc = None
-            self.ctx.is_finished = False
-            self.report('Calculation failed due to lack of memory, I resubmit it with twice larger'
-                        ' amount of computational nodes and smaller MPI/OMP ratio')
-
-            # increase number of nodes
-            propose_nodes = self.ctx.num_machines * 2
-            if propose_nodes > self.ctx.max_queue_nodes:
-                propose_nodes = self.ctx.max_queue_nodes
-            self.ctx.num_machines = propose_nodes
-
-            self.ctx.suggest_mpi_omp_ratio = self.ctx.suggest_mpi_omp_ratio / 2
-            self.check_kpts()
-
-            if 'settings' not in self.ctx.inputs:
-                self.ctx.inputs.settings = {}
-            else:
-                self.ctx.inputs.settings = self.ctx.inputs.settings.get_dict()
-            self.ctx.inputs.settings.setdefault('remove_from_remotecopy_list', [])
-            if 'mixing_history*' not in self.ctx.inputs.settings['remove_from_remotecopy_list']:
-                self.ctx.inputs.settings['remove_from_remotecopy_list'].append('mixing_history*')
-            return ProcessHandlerReport(True)
-        else:
+        if not self.ctx.can_be_optimised:
             self.ctx.restart_calc = calculation
             self.ctx.is_finished = True
             self.report('I am not allowed to optimize your settings. Consider providing at least'
                         'num_machines and num_mpiprocs_per_machine')
             self.results()
             return ProcessHandlerReport(True, self.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION)
+
+        self.ctx.restart_calc = None
+        self.ctx.is_finished = False
+        self.report('Calculation failed due to lack of memory, I resubmit it with twice larger'
+                    ' amount of computational nodes and smaller MPI/OMP ratio')
+
+        # increase number of nodes
+        propose_nodes = self.ctx.num_machines * 2
+        if propose_nodes > self.ctx.max_queue_nodes:
+            propose_nodes = self.ctx.max_queue_nodes
+        self.ctx.num_machines = propose_nodes
+
+        self.ctx.suggest_mpi_omp_ratio = self.ctx.suggest_mpi_omp_ratio / 2
+
+        status = self.check_kpts()
+        if status is not None:
+            self.ctx.is_finished = True
+            self.results()
+            return ProcessHandlerReport(True, self.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES)
+
+        if 'settings' not in self.ctx.inputs:
+            settings = {}
+        else:
+            settings = self.ctx.inputs.settings.get_dict()
+        settings.setdefault('remove_from_remotecopy_list', [])
+        if 'mixing_history*' not in settings['remove_from_remotecopy_list']:
+            settings['remove_from_remotecopy_list'].append('mixing_history*')
+        self.ctx.inputs.settings = orm.Dict(dict=settings)
+
+        #check if the cdn.hdf can be reused
+        #Out of memory can also occur after a couple of iterations if the mixing_history gets too large
+        remote = calculation.base.links.get_outgoing().get_node_by_label('remote_folder')
+        if _is_remote_reusable(self.ctx.inputs, calculation):
+            if 'fleurinp' in self.ctx.inputs:
+                del self.ctx.inputs.fleurinp
+            self.ctx.inputs.parent_folder = remote
+
+        return ProcessHandlerReport(True)
 
     @process_handler(priority=47, exit_codes=FleurCalculation.exit_codes.ERROR_TIME_LIMIT)
     def _handle_time_limits(self, calculation):
@@ -286,10 +304,11 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
 
         # if previous calculation failed for the same reason, do not restart
         try:
-            prev_calculation_remote = calculation.get_incoming().get_node_by_label('parent_folder')
-            prev_calculation_status = prev_calculation_remote.get_incoming().all()[-1].node.exit_status
+            prev_calculation_remote = calculation.base.links.get_incoming().get_node_by_label('parent_folder')
+            prev_calculation_status = prev_calculation_remote.creator.exit_status
             if prev_calculation_status in FleurCalculation.get_exit_statuses(['ERROR_TIME_LIMIT']):
                 self.ctx.is_finished = True
+                self.results()
                 return ProcessHandlerReport(True)
         except NotExistent:
             pass
@@ -308,34 +327,39 @@ class FleurBaseWorkChain(BaseRestartWorkChain):
             propose_nodes = self.ctx.max_queue_nodes
         self.ctx.num_machines = propose_nodes
 
-        remote = calculation.get_outgoing().get_node_by_label('remote_folder')
+        remote = calculation.base.links.get_outgoing().get_node_by_label('remote_folder')
 
         # resubmit providing inp.xml and cdn from the remote folder
         self.ctx.is_finished = False
-        check_remote = False
-
-        if 'fleurinpdata' in self.ctx.inputs:
-            modes = self.ctx.inputs.fleurinpdata.get_fleur_modes()
-            if not (modes['force_theorem'] or modes['dos'] or modes['band']):
-                # in modes listed above it makes no sense copying cdn.hdf
-                self.ctx.inputs.parent_folder = remote
-                del self.ctx.inputs.fleurinpdata
-                check_remote = True
-        else:
-            # it is harder to extract modes in this case - simply try to reuse cdn.hdf and hope it works
+        if _is_remote_reusable(self.ctx.inputs, calculation):
+            if 'fleurinp' in self.ctx.inputs:
+                del self.ctx.inputs.fleurinp
             self.ctx.inputs.parent_folder = remote
-            check_remote = True
-
-        if check_remote:
-            #If no charge density file is available to restart from the calculation will except
-            #with a not nice error message. So we try to catch these cases to produce a nice error message
-            retrieved_filenames = calculation.get_outgoing().get_node_by_label('retrieved').list_object_names()
-            if all(file not in retrieved_filenames for file in (
-                    'cdn_last.hdf',
-                    'cdn1',
-            )):
-                self.report(
-                    'FleurCalculation failed due to time limits and no charge density file is available. Aborting!')
-                return ProcessHandlerReport(True, self.exit_codes.ERROR_TIME_LIMIT_NO_SOLUTION)
 
         return ProcessHandlerReport(True)
+
+
+def _is_remote_reusable(inputs, calculation):
+    """
+    Check whether the remote folder of the given calculation
+    can be resubmitted
+    """
+    can_use_remote = False
+    #If no charge density file is available to restart from the calculation will except
+    #with a not nice error message. So we can only reuse the charge density if these files are available
+    retrieved_filenames = calculation.base.links.get_outgoing().get_node_by_label('retrieved').list_object_names()
+    if any(file in retrieved_filenames for file in (
+            'cdn_last.hdf',
+            'cdn1',
+    )):
+        can_use_remote = True
+
+    if 'fleurinp' in inputs:
+        modes = inputs.fleurinp.get_fleur_modes()
+        if modes['force_theorem'] or modes['dos'] or modes['band']:
+            # in modes listed above it makes no sense copying cdn.hdf
+            can_use_remote = False
+    # without fleurinp it is harder to extract modes in this case
+    # - simply try to reuse cdn.hdf and hope it works
+
+    return can_use_remote

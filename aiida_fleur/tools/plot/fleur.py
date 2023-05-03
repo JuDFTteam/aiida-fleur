@@ -21,9 +21,10 @@ masci-tools which use matplotlib or bokeh as backend.
 from pprint import pprint
 import warnings
 import numpy as np
+import re
 
+from aiida.common.links import LinkType
 from aiida.orm import load_node, Node, WorkChainNode, Dict
-from aiida.common.exceptions import UniquenessError, NotExistent
 
 from masci_tools.util.constants import HTR_TO_EV
 from masci_tools.vis.common import set_defaults, set_default_backend, show_defaults, save_defaults, load_defaults, reset_defaults
@@ -165,7 +166,7 @@ def classify_node(node):
 
     #Define any additional node hat should be passed to the plotting function
     ADDITIONAL_OUTPUTS = {
-        'FleurBandDosWorkChain': ('last_calc_retrieved',),
+        'FleurBandDosWorkChain': ('banddos_calc__retrieved',),
         'FleurCFCoeffWorkChain': ('output_cfcoeff_wc_charge_densities', 'output_cfcoeff_wc_potentials')
     }
 
@@ -181,34 +182,24 @@ def classify_node(node):
     workchain_node = None
     if isinstance(node, WorkChainNode):
         workchain_node = node
-        output_list = workchain_node.get_outgoing().all()
+        output_list = workchain_node.get_outgoing(link_type=LinkType.RETURN).all()
         for out_link in output_list:
-            if 'output_' in out_link.link_label:
-                if 'wc' in out_link.link_label or 'wf' in out_link.link_label:
-                    if 'para' in out_link.link_label:  # We are just looking for parameter
-                        #nodes, structures, bands, dos and so on we tread different
-                        parameter_node = out_link.node  # we only visualize last output node
+            if re.fullmatch('output_.+_w[cf]_para', out_link.link_label):
+                parameter_node = out_link.node  # we only visualize last output node
     elif isinstance(node, Dict):
         parameter_node = node
 
-    if isinstance(parameter_node, Dict):
-        parameter_dict = parameter_node.get_dict()
-        workflow_name = parameter_dict.get('workflow_name', None)
-    else:
+    if parameter_node is None:
         raise ValueError(f'I do not know how to visualize this node: {node}')
+
+    parameter_dict = parameter_node.get_dict()
+    workflow_name = parameter_dict.get('workflow_name', None)
 
     add_outputs = ADDITIONAL_OUTPUTS.get(workflow_name, tuple())
     add_nodes = tuple()
     if add_outputs:
         if workchain_node is None:
-            incoming = parameter_node.get_incoming(node_class=WorkChainNode).all()
-            n_parents = len(incoming)
-            if n_parents > 1:
-                raise UniquenessError(f'Parameter node {parameter_node} has no unique WorkChainNode parent')
-            if n_parents == 0:
-                raise NotExistent(f'Parameter node {parameter_node} has no WorkChainNode parent')
-            workchain_node = incoming[0].node
-
+            workchain_node = parameter_node.get_incoming(node_class=WorkChainNode).one().node
         add_nodes = tuple(workchain_node.get_outgoing().get_node_by_label(out_label) for out_label in add_outputs)
 
     outputs = (parameter_node,) + add_nodes
@@ -482,12 +473,13 @@ def plot_fleur_orbcontrol_wc(nodes,
                              show=True,
                              line_labels=None,
                              backend='matplotlib',
+                             size_func=None,
                              **kwargs):
     """
     This methods takes AiiDA output parameter nodes from a orbcontrol
     workchain and plots the energy of the individual configurations.
     """
-    from masci_tools.vis.common import scatter
+    from masci_tools.vis.common import scatter, PlotBackend
     from itertools import chain
 
     if labels is None:
@@ -502,6 +494,8 @@ def plot_fleur_orbcontrol_wc(nodes,
     converged_energy = []
     non_converged_configs = []
     non_converged_energy = []
+    converged_size_data = []
+    non_converged_size_data = []
     for node in nodes:
         outputs = node.get_dict()
 
@@ -516,6 +510,17 @@ def plot_fleur_orbcontrol_wc(nodes,
         non_converged_configs.extend(i + offset for i in non_converged)
         non_converged_energy.extend(total_energy[i] for i in non_converged)
 
+        if size_func is not None:
+            #The size_func operates on the original workchain node (to make introspection easier)
+            wc_node = node.get_incoming(link_type=LinkType.RETURN).one().node
+            size = size_func(wc_node)
+            if not isinstance(size, list) or len(size) != len(total_energy):
+                raise ValueError(f'Wrong length of size data. Expected {len(total_energy)} entries: '
+                                 f'Got {len(size) if isinstance(size, list) else size}')
+
+            converged_size_data.extend(size[i] for i in converged)
+            non_converged_size_data.extend(size[i] for i in non_converged)
+
         offset += max(chain(converged, non_converged, outputs['failed_configs'])) + 1
         lines.append(offset - 0.5)
 
@@ -527,7 +532,8 @@ def plot_fleur_orbcontrol_wc(nodes,
     converged_energy *= HTR_TO_EV
     non_converged_energy *= HTR_TO_EV
 
-    if backend == 'matplotlib':
+    backend = PlotBackend.from_str(backend)
+    if backend == PlotBackend.mpl:
         kwargs.setdefault('plot_label', ['converged', 'not converged'])
     else:
         kwargs.setdefault('legend_label', ['converged', 'not converged'])
@@ -535,11 +541,13 @@ def plot_fleur_orbcontrol_wc(nodes,
     kwargs.setdefault('xlabel', 'Configurations')
     kwargs.setdefault('ylabel', r'$E_{rel}$ [eV]')
     kwargs.setdefault('title', 'Results for orbcontrol node')
-    kwargs.setdefault('legend_option', {'loc': 'upper right'})
+    kwargs.setdefault('legend_options', {'loc': 'upper right'})
     kwargs.setdefault('markersize', 10.0)
     kwargs.setdefault('legend', True)
     if len(lines) > 1:
         kwargs.setdefault('lines', {'vertical': lines[:-1]})
+    if size_func is not None:
+        kwargs.setdefault('size_data', [converged_size_data, non_converged_size_data])
 
     p1 = scatter([converged_configs, non_converged_configs], [converged_energy, non_converged_energy],
                  color=['darkblue', 'darkred'],
@@ -548,7 +556,7 @@ def plot_fleur_orbcontrol_wc(nodes,
                  backend=backend,
                  **kwargs)
 
-    if line_labels and backend == 'matplotlib':
+    if line_labels and backend == PlotBackend.mpl:
         for label, pos in zip(line_labels, [0] + [p + 0.25 for p in lines]):
             p1.annotate(label, xy=(pos, 0.95), xycoords=('data', 'axes fraction'), ha='left', va='center', size=16)
 

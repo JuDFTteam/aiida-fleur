@@ -26,6 +26,8 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
 
+from masci_tools.util.constants import HTR_TO_EV
+
 # pylint: disable=invalid-name
 FleurInpData = DataFactory('fleur.fleurinp')
 # pylint: enable=invalid-name
@@ -151,7 +153,7 @@ class FleurStrainWorkChain(WorkChain):
         inputs = self.inputs
         if 'inpgen' in inputs:
             try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen', use_exceptions=True)
+                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen')
             except ValueError:
                 error = ('The code you provided for inpgen of FLEUR does not use the plugin fleur.inpgen')
                 self.control_end_wc(error)
@@ -159,7 +161,7 @@ class FleurStrainWorkChain(WorkChain):
 
         if 'fleur' in inputs:
             try:
-                test_and_get_codenode(inputs.fleur, 'fleur.fleur', use_exceptions=True)
+                test_and_get_codenode(inputs.fleur, 'fleur.fleur')
             except ValueError:
                 error = ('The code you provided for FLEUR does not use the plugin fleur.fleur')
                 self.control_end_wc(error)
@@ -229,9 +231,9 @@ class FleurStrainWorkChain(WorkChain):
         inputs['inpgen'] = self.inputs.inpgen
         inputs['fleur'] = self.inputs.fleur
 
-        inputs['options'] = Dict(dict=inputs['options'])
-        inputs['wf_parameters'] = Dict(dict=inputs['wf_parameters'])
-        inputs['calc_parameters'] = Dict(dict=inputs['calc_parameters'])
+        inputs['options'] = Dict(inputs['options'])
+        inputs['wf_parameters'] = Dict(inputs['wf_parameters'])
+        inputs['calc_parameters'] = Dict(inputs['calc_parameters'])
 
         return inputs
 
@@ -247,7 +249,6 @@ class FleurStrainWorkChain(WorkChain):
         calc_uuids = []
         vol_peratom_success = []
         natoms = len(self.inputs.structure.sites)
-        htr_to_ev = 27.21138602
 
         for label in self.ctx.labels:
             calc = self.ctx[label]
@@ -271,14 +272,14 @@ class FleurStrainWorkChain(WorkChain):
             t_e = outpara.get('total_energy', float('nan'))
             e_u = outpara.get('total_energy_units', 'eV')
             if e_u in ('Htr', 'htr'):
-                t_e = t_e * htr_to_ev
+                t_e = t_e * HTR_TO_EV
             dis = outpara.get('distance_charge', float('nan'))
             dis_u = outpara.get('distance_charge_units')
             t_energylist.append(t_e)
             t_energylist_peratom.append(t_e / natoms)
             vol_peratom_success.append(self.ctx.volume_peratom[label])
             distancelist.append(dis)
-            calc_uuid = outpara.get('last_calc_uuid')
+            calc_uuid = calc.outputs.last_calc.remote_folder.creator.uuid
             calc_uuids.append(calc_uuid)
             bandgaplist.append(load_node(calc_uuid).res.bandgap)
 
@@ -350,7 +351,7 @@ class FleurStrainWorkChain(WorkChain):
             self.report('Done, but something went wrong.... Probably some individual calculation failed or'
                         ' a scf-cycle did not reach the desired distance.')
 
-        outputnode_t = Dict(dict=outputnode_dict)
+        outputnode_t = Dict(outputnode_dict)
         outdict = create_strain_result_node(outpara=outputnode_t)
 
         # create link to work-chain node

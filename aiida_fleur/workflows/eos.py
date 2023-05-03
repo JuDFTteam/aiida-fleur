@@ -18,6 +18,7 @@ of an equation of state
 # one can start with 18 iterations, and if thats not enough run again 9 or something)
 import numpy as np
 
+from aiida import orm
 from aiida.orm import load_node
 from aiida.orm import Float, StructureData, Dict, List
 from aiida.engine import WorkChain, ToContext
@@ -182,7 +183,7 @@ class FleurEosWorkChain(WorkChain):
             return self.exit_codes.ERROR_SUB_PROCESS_FAILED
 
         fleurinp = first_scf.outputs.fleurinp
-        self.ctx.first_calc_parameters = fleurinp.get_parameterdata()
+        self.ctx.first_calc_parameters = fleurinp.get_parameterdata(write_ids=orm.Bool(False))
 
     def converge_scf(self):
         """
@@ -294,7 +295,7 @@ class FleurEosWorkChain(WorkChain):
 
             # something went wrong with the fit
             for i in volume, bulk_modulus, bulk_deriv, residuals:
-                if issubclass(type(i), np.complex):
+                if isinstance(i, complex):
                     write_defaults_fit = True
 
             if all(i is not None for i in (volume, bulk_modulus, bulk_deriv, residuals)):
@@ -359,7 +360,7 @@ class FleurEosWorkChain(WorkChain):
             self.report('Done, but something went wrong.... Probably some individual calculation failed or'
                         ' a scf-cycle did not reach the desired distance.')
 
-        outnode = Dict(dict=out)
+        outnode = Dict(out)
         outnodedict['results_node'] = outnode
 
         # create links between all these nodes...

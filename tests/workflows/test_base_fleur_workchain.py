@@ -9,6 +9,7 @@
 # http://aiida-fleur.readthedocs.io/en/develop/                               #
 ###############################################################################
 '''Contains tests for the FleurBaseWorkChain'''
+
 import pytest
 import os
 from aiida.orm import Dict
@@ -19,7 +20,7 @@ from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 
 aiida_path = os.path.dirname(aiida_fleur.__file__)
-TEST_INP_XML_PATH = os.path.join(aiida_path, 'tests/files/inpxml/Si/inp.xml')
+TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 CALC_ENTRY_POINT = 'fleur.fleur'
 
 
@@ -104,7 +105,7 @@ def test_handle_dirac_equation_fleurinp_with_relax(generate_workchain_base, crea
     path = os.path.abspath(os.path.join(aiida_path, '../tests/files/outxml/tmp'))
     remote = generate_remote_data(fleur.computer, path).store()
 
-    inputs = {'code': fleur, 'fleurinpdata': fleurinp, 'parent_folder': remote, 'options': Dict(dict=default_options)}
+    inputs = {'code': fleur, 'fleurinp': fleurinp, 'parent_folder': remote, 'options': Dict(default_options)}
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_DROP_CDN, inputs=inputs)
     process.setup()
@@ -138,12 +139,22 @@ def test_handle_not_enough_memory_no_solution(generate_workchain_base):
     assert result == FleurBaseWorkChain.exit_codes.ERROR_MEMORY_ISSUE_NO_SOLUTION
 
 
-def test_handle_not_enough_memory(generate_workchain_base):
+def test_handle_not_enough_memory(generate_workchain_base, generate_remote_data, generate_retrieved_data):
     """Test `FleurBaseWorkChain._handle_not_enough_memory`."""
+    from aiida.common import LinkType
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_NOT_ENOUGH_MEMORY)
     process.setup()
     process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
+
+    code = process.ctx.inputs.code
+
+    #Add outgoing remote folder
+    process.ctx.children[-1].store()
+    remote = generate_remote_data(code.computer, '/tmp')
+    remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.store()
+    generate_retrieved_data(process.ctx.children[-1], 'default')
 
     result = process._handle_not_enough_memory(process.ctx.children[-1])
     assert isinstance(result, ProcessHandlerReport)
@@ -154,7 +165,7 @@ def test_handle_not_enough_memory(generate_workchain_base):
     assert 'settings' in process.ctx.inputs
     assert process.ctx.inputs.settings['remove_from_remotecopy_list'] == ['mixing_history*']
 
-    process.ctx.inputs.settings = Dict(dict={})  #Test that already set inputs also work
+    process.ctx.inputs.settings = Dict({})  #Test that already set inputs also work
     process.ctx.num_machines = 14  #doubling goes over the maximum specified
     result = process.inspect_process()
     assert result.status == 0
@@ -162,6 +173,9 @@ def test_handle_not_enough_memory(generate_workchain_base):
     assert abs(process.ctx.suggest_mpi_omp_ratio - 0.25) < 1e-12
     assert 'settings' in process.ctx.inputs
     assert process.ctx.inputs.settings['remove_from_remotecopy_list'] == ['mixing_history*']
+    assert 'parent_folder' in process.ctx.inputs
+    assert process.ctx.inputs.parent_folder.uuid == remote.uuid
+    assert 'fleurinp' not in process.ctx.inputs
 
 
 def test_handle_time_limits(generate_workchain_base, generate_remote_data, generate_retrieved_data):
@@ -177,7 +191,7 @@ def test_handle_time_limits(generate_workchain_base, generate_remote_data, gener
     #Add outgoing remote folder
     process.ctx.children[-1].store()
     remote = generate_remote_data(code.computer, '/tmp')
-    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
     generate_retrieved_data(process.ctx.children[-1], 'default')
 
@@ -188,7 +202,7 @@ def test_handle_time_limits(generate_workchain_base, generate_remote_data, gener
     assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 12 * 60 * 60
     assert process.ctx.num_machines == 2
     assert process.ctx.inputs.parent_folder.uuid == remote.uuid
-    assert 'fleurinpdata' not in process.ctx.inputs
+    assert 'fleurinp' not in process.ctx.inputs
 
     process.ctx.inputs.metadata.options['max_wallclock_seconds'] = 80000  #doubling goes over the maximum specified
     process.ctx.num_machines = 14  #doubling goes over the maximum specified
@@ -197,11 +211,12 @@ def test_handle_time_limits(generate_workchain_base, generate_remote_data, gener
     assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 86400
     assert process.ctx.num_machines == 20
     assert process.ctx.inputs.parent_folder.uuid == remote.uuid
-    assert 'fleurinpdata' not in process.ctx.inputs
+    assert 'fleurinp' not in process.ctx.inputs
 
 
 def test_handle_time_limits_no_charge_density(generate_workchain_base, generate_remote_data, generate_retrieved_data):
-    """Test `FleurBaseWorkChain._handle_time_limits`."""
+    """Test `FleurBaseWorkChain._handle_time_limits` with remote folder without charge density.
+       Expected result continue without charge density and doulbed resources"""
     from aiida.common import LinkType
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT)
@@ -213,17 +228,27 @@ def test_handle_time_limits_no_charge_density(generate_workchain_base, generate_
     #Add outgoing remote folder
     process.ctx.children[-1].store()
     remote = generate_remote_data(code.computer, '/tmp')
-    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
     generate_retrieved_data(process.ctx.children[-1], 'complex_errorout')
 
     result = process._handle_time_limits(process.ctx.children[-1])
     assert isinstance(result, ProcessHandlerReport)
     assert result.do_break
-    assert result.exit_code.status == 388
+    assert result.exit_code.status == 0
+    assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 12 * 60 * 60
+    assert process.ctx.num_machines == 2
+    assert 'parent_folder' not in process.ctx.inputs
+    assert 'fleurinp' in process.ctx.inputs
 
+    process.ctx.inputs.metadata.options['max_wallclock_seconds'] = 80000  #doubling goes over the maximum specified
+    process.ctx.num_machines = 14  #doubling goes over the maximum specified
     result = process.inspect_process()
-    assert result == FleurBaseWorkChain.exit_codes.ERROR_TIME_LIMIT_NO_SOLUTION
+    assert result.status == 0
+    assert process.ctx.inputs.metadata.options['max_wallclock_seconds'] == 86400
+    assert process.ctx.num_machines == 20
+    assert 'parent_folder' not in process.ctx.inputs
+    assert 'fleurinp' in process.ctx.inputs
 
 
 def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_remote_data, generate_retrieved_data,
@@ -238,12 +263,7 @@ def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_
     path = os.path.abspath(os.path.join(aiida_path, '../tests/files/outxml/tmp'))
     remote_before = generate_remote_data(fleur.computer, path).store()
 
-    inputs = {
-        'code': fleur,
-        'fleurinpdata': fleurinp,
-        'parent_folder': remote_before,
-        'options': Dict(dict=default_options)
-    }
+    inputs = {'code': fleur, 'fleurinp': fleurinp, 'parent_folder': remote_before, 'options': Dict(default_options)}
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT, inputs=inputs)
     process.setup()
@@ -252,7 +272,7 @@ def test_handle_time_limits_incompatible_mode(generate_workchain_base, generate_
     #Add outgoing remote folder
     process.ctx.children[-1].store()
     remote = generate_remote_data(fleur.computer, '/tmp')
-    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
     generate_retrieved_data(process.ctx.children[-1], 'default')
 
@@ -276,23 +296,18 @@ def test_handle_time_limits_no_fleurinp(generate_workchain_base, generate_remote
     path = os.path.abspath(os.path.join(aiida_path, '../tests/files/outxml/tmp'))
     remote_before = generate_remote_data(fleur.computer, path).store()
 
-    inputs = {
-        'code': fleur,
-        'fleurinpdata': fleurinp,
-        'parent_folder': remote_before,
-        'options': Dict(dict=default_options)
-    }
+    inputs = {'code': fleur, 'fleurinp': fleurinp, 'parent_folder': remote_before, 'options': Dict(default_options)}
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT, inputs=inputs)
     process.setup()
     process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
 
-    process.ctx.inputs.pop('fleurinpdata')  #Simulate the fact that some previous error handler dropped fleurinpdata
+    process.ctx.inputs.pop('fleurinp')  #Simulate the fact that some previous error handler dropped fleurinp
 
     #Add outgoing remote folder
     process.ctx.children[-1].store()
     remote = generate_remote_data(fleur.computer, '/tmp')
-    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
     generate_retrieved_data(process.ctx.children[-1], 'default')
 
@@ -322,25 +337,22 @@ def test_handle_time_limits_previous_calculation_error(generate_workchain_base, 
     prev_calc.set_exit_status(FleurCalculation.exit_codes.ERROR_TIME_LIMIT.status)
     prev_calc.store()
 
-    remote_before.add_incoming(prev_calc, link_type=LinkType.CREATE, link_label='remote_folder')
+    remote_before.base.links.add_incoming(prev_calc, link_type=LinkType.CREATE, link_label='remote_folder')
     remote_before.store()
 
-    inputs = {
-        'code': fleur,
-        'fleurinpdata': fleurinp,
-        'parent_folder': remote_before,
-        'options': Dict(dict=default_options)
-    }
+    inputs = {'code': fleur, 'fleurinp': fleurinp, 'parent_folder': remote_before, 'options': Dict(default_options)}
 
     process = generate_workchain_base(exit_code=FleurCalculation.exit_codes.ERROR_TIME_LIMIT, inputs=inputs)
     process.setup()
     process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
 
     #Add outgoing remote folder
-    process.ctx.children[-1].add_incoming(remote_before, link_type=LinkType.INPUT_CALC, link_label='parent_folder')
+    process.ctx.children[-1].base.links.add_incoming(remote_before,
+                                                     link_type=LinkType.INPUT_CALC,
+                                                     link_label='parent_folder')
     process.ctx.children[-1].store()
     remote = generate_remote_data(fleur.computer, '/tmp')
-    remote.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
+    remote.base.links.add_incoming(process.ctx.children[-1], link_type=LinkType.CREATE, link_label='remote_folder')
     remote.store()
 
     result = process._handle_time_limits(process.ctx.children[-1])
@@ -353,6 +365,42 @@ def test_handle_time_limits_previous_calculation_error(generate_workchain_base, 
     assert result.status == 0
 
 
+def test_base_fleur_worlchain_forbid_single_mpi(generate_workchain_base, create_fleurinp, fixture_code):
+
+    from aiida_fleur.common.defaults import default_options
+    from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+
+    INPXML_PATH = os.path.abspath(os.path.join(aiida_path, '../tests/files/inpxml/CuDOSXML/files/inp.xml'))
+    fleurinp = create_fleurinp(INPXML_PATH)
+    fm = FleurinpModifier(fleurinp)
+    fm.set_nkpts(1033)  #set to bad number to make the only parallelization 1 node 1 MPI
+    fleurinp = fm.freeze()
+
+    fleur = fixture_code('fleur.fleur')
+
+    inputs = {
+        'code':
+        fleur,
+        'fleurinp':
+        fleurinp,
+        'add_comp_para':
+        Dict({
+            'only_even_MPI': False,
+            'forbid_single_mpi': True,
+            'max_queue_nodes': 20,
+            'max_queue_wallclock_sec': 86400
+        }),
+        'options':
+        Dict(default_options)
+    }
+
+    process = generate_workchain_base(inputs=inputs)
+    process.setup()
+    status = process.validate_inputs()  #Sets up all the context in order for the memory error handler to work
+
+    assert status == FleurBaseWorkChain.exit_codes.ERROR_NOT_OPTIMAL_RESOURCES
+
+
 # tests
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_FleurBaseWorkChain():
@@ -360,15 +408,14 @@ class Test_FleurBaseWorkChain():
     Regression tests for the FleurBaseWorkChain
     """
 
-    @pytest.mark.skip(reason='Test is not implemented')
+    @pytest.mark.skip
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_base_fleurinp_Si(self, run_with_cache, mock_code_factory, create_fleurinp):
+    def test_fleur_base_fleurinp_Si(self, enable_archive_cache, fleur_local_code, create_fleurinp):
         """
         full example using FleurBaseWorkChain with just a fleurinp data as input.
         Several fleur runs needed till convergence
         """
-        from aiida.orm import Code, load_node, StructureData
-        from numpy import array
+        from aiida.engine import run_get_node
 
         options = {
             'resources': {
@@ -379,21 +426,17 @@ class Test_FleurBaseWorkChain():
             'custom_scheduler_commands': ''
         }
 
-        FleurCode = mock_code = mock_code_factory(
-            label='fleur',
-            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data_dir/'),
-            entry_point=CALC_ENTRY_POINT,
-            ignore_files=['_aiidasubmit.sh', 'cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
         # create process builder to set parameters
         builder = FleurBaseWorkChain.get_builder()
         builder.metadata.description = 'Simple Fleur SCF test for Si bulk with fleurinp data given'
-        builder.metadata.label = 'FleurSCF_test_Si_bulk'
+        builder.metadata.label = 'FleurBase_test_Si_bulk'
         builder.fleurinp = create_fleurinp(TEST_INP_XML_PATH)
-        builder.options = Dict(dict=options)
-        builder.fleur = FleurCode
+        builder.options = Dict(options)
+        builder.code = fleur_local_code
 
         # now run calculation
-        out, node = run_with_cache(builder)
+        with enable_archive_cache('fleur_base_fleurinp_Si.tar.gz'):
+            out, node = run_get_node(builder)
 
         # check output
 
@@ -401,7 +444,7 @@ class Test_FleurBaseWorkChain():
 
     @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_base_structure_Si(self, run_with_cache, mock_code_factory):
+    def test_fleur_base_structure_Si(self, run_with_cache, fleur_local_code):
         """
         Full regression test of FleurBaseWorkChain starting with a crystal structure and parameters
         """
@@ -409,7 +452,7 @@ class Test_FleurBaseWorkChain():
 
     @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_base_continue_from_x(self, run_with_cache, mock_code_factory):
+    def test_fleur_base_continue_from_x(self, run_with_cache, fleur_local_code):
         """
         Full regression test of FleurBaseWorkChain while encountering x, handling it and restart
         """
@@ -417,7 +460,7 @@ class Test_FleurBaseWorkChain():
 
     @pytest.mark.skip(reason='Test is not implemented')
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_base_validation_wrong_inputs(self, run_with_cache, mock_code_factory):
+    def test_fleur_base_validation_wrong_inputs(self, run_with_cache, fleur_local_code):
         """
         Test the validation behavior of FleurBaseWorkChain if wrong input is provided it should throw
         an exitcode and not start a Fleur run or crash

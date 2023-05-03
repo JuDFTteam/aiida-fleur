@@ -1,0 +1,21 @@
+A Fleur (inpgen file)
+&input  cartesian=F   film=T /
+       5.301179703        0.000000000        0.000000000
+       0.000000000        7.497000033        0.000000000
+       0.000000000        0.000000000        9.450000000
+      1.0000000000
+       1.000000000        1.000000000        1.000000000
+
+      2
+       26.1       0.0000000000       0.0000000000      -0.9964250044 1
+       78.1       0.5000000000       0.5000000000       0.9964250044 1
+&atom
+  dx=0.017   element="Pt"   jri=787   lmax=10   lnonsph=6   lo="5p"   rmt=2.38 /
+&atom
+  dx=0.016   element="Fe"   jri=787   lmax=10   lnonsph=6   lo="3s 3p"   rmt=2.38 /
+&comp
+  ctail=F   frcor=F   gmax=10.9   gmaxxc=9.1   jspins=2   kcrel=0   kmax=4.4 /
+&exco
+  xctyp="pbe" /
+&kpt
+  div1=12   div2=8   div3=0 /

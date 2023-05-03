@@ -44,6 +44,7 @@ from aiida_fleur.tools.element_econfig_list import econfigstr_hole, states_spin
 from aiida_fleur.tools.element_econfig_list import get_state_occ, highest_unocc_valence
 from aiida_fleur.tools.dict_util import dict_merger, extract_elementpara
 from aiida_fleur.data.fleurinp import FleurinpData
+from aiida_fleur.data.fleurinpmodifier import inpxml_changes
 
 
 class FleurCoreholeWorkChain(WorkChain):
@@ -218,7 +219,18 @@ class FleurCoreholeWorkChain(WorkChain):
         else:
             self.ctx.ref_para = None
 
-        wf_dict = inputs.wf_parameters.get_dict()
+        wf_default = self._default_wf_para
+        if 'wf_parameters' in self.inputs:
+            wf_dict = self.inputs.wf_parameters.get_dict()
+        else:
+            wf_dict = wf_default
+
+        for key, val in wf_default.items():
+            if isinstance(val, dict):
+                wf_dict[key] = {**val, **wf_dict.get(key, {})}
+            else:
+                wf_dict[key] = wf_dict.get(key, val)
+
         self.ctx.method = wf_dict.get('method', 'valence')
         self.ctx.joblimit = wf_dict.get('joblimit')
         self.ctx.add_comp_para = wf_dict['add_comp_para']
@@ -394,7 +406,7 @@ class FleurCoreholeWorkChain(WorkChain):
         # 1. Find out what atoms to put coreholes on
         self.report(f'Atoms to calculate : {atoms_toc}')
         for atom_info in atoms_toc:
-            if isinstance(atom_info, str):  # , six.text_type)):  #basestring):
+            if isinstance(atom_info, str):
                 if atom_info == 'all':
                     # add all symmetry equivivalent atoms of structure to create coreholes
                     #coreholes_atoms = base_atoms_sites
@@ -450,7 +462,7 @@ class FleurCoreholeWorkChain(WorkChain):
         # 2. now check what type of corelevel shall we create on those atoms
         self.report(f'Corelevels to calculate : {corelevels_toc}')
         for corel in corelevels_toc:
-            if isinstance(corel, str):  # , six.text_type)):  #basestring):
+            if isinstance(corel, str):
                 # split string (Be1s) s.replace(';',' ')... could get rid of re
                 elm_cl = re.split('[, ;:-]', corel)
                 #print(elm_cl)
@@ -549,38 +561,6 @@ class FleurCoreholeWorkChain(WorkChain):
                                                    corehole=cl_dict.get('corelevel')[i],
                                                    valence=cl_dict.get('valence')[i],
                                                    ch_occ=hole_charge)
-                    attributedict = {'electronConfig': {'stateOccupation': state_tag_list}}
-                    #pprint(state_tag_list)
-                    change = ('set_species', {
-                        'species_name': change_kind,
-                        'attributedict': attributedict,
-                        'create': False
-                    })
-                    fleurinp_change.append(change)
-                    if correct_val_charge:  # only needed in certain methods
-                        charge_change = (
-                            'add_number_to_first_attrib',
-                            {
-                                'attributename': 'valenceElectrons',
-                                'add_number': -1.0,  #-hole_charge,  #one electron was added by inpgen, we remove it
-                                'mode': 'abs',
-                            })
-                        fleurinp_change.append(charge_change)
-                    elif hole_charge != 1.0:  # fractional valence hole
-                        charge_change = (
-                            'add_number_to_first_attrib',
-                            {
-                                'attributename': 'valenceElectrons',
-                                'add_number': -1.0 + hole_charge,  # one electron was already added by inpgen
-                                'mode': 'abs',
-                            })
-                        fleurinp_change.append(charge_change)
-                    if self.ctx.magnetic:  # Do a collinear magnetic calculation
-                        charge_change = ('set_inpchanges', {'change_dict': {'jspins': 2}})
-                        fleurinp_change.append(charge_change)
-                    #self.report('{}'.format(fleurinp_change))
-                    # because there might be already some kinds and another number is right...
-                    # repacking of sites, because input to a calcfunction, otherwise not storeable...
                     corehole = {
                         'site': {
                             'kind_name': kind,  #site.kind_name,
@@ -588,8 +568,23 @@ class FleurCoreholeWorkChain(WorkChain):
                         },
                         'econfig': econfig,
                         'kindname': change_kind,
-                        'inpxml_changes': fleurinp_change
                     }
+                    with inpxml_changes(corehole) as fm:
+                        fm.set_species(change_kind, {'electronConfig': {'stateOccupation': state_tag_list}})
+
+                        if correct_val_charge:  # only needed in certain methods
+                            fm.add_number_to_first_attrib('valenceElectrons', -1, mode='abs')
+                        elif hole_charge != 1.0:  # fractional valence hole
+                            # one electron was already added by inpgen
+                            fm.add_number_to_first_attrib('valenceElectrons', -1 + hole_charge, mode='abs')
+
+                        if self.ctx.magnetic:  # Do a collinear magnetic calculation
+                            fm.set_inpchanges({'jspins': 2})
+
+                    #self.report('{}'.format(fleurinp_change))
+                    # because there might be already some kinds and another number is right...
+                    # repacking of sites, because input to a calcfunction, otherwise not storeable...
+
                     corehole_to_create.append(corehole)
 
         #state_tag_list = get_state_occ(econfigstr, corehole = '', valence = '', ch_occ = 1.0):
@@ -603,7 +598,7 @@ class FleurCoreholeWorkChain(WorkChain):
         calcs = []
         for corehole in corehole_to_create:
             para = self.ctx.ref_para
-            wf_para = Dict(dict=corehole)
+            wf_para = Dict(corehole)
             #print(corehole)
             #print(base_supercell)
             #print(para)
@@ -625,7 +620,7 @@ class FleurCoreholeWorkChain(WorkChain):
             wf_parameter['add_comp_para'] = self.ctx.add_comp_para
             wf_parameter['inpxml_changes'] = corehole['inpxml_changes']
 
-            wf_parameters = Dict(dict=wf_parameter)
+            wf_parameters = Dict(wf_parameter)
             calcs.append([moved_struc, calc_para, wf_parameters])
         self.ctx.calcs_torun = calcs
         #print('ctx.calcs_torun {}'.format(self.ctx.calcs_torun))
@@ -670,8 +665,8 @@ class FleurCoreholeWorkChain(WorkChain):
         else:
             wf_parameter = para
         wf_parameter['add_comp_para'] = self.ctx.add_comp_para
-        wf_parameters = Dict(dict=wf_parameter)
-        options = Dict(dict=self.ctx.options)
+        wf_parameters = Dict(wf_parameter)
+        options = Dict(self.ctx.options)
         '''
         #res_all = []
         calcs = {}
@@ -816,8 +811,8 @@ class FleurCoreholeWorkChain(WorkChain):
         wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         #wf_parameter['queue_name'] = self.ctx.queue
         #wf_parameter['custom_scheduler_commands'] = self.ctx.custom_scheduler_commands
-        wf_parameters = Dict(dict=wf_parameter)
-        options = Dict(dict=self.ctx.options)
+        wf_parameters = Dict(wf_parameter)
+        options = Dict(self.ctx.options)
         #res_all = []
         calcs = {}
         scf_label = 'FleurCoreholeWorkChain cell'
@@ -998,13 +993,13 @@ class FleurCoreholeWorkChain(WorkChain):
         outputnode_dict['errors'] = self.ctx.errors
         outputnode_dict['hints'] = self.ctx.hints
 
-        outputnode = Dict(dict=outputnode_dict)
+        outputnode = Dict(outputnode_dict)
         outdict = {}
         outdict['output_corehole_wc_para'] = outputnode
 
         # To have to ouput node linked to the calculation output nodes
         outnodedict = {}
-        outnode = Dict(dict=outputnode_dict)
+        outnode = Dict(outputnode_dict)
         outnodedict['results_node'] = outnode
 
         # TODO: bad design, make bullet proof.
@@ -1013,7 +1008,7 @@ class FleurCoreholeWorkChain(WorkChain):
             #print(calc)
             #print(calc.get_outgoing().all())
             try:
-                calc_dict = calc.get_outgoing().get_node_by_label(
+                calc_dict = calc.base.links.get_outgoing().get_node_by_label(
                     'output_scf_wc_para')  #calc.outputs.output_scf_wc_para
             except (KeyError, ValueError):
                 print('continue 2')
@@ -1091,11 +1086,13 @@ def prepare_struc_corehole_wf(
     npos = -np.array(pos)
 
     # break the symmetry, make corehole atoms its own species. # pos has to be tuple, unpack problem here.. #TODO rather not so nice
-    inputs = dict(structure=base_supercell,
-                  atoms=[],
-                  site=[],
-                  pos=[(pos[0], pos[1], pos[2])],
-                  new_kinds_names=new_kinds_names)
+    inputs = {
+        'structure': base_supercell,
+        'atoms': [],
+        'site': [],
+        'pos': [(pos[0], pos[1], pos[2])],
+        'new_kinds_names': new_kinds_names
+    }
     if para is not None:
         inputs['parameterdata'] = para
     new_struc, new_para = break_symmetry(**inputs)
@@ -1129,11 +1126,11 @@ def extract_results_corehole(calcs):
 
     calc_uuids = []
     for calc in calcs:
-        print(calc)
-        print(calc.exit_status, calc.exit_message)
-        print(calc.get_outgoing().all())
+        # print(calc)
+        # print(calc.exit_status, calc.exit_message)
+        # print(calc.get_outgoing().all())
         try:
-            calc_uuid = calc.outputs.output_scf_wc_para.get_dict()['last_calc_uuid']
+            calc_uuid = calc.outputs.last_calc.remote_folder.creator.uuid
         except (KeyError, AttributeError):
             print('continue')
             continue
@@ -1163,13 +1160,9 @@ def extract_results_corehole(calcs):
             continue
         if calc.is_finished_ok:
             # get out.xml file of calculation
-            #outxml = calc.outputs.retrieved.folder.get_abs_path('path/out.xml')
-            outxml = calc.outputs.retrieved.open('out.xml')
-            #print outxml
-            try:
+            with calc.outputs.retrieved.open('out.xml', 'rb') as outxml:
                 corelevels, atomtypes = extract_corelevels(outxml)
-            finally:
-                outxml.close()
+
             #all_corelevels.append(core)
             #print('corelevels: {}'.format(corelevels))
             #print('atomtypes: {}'.format(atomtypes))

@@ -165,16 +165,6 @@ def test_fleurinp_single_value_modification(create_fleurinp, inpxmlfilepath):
     # TODO check if set right
 
 
-@pytest.mark.parametrize('inpxmlfilepath', inpxmlfilelist)
-def test_get_tag(create_fleurinp, inpxmlfilepath):
-
-    fleurinp_tmp = create_fleurinp(inpxmlfilepath)
-    with pytest.deprecated_call():
-        tag = fleurinp_tmp.get_tag('/fleurInput/atomSpecies/species')
-
-    assert tag != []
-
-
 def test_fleurinp_convert_inpxml(create_fleurinp):
     """
     Test that the convert_inpxml method works correctly

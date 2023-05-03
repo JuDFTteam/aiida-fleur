@@ -4,74 +4,13 @@ Most of these fixtures are taken from the aiida-quantum espresso package since t
 are needed to mock commands running aiida process
 """
 import pytest
+import os
+import click
 
 
 def mock_launch_process(*_, **__):
     """Mock the :meth:`~aiida_fleur.cmdline.util.utils.launch_process` to be a no-op."""
     return
-
-
-@pytest.fixture
-def import_with_migrate(temp_dir):
-    """Import an aiida export file and migrate it
-
-    We want to be able to run the test with several aiida versions,
-    therefore imports have to be migrate, but we also do not want to use verdi
-    """
-    # This function has some deep aiida imports which might change in the future
-    _DEFAULT_IMPORT_KWARGS = {'group': None}
-
-    try:
-        from aiida.tools.importexport import import_data
-
-        def _import_with_migrate(filename, tempdir=temp_dir, import_kwargs=None, try_migration=True):
-            from click import echo
-            from aiida.tools.importexport import import_data
-            from aiida.tools.importexport import EXPORT_VERSION, IncompatibleArchiveVersionError
-            # these are only availbale after aiida >= 1.5.0, maybe rely on verdi import instead
-            from aiida.tools.importexport import detect_archive_type
-            from aiida.tools.importexport.archive.migrators import get_migrator
-            from aiida.tools.importexport.common.config import ExportFileFormat
-            if import_kwargs is None:
-                import_kwargs = _DEFAULT_IMPORT_KWARGS
-            archive_path = filename
-
-            try:
-                import_data(archive_path, **import_kwargs)
-            except IncompatibleArchiveVersionError:
-                #raise ValueError
-                if try_migration:
-                    echo(f'incompatible version detected for {archive_path}, trying migration')
-                    migrator = get_migrator(detect_archive_type(archive_path))(archive_path)
-                    archive_path = migrator.migrate(EXPORT_VERSION, None, out_compression='none', work_dir=tempdir)
-                    import_data(archive_path, **import_kwargs)
-                else:
-                    raise
-
-    except ImportError:
-        # This is the case for aiida >= 2.0.0
-        def _import_with_migrate(filename, import_kwargs=None, try_migration=True):
-            from click import echo
-            from aiida.tools.archive import import_archive, get_format
-            from aiida.common.exceptions import IncompatibleStorageSchema
-
-            if import_kwargs is None:
-                import_kwargs = _DEFAULT_IMPORT_KWARGS
-            archive_path = filename
-
-            try:
-                import_archive(archive_path, **import_kwargs)
-            except IncompatibleStorageSchema:
-                if try_migration:
-                    echo(f'incompatible version detected for {archive_path}, trying migration')
-                    archive_format = get_format()
-                    version = archive_format.latest_version
-                    archive_format.migrate(archive_path, archive_path, version, force=True, compression=6)
-                    import_archive(archive_path, **import_kwargs)
-                else:
-                    raise
-
-    return _import_with_migrate
 
 
 @pytest.fixture
@@ -133,3 +72,46 @@ def run_cli_process_launch_command(run_cli_command, monkeypatch):
         return run_cli_command(command, options, raises)
 
     return _inner
+
+
+@pytest.fixture()
+def non_interactive_editor(request):
+    """Fixture to patch click's `Editor.edit_file`.
+
+    In `click==7.1` the `Editor.edit_file` command was changed to escape the `os.environ['EDITOR']` command. Our tests
+    are currently abusing this variable to define an automated vim command in order to make an interactive command
+    non-interactive, and escaping it makes bash interpret the command and its arguments as a single command instead.
+    Here we patch the method to remove the escaping of the editor command.
+
+    :param request: the command to set for the editor that is to be called
+    """
+    from unittest.mock import patch
+
+    from click._termui_impl import Editor
+
+    os.environ['EDITOR'] = request.param
+    os.environ['VISUAL'] = request.param
+
+    def edit_file(self, filename):
+        import subprocess
+
+        editor = self.get_editor()
+        if self.env:
+            environ = os.environ.copy()
+            environ.update(self.env)
+        else:
+            environ = None
+        try:
+            with subprocess.Popen(
+                f'{editor} {filename}',  # This is the line that we change removing `shlex_quote`
+                env=environ,
+                shell=True,
+            ) as process:
+                exit_code = process.wait()
+                if exit_code != 0:
+                    raise click.ClickException(f'{editor}: Editing failed!')
+        except OSError as exception:
+            raise click.ClickException(f'{editor}: Editing failed: {exception}')
+
+    with patch.object(Editor, 'edit_file', edit_file):
+        yield

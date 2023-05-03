@@ -12,6 +12,7 @@
 Contains smoke tests for all workchains of aiida-fleur,
 checks if builderis from aiida-core gets the correct class.
 '''
+
 import pytest
 
 
@@ -76,14 +77,6 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.relax import FleurRelaxWorkChain
 
         builder = FleurRelaxWorkChain.get_builder()
-
-    def test_fleur_optimize_para_wc_init(self):
-        """
-        Test the interface of the optimize_para_ workchain
-        """
-        from aiida_fleur.workflows.optimize_para import fleur_optimize_parameters_wc
-
-        builder = fleur_optimize_parameters_wc.get_builder()
 
     def test_fleur_mae_wc_init(self):
         """
@@ -172,3 +165,11 @@ class TestFleurWorkchainInterfaces:
         from aiida_fleur.workflows.cfcoeff import FleurCFCoeffWorkChain
 
         builder = FleurCFCoeffWorkChain.get_builder()
+
+    def test_fleur_relax_torque_wc_init(self):
+        """
+        Test the interface of the cfcoeff workchain
+        """
+        from aiida_fleur.workflows.relax_torque import FleurRelaxTorqueWorkChain
+
+        builder = FleurRelaxTorqueWorkChain.get_builder()

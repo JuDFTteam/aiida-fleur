@@ -13,6 +13,7 @@ Module to test all CLI data fleurinp commands.
 '''
 import os
 from aiida.orm import Dict
+import pytest
 
 file_path1 = '../../files/inpxml/FePt/inp.xml'
 file_path2 = '../../files/inpxml/Si/inp.xml'
@@ -50,3 +51,42 @@ def test_cmd_fleurinp_cat(run_cli_command, create_fleurinp):
     options = [fleurinp.uuid]
     result = run_cli_command(cat_file, options=options)
     # printed contents will also put in line breaks \n which makes comparisson hard.
+
+
+@pytest.mark.parametrize('non_interactive_editor', ('vim -cwq',), indirect=True)
+def test_cmd_fleurinp_open(run_cli_command, create_fleurinp, non_interactive_editor):
+    """Test invoking the data fleurinp cat command."""
+    from aiida_fleur.cmdline.data.fleurinp import open_inp
+
+    fleurinp = create_fleurinp(FEPT_INPXML_FILE)
+    fleurinp.store()
+    options = [fleurinp.uuid]
+    result = run_cli_command(open_inp, options=options)
+
+
+def test_cmd_fleurinp_exctract_inpgen(run_cli_command, create_fleurinp):
+    """Test invoking the data fleurinp cat command."""
+    from aiida_fleur.cmdline.data.fleurinp import extract_inpgen_file
+
+    fleurinp = create_fleurinp(FEPT_INPXML_FILE)
+    fleurinp.store()
+    options = [fleurinp.uuid]
+    result = run_cli_command(extract_inpgen_file, options=options)
+
+
+def test_cmd_fleurinp_exctract_inpgen_output_file(run_cli_command, create_fleurinp, file_regression):
+    """Test invoking the data fleurinp cat command."""
+    from aiida_fleur.cmdline.data.fleurinp import extract_inpgen_file
+    import tempfile
+    from pathlib import Path
+
+    fleurinp = create_fleurinp(FEPT_INPXML_FILE)
+    fleurinp.store()
+    with tempfile.TemporaryDirectory() as td:
+
+        options = [fleurinp.uuid, '--output-filename', os.fspath(Path(td) / 'aiida.in')]
+        result = run_cli_command(extract_inpgen_file, options=options)
+        with open(Path(td) / 'aiida.in', encoding='utf-8') as file:
+            content = file.read()
+
+    file_regression.check(content)

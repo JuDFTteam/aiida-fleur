@@ -16,7 +16,6 @@ import numpy as np
 
 from aiida.engine import WorkChain, ToContext, while_, if_
 from aiida.engine import calcfunction as cf
-from aiida.orm import load_node
 from aiida.orm import StructureData, Dict
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
@@ -24,7 +23,7 @@ from aiida.common.exceptions import NotExistent
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinp import FleurinpData
-from aiida_fleur.common.constants import BOHR_A
+from aiida_fleur.data.fleurinpmodifier import inpxml_changes
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
 
 
@@ -33,7 +32,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = '0.4.0'
+    _workflowversion = '0.5.0'
 
     _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
@@ -184,8 +183,7 @@ class FleurRelaxWorkChain(WorkChain):
         if relaxtype is None:
             self.ctx.reached_relax = True
             return False
-        else:
-            return True
+        return True
 
     def converge_scf(self):
         """
@@ -212,7 +210,7 @@ class FleurRelaxWorkChain(WorkChain):
             if 'calc_parameters' in input_scf:
                 calc_para = input_scf.calc_parameters
             # currently we always break the full symmetry
-            break_dict = Dict(dict={'atoms': ['all']})  # for provenance
+            break_dict = Dict({'atoms': ['all']})  # for provenance
             broken_sys = break_symmetry_wf(input_scf.structure, wf_para=break_dict, parameterdata=calc_para)
             input_scf.structure = broken_sys['new_structure']
             input_scf.calc_parameters = broken_sys['new_parameters']
@@ -221,42 +219,18 @@ class FleurRelaxWorkChain(WorkChain):
             scf_wf_dict = {}
         else:
             scf_wf_dict = input_scf.wf_parameters.get_dict()
-
-        if 'inpxml_changes' not in scf_wf_dict:
-            scf_wf_dict['inpxml_changes'] = []
-
         scf_wf_dict['mode'] = 'force'
 
-        if self.ctx.wf_dict['film_distance_relaxation']:
-            scf_wf_dict['inpxml_changes'].append(('set_atomgroup', {
-                'attributedict': {
-                    'force': {
-                        'relaxXYZ': 'FFT'
-                    }
-                },
-                'species': 'all'
-            }))
+        with inpxml_changes(scf_wf_dict) as fm:
+            if self.ctx.wf_dict['film_distance_relaxation']:
+                fm.set_atomgroup({'force': {'relaxXYZ': 'FFT'}}, species='all')
 
-        for specie_off in self.ctx.wf_dict['atoms_off']:
-            scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
-                'attributedict': {
-                    'force': {
-                        'relaxXYZ': 'FFF'
-                    }
-                },
-                'atom_label': specie_off
-            }))
+            for specie_off in self.ctx.wf_dict['atoms_off']:
+                fm.set_atomgroup_label(specie_off, {'force': {'relaxXYZ': 'FFF'}})
 
-        scf_wf_dict['inpxml_changes'].append(('set_atomgroup_label', {
-            'attributedict': {
-                'force': {
-                    'relaxXYZ': 'FFF'
-                }
-            },
-            'atom_label': '49999'
-        }))
+            fm.set_atomgroup_label('49999', {'force': {'relaxXYZ': 'FFF'}})
 
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
+        input_scf.wf_parameters = Dict(scf_wf_dict)
 
         return input_scf
 
@@ -267,7 +241,9 @@ class FleurRelaxWorkChain(WorkChain):
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
         if 'structure' in input_scf:
             del input_scf.structure
+        if 'inpgen' in input_scf:
             del input_scf.inpgen
+        if 'calc_parameters' in input_scf:
             del input_scf.calc_parameters
 
         if 'wf_parameters' not in input_scf:
@@ -283,7 +259,7 @@ class FleurRelaxWorkChain(WorkChain):
                 scf_wf_dict['inpxml_changes'] = new_changes
 
         scf_wf_dict['mode'] = 'force'
-        input_scf.wf_parameters = Dict(dict=scf_wf_dict)
+        input_scf.wf_parameters = Dict(scf_wf_dict)
 
         scf_wc = self.ctx.scf_res
         input_scf.remote_data = scf_wc.outputs.last_calc.remote_folder
@@ -310,7 +286,7 @@ class FleurRelaxWorkChain(WorkChain):
                 if fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_VACUUM_SPILL_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to atom and vacuum overlap')
                     return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-                elif fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
+                if fleur_calc.exit_status == FleurBaseWorkChain.get_exit_statuses(['ERROR_MT_RADII_RELAX'])[0]:
                     self.control_end_wc('ERROR: Failed due to MT overlap')
                     return self.exit_codes.ERROR_MT_RADII_RELAX
             return self.exit_codes.ERROR_SCF_FAILED
@@ -341,12 +317,19 @@ class FleurRelaxWorkChain(WorkChain):
 
         largest_now = self.ctx.forces[-1]
 
+        # get force mixing (straight or BFGS) setting
+        # defaults to stright mixing if not set in scf.wf_parameters
+        if 'wf_parameters' in self.inputs.scf:
+            force_dict = self.inputs.scf.wf_parameters.get_dict().get('force_dict', {})
+            force_strmix = force_dict.get('forcemix', 'straight') == 'straight'
+        else:
+            force_strmix = True
+
         if largest_now < self.ctx.wf_dict['force_criterion']:
             self.report(f'INFO: Structure is converged to the largest force {self.ctx.forces[-1]}')
             self.ctx.reached_relax = True
             return False
-        elif largest_now < self.ctx.wf_dict['change_mixing_criterion'] and self.inputs.scf.wf_parameters['force_dict'][
-                'forcemix'] == 'straight':
+        if largest_now < self.ctx.wf_dict['change_mixing_criterion'] and force_strmix:
             self.report(f'INFO: Seems it is safe to switch to BFGS. Current largest force: {self.ctx.forces[-1]}')
             self.ctx.switch_bfgs = True
             return False
@@ -428,7 +411,7 @@ class FleurRelaxWorkChain(WorkChain):
                     scf_wf_dict['inpxml_changes'] = new_changes
 
             scf_wf_dict['mode'] = 'density'
-            input_final_scf.wf_parameters = Dict(dict=scf_wf_dict)
+            input_final_scf.wf_parameters = Dict(scf_wf_dict)
         structure = self.ctx.final_structure
         formula = structure.get_formula()
         input_final_scf.structure = structure
@@ -471,7 +454,7 @@ class FleurRelaxWorkChain(WorkChain):
             return
 
         try:
-            relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
+            relax_out = self.ctx.scf_res.outputs.last_calc.output_parameters
             retrieved_node = self.ctx.scf_res.outputs.last_calc.retrieved
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT
@@ -500,7 +483,7 @@ class FleurRelaxWorkChain(WorkChain):
         """
 
         try:
-            scf_out = self.ctx.scf_final_res.outputs.last_fleur_calc_output
+            scf_out = self.ctx.scf_final_res.outputs.last_calc.output_parameters
         except NotExistent:
             return self.exit_codes.ERROR_NO_SCF_OUTPUT
 
@@ -542,17 +525,14 @@ class FleurRelaxWorkChain(WorkChain):
             'errors': self.ctx.errors,
             'force': self.ctx.forces,
             'force_iter_done': self.ctx.loop_count,
-            # uuids in the output are bad for caching should be avoided,
-            # instead better return the node.
-            'last_scf_wc_uuid': self.ctx.scf_res.uuid,
             'total_magnetic_moment_cell': self.ctx.total_magnetic_moment,
             'total_magnetic_moment_cell_units': 'muBohr'
         }
-        outnode = Dict(dict=out)
+        outnode = Dict(out)
 
         con_nodes = {}
         try:
-            relax_out = self.ctx.scf_res.outputs.last_fleur_calc_output
+            relax_out = self.ctx.scf_res.outputs.last_calc.output_parameters
         except NotExistent:
             relax_out = None
         if relax_out is not None:
@@ -560,7 +540,7 @@ class FleurRelaxWorkChain(WorkChain):
 
         if all([self.ctx.wf_dict.get('run_final_scf', False), self.ctx.reached_relax]):
             try:
-                scf_out = self.ctx.scf_final_res.outputs.last_fleur_calc_output
+                scf_out = self.ctx.scf_final_res.outputs.last_calc.output_parameters
             except NotExistent:
                 scf_out = None
             if relax_out is not None:

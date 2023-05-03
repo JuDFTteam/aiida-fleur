@@ -27,6 +27,14 @@ from aiida.common.exceptions import NotExistent
 from masci_tools.io.parsers.fleur import outxml_parser
 from masci_tools.io.parsers.fleur_schema import InputSchemaDict
 
+#Phrases in this list are used to detect out of
+#memory errors
+OUT_OF_MEMORY_PHRASES = [
+    'cgroup out-of-memory handler',
+    'Out Of Memory',
+    'Allocation of array for communication failed'  #from io/eig66_mpi
+]
+
 
 class FleurParser(Parser):
     """
@@ -168,18 +176,20 @@ class FleurParser(Parser):
                     except KeyError:
                         pass
 
-                    if (kb_used * mpiprocs / mem_kb_avail > 0.93 or
-                            'cgroup out-of-memory handler' in error_file_lines or 'Out Of Memory' in error_file_lines):
+                    if kb_used * mpiprocs / mem_kb_avail > 0.93 or \
+                        any(phrase in error_file_lines for phrase in OUT_OF_MEMORY_PHRASES):
                         return self.exit_codes.ERROR_NOT_ENOUGH_MEMORY
-                    elif 'TIME LIMIT' in error_file_lines or 'time limit' in error_file_lines:
+                    if 'TIME LIMIT' in error_file_lines or 'time limit' in error_file_lines:
                         return self.exit_codes.ERROR_TIME_LIMIT
-                    elif 'Atom spills out into vacuum during relaxation' in error_file_lines:
+                    if 'Atom spills out into vacuum during relaxation' in error_file_lines:
                         return self.exit_codes.ERROR_VACUUM_SPILL_RELAX
-                    elif 'Error checking M.T. radii' in error_file_lines:
+                    if 'Error checking M.T. radii' in error_file_lines:
                         return self.exit_codes.ERROR_MT_RADII
-                    elif 'No solver linked for Hubbard 1' in error_file_lines:
+                    if 'No solver linked for Hubbard 1' in error_file_lines:
                         return self.exit_codes.ERROR_MISSING_DEPENDENCY.format(name='edsolver')
-                    elif 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
+                    if 'FLEUR is not linked against libxc' in error_file_lines:
+                        return self.exit_codes.ERROR_MISSING_DEPENDENCY.format(name='libxc')
+                    if 'Overlapping MT-spheres during relaxation: ' in error_file_lines:
                         overlap_line = re.findall(r'\S+ +\S+ olap: +\S+', error_file_lines)[0].split()
                         with output_folder.open('relax.xml', 'r') as rlx:
                             schema_dict = InputSchemaDict.fromVersion('0.34')
@@ -194,16 +204,17 @@ class FleurParser(Parser):
                             'iteration_number': it_number
                         }
                         link_name = self.get_linkname_outparams()
-                        error_params = Dict(dict=error_params)
+                        error_params = Dict(error_params)
                         self.out('error_params', error_params)
                         return self.exit_codes.ERROR_MT_RADII_RELAX
-                    elif 'parent_folder' in calc.inputs:  # problem in reusing cdn for relaxations, drop cdn
-                        if 'fleurinpdata' in calc.inputs:
-                            if 'relax.xml' in calc.inputs.fleurinpdata.files:
+                    if 'parent_folder' in calc.inputs:  # problem in reusing cdn for relaxations, drop cdn
+                        if 'fleurinp' in calc.inputs:
+                            if 'relax.xml' in calc.inputs.fleurinp.files:
                                 return self.exit_codes.ERROR_DROP_CDN
                         return self.exit_codes.ERROR_FLEUR_CALC_FAILED
-                    else:
-                        return self.exit_codes.ERROR_FLEUR_CALC_FAILED
+
+                    #Catch all exit code for an unknown failure
+                    return self.exit_codes.ERROR_FLEUR_CALC_FAILED
 
         # if a relax.xml was retrieved
         if FleurCalculation._RELAX_FILE_NAME in list_of_files:
@@ -228,24 +239,25 @@ class FleurParser(Parser):
         # Call routines for output node creation
         if not success:
             self.logger.error('Parsing of XML output file was not successfull.')
-            outxml_params = Dict(dict=parser_info)
+            outxml_params = Dict(parser_info)
             link_name = self.get_linkname_outparams()
             self.out(link_name, outxml_params)
             return self.exit_codes.ERROR_XMLOUT_PARSING_FAILED
-        elif out_dict:
-            outxml_params = Dict(dict={**out_dict, **parser_info})
+
+        if out_dict:
+            outxml_params = Dict({**out_dict, **parser_info})
             link_name = self.get_linkname_outparams()
             self.out(link_name, outxml_params)
         else:
             self.logger.error('Something went wrong, no out_dict found')
-            outxml_params = Dict(dict=parser_info)
+            outxml_params = Dict(parser_info)
             link_name = self.get_linkname_outparams()
             self.out(link_name, outxml_params)
 
         if has_relax_file:
             relax_name = FleurCalculation._RELAX_FILE_NAME
             try:
-                fleurinp = calc.inputs.fleurinpdata
+                fleurinp = calc.inputs.fleurinp
             except NotExistent:
                 old_relax_text = ''
             else:
@@ -280,4 +292,4 @@ def parse_relax_file(relax_file, schema_dict):
 
     out_dict = get_relaxation_information(tree, schema_dict)
 
-    return Dict(dict=out_dict)
+    return Dict(out_dict)

@@ -12,29 +12,31 @@
 
 import pytest
 import aiida_fleur
+from pathlib import Path
 import os
 from aiida.orm import load_node
 from aiida.engine import run_get_node
 from aiida_fleur.workflows.initial_cls import FleurInitialCLSWorkChain
 
-
 # tests
-@pytest.mark.skip
+
+
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_FleurInitialCLSWorkChain():
     """
     Regression tests for the FleurInitialCLSWorkChain
     """
 
+    @pytest.mark.regression_test
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_initial_cls_W(self, run_with_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
-                                 export_cache, load_cache):
+    def test_fleur_initial_cls_W(self, enable_archive_cache, inpgen_local_code, fleur_local_code, generate_structure_W,
+                                 load_cache):
         """
         full example using FleurInitialCLSWorkChain with just elemental W as input
         (W, onw atoms per unit cell)
         uses the same structure as reference.
         """
-        from aiida.orm import Code, Dict, StructureData
+        from aiida.orm import Dict
 
         options = {
             'resources': {
@@ -69,14 +71,15 @@ class Test_FleurInitialCLSWorkChain():
         structure = generate_structure_W().store()
         export_cache([structure, parameters], 'W_structure_para.tar.gz')
         '''
-        load_cache('data_dir/W_structure_para.tar.gz')
+        basepath = Path(aiida_fleur.__file__).parent
+        load_cache(basepath / '../tests/data_dir/W_structure_para.tar.gz')
 
         #print(structure.uuid, structure.pk)
         #print(parameters.uuid, parameters.pk)
         structure = load_node('6c7addb7-f688-4afd-8492-7c64861efd70')
         parameters = load_node('b5275b1a-bff7-4cdc-8efc-36c5ddd67f28')
 
-        wf_para = Dict(dict={'references': {'W': [structure.uuid, parameters.uuid]}})
+        wf_para = Dict({'references': {'W': [structure.uuid, parameters.uuid]}})
 
         FleurCode = fleur_local_code
         InpgenCode = inpgen_local_code
@@ -87,7 +90,7 @@ class Test_FleurInitialCLSWorkChain():
                 'description': 'Simple FleurInitialCLSWorkChain test with W bulk',
                 'label': 'FleurInitialCLSWorkChain test_W_bulk'
             },
-            'options': Dict(dict=options),
+            'options': Dict(options),
             'fleur': FleurCode,
             'inpgen': InpgenCode,
             'wf_parameters': wf_para,
@@ -95,8 +98,9 @@ class Test_FleurInitialCLSWorkChain():
             'structure': structure
         }
 
-        # now run calculation
-        out, node = run_with_cache(inputs, process_class=FleurInitialCLSWorkChain)
+        with enable_archive_cache('fleur_initial_cls_W.tar.gz'):
+            # now run calculation
+            out, node = run_get_node(FleurInitialCLSWorkChain, **inputs)
 
         # check general run
         assert node.is_finished_ok

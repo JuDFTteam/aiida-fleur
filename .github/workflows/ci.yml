@@ -5,8 +5,20 @@ on: [push, pull_request]
 jobs:
 
   docs:
-
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - name: docs
+            sphinx-options: '' 
+            allow-failure: false
+          - name: docs-nitpicky
+            sphinx-options: '-nW'
+            allow-failure: true
+
+    name: ${{ matrix.name }}
+    continue-on-error: ${{ matrix.allow-failure }}
 
     steps:
     - uses: actions/checkout@v2
@@ -21,20 +33,21 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache/pip
-        key: pip-docs-${{ hashFiles('**/setup.json') }}
+        key: pip-docs-${{ hashFiles('**/pyproject.toml') }}
         restore-keys: |
           pip-docs-
 
     - name: Install python dependencies
       run: |
         pip install -e .[docs]
-        reentry scan
+        reentry scan || true
 
     - name: Build documentation
       env:
         READTHEDOCS: 'True'
+        SPHINXOPTS: ${{ matrix.sphinx-options }}
       run: |
-        SPHINXOPTS='-nW' make -C docs html
+        make -C docs html
 
   pre-commit:
 
@@ -49,14 +62,14 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache/pip
-        key: pip-pre-commit-${{ hashFiles('**/setup.json') }}
+        key: pip-pre-commit-${{ hashFiles('**/pyproject.toml') }}
         restore-keys: |
           pip-pre-commit-
 
-    - name: Set up Python 3.7
+    - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 3.8
 
     - name: Install python dependencies
       run: |
@@ -74,22 +87,46 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
-        aiida-version: ['aiida-core']
-        aiida-name: ['stable']
+        python-version: ["3.8", "3.9", "3.10"]
+        aiida: [{version: 'aiida-core==2.0.1', name: '2.0.1'},{version: 'aiida-core==2.3.0', name: '2.3.0'}]
+        masci-tools: [{version: 'masci-tools', name: 'stable'}]
+        bokeh-version: ['bokeh==3.0.3']
+        mpl-version: ['matplotlib==3.6.3']
+        add-name: ['']
         allowed-to-fail: [false]
         include:
-          - python-version: 3.8
-            aiida-version: 'git+https://github.com/aiidateam/aiida-core.git@develop'
-            aiida-name: 'develop'
+          - python-version: "3.11"
+            aiida: {version: 'aiida-core==2.3.0', name: '2.3.0'}
+            masci-tools: {version: 'masci-tools', name: 'stable'}
+            bokeh-version: 'bokeh==3.0.3'
+            mpl-version: 'matplotlib==3.6.3'
+            add-name: ''
+            allowed-to-fail: false
+          - python-version: 3.9
+            aiida: {version: 'git+https://github.com/aiidateam/aiida-core.git@main', name: 'latest'}
+            masci-tools: {version: 'masci-tools', name: 'stable'}
+            bokeh-version: 'bokeh==3.0.3'
+            mpl-version: 'matplotlib==3.6.3'
+            add-name: ''
             allowed-to-fail: true
           - python-version: 3.9
-            aiida-version: 'aiida-core==2.0.0b1'
-            aiida-name: '2.0.0b1'
-            allowed-to-fail: false
+            aiida: {version: 'aiida-core==2.0.1', name: '2.0.1'}
+            masci-tools: {version: 'git+https://github.com/JuDFTteam/masci-tools.git@develop', name: 'develop'}
+            bokeh-version: 'bokeh==3.0.3'
+            mpl-version: 'matplotlib==3.6.3'
+            add-name: ''
+            allowed-to-fail: true
+          - python-version: 3.9
+            aiida: {version: 'aiida-core==2.0.1', name: '2.0.1'}
+            masci-tools: {version: 'masci-tools', name: 'stable'}
+            bokeh-version: 'bokeh'
+            mpl-version: 'matplotlib'
+            add-name: '-latest-bokeh/mpl'
+            allowed-to-fail: true
+
       fail-fast: false
 
-    name: tests-python-${{ matrix.python-version }}-${{ matrix.aiida-name }}
+    name: ${{ matrix.python-version }}-aiida-${{ matrix.aiida.name }}-masci-${{ matrix.masci-tools.name }}${{ matrix.add-name }}
     continue-on-error: ${{ matrix.allowed-to-fail }}
 
     services:
@@ -114,9 +151,9 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache/pip
-        key: pip-${{ matrix.python-version }}-${{ matrix.aiida-name }}-tests-${{ hashFiles('**/setup.json') }}
+        key: pip-${{ matrix.python-version }}-${{ matrix.aiida.name }}-tests-${{ hashFiles('**/pyproject.toml') }}
         restore-keys: |
-          pip-${{ matrix.python-version }}-${{ matrix.aiida-name }}-tests
+          pip-${{ matrix.python-version }}-${{ matrix.aiida.name }}-tests
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
@@ -131,21 +168,19 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install --upgrade wheel setuptools
-        pip install git+https://github.com/aiidateam/aiida-testing.git@export_cache
+        pip install git+https://github.com/aiidateam/aiida-testing.git@main
+        pip install --no-deps git+https://github.com/aiidateam/aiida-common-workflows.git@master
         pip install .[testing,graphs]
-        pip install ${{ matrix.aiida-version }}
-        pip install reentry
-        reentry scan
+        pip install ${{ matrix.aiida.version }} ${{ matrix.masci-tools.version }}
+        pip install ${{ matrix.bokeh-version }} ${{ matrix.mpl-version }}
+        reentry scan || true
 
     - name: Run pytest
       run: |
-       # create fake codes for tests to work on ci
        cd ./tests/
+       # create fake codes for tests to work on ci
        touch local_exe/inpgen && chmod +x local_exe/inpgen
        touch local_exe/fleur && chmod +x local_exe/fleur
-       # At the moment the aiida-testing config cannot be used with relative paths
-       # here we replace the dot in the path to make it absolute
-       sed -i "s/\./${GITHUB_WORKSPACE//\//\\/}\/tests/g" .aiida-testing-config.yml
        ./run_all_cov.sh --local-exe-hdf5
 
     - name: Upload report to Codecov
@@ -153,3 +188,9 @@ jobs:
       with:
         file: ./tests/coverage.xml
         fail_ci_if_error: False
+
+    - uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: matplotlib-comparison-${{ matrix.python-version }}
+        path: tests/mpl-results

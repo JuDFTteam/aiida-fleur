@@ -168,7 +168,7 @@ class FleurInitialCLSWorkChain(WorkChain):
         wf_dict = self.inputs.wf_parameters.get_dict()
         default = self._default_wf_para
 
-        self.ctx.add_comp_para = wf_dict.get('add_para_calc', default.get('add_para_calc'))
+        self.ctx.add_comp_para = wf_dict.get('add_comp_para', default.get('add_comp_para'))
         self.ctx.same_para = wf_dict.get('same_para', default.get('same_para'))
         self.ctx.scf_para = wf_dict.get('scf_para', default.get('scf_para'))
         self.ctx.relax = wf_dict.get('relax', default.get('relax'))
@@ -404,10 +404,10 @@ class FleurInitialCLSWorkChain(WorkChain):
             wf_parameter = para
         wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         #wf_parameter['options'] = self.ctx.options
-        wf_parameters = Dict(dict=wf_parameter)
+        wf_parameters = Dict(wf_parameter)
         resall = {}
         calc_labels = []
-        options = Dict(dict=self.ctx.options)
+        options = Dict(self.ctx.options)
         # for each calulation in self.ctx.calcs_torun #TODO what about wf params?
         res = None
         #print(self.ctx.calcs_torun)
@@ -534,8 +534,8 @@ class FleurInitialCLSWorkChain(WorkChain):
         wf_parameter['add_comp_para'] = self.ctx.add_comp_para
         # TODO maybe use less resources, or default of one machine
         #wf_parameter['options'] = self.ctx.options
-        wf_parameters = Dict(dict=wf_parameter)
-        options = Dict(dict=self.ctx.options)
+        wf_parameters = Dict(wf_parameter)
+        options = Dict(self.ctx.options)
 
         res_all = []
         calcs = {}
@@ -823,17 +823,17 @@ class FleurInitialCLSWorkChain(WorkChain):
 
         # To have to ouput node linked to the calculation output nodes
         outnodedict = {}
-        outnode = Dict(dict=outputnode_dict)
+        outnode = Dict(outputnode_dict)
         outnodedict['results_node'] = outnode
 
         # TODO: bad design, put in calcfunction and make bullet proof.
         calc = self.ctx[self.ctx.calc_labels[-1]]
-        calc_dict = calc.get_outgoing().get_node_by_label('output_scf_wc_para')
+        calc_dict = calc.base.links.get_outgoing().get_node_by_label('output_scf_wc_para')
         outnodedict['input_structure'] = calc_dict
 
         for label in self.ctx.ref_labels:
             calc = self.ctx[label]
-            calc_dict = calc.get_outgoing().get_node_by_label('output_scf_wc_para')
+            calc_dict = calc.base.links.get_outgoing().get_node_by_label('output_scf_wc_para')
             outnodedict[label] = calc_dict
 
         outdict = create_initcls_result_node(**outnodedict)
@@ -921,7 +921,7 @@ def fleur_calc_get_structure(calc_node):
     Get the AiiDA data structure from a fleur calculations
     """
     #get fleurinp
-    fleurinp = calc_node.inp.fleurinpdata
+    fleurinp = calc_node.inp.fleurinp
     structure = fleurinp.get_structuredata(fleurinp)
     return structure
 
@@ -940,15 +940,13 @@ def extract_results(calcs):
     for calc in calcs:
         #print(calc)
         try:
-            calc_uuid = calc.get_outgoing().get_node_by_label('output_scf_wc_para').get_dict()['last_calc_uuid']
+            calc_uuid = calc.outputs.last_calc.remote_folder.creator.uuid
         except (NotExistent, MultipleObjectsError, ValueError, TypeError, KeyError):  #TODO which error
-            logmsg = ('ERROR: No output_scf_wc_para node found or no "last_calc_uuid" '
-                      'key in it for calculation: {}'.format(calc))
+            logmsg = f'ERROR: No FleurCalculation node found in SCF workchain: {calc.uuid}'
             log.append(logmsg)
             continue
         if calc_uuid is not None:
             calc_uuids.append(calc_uuid)
-        #calc_uuids.append(calc['output_scf_wc_para'].get_dict()['last_calc_uuid'])
 
     all_corelevels = {}
     fermi_energies = {}
@@ -967,13 +965,10 @@ def extract_results(calcs):
             continue
         if calc.is_finished_ok:
             # get out.xml file of calculation
-            #outxml = calc.outputs.retrieved.folder.get_abs_path('path/out.xml')
-            outxml = calc.outputs.retrieved.open('out.xml')
-            #print outxml
-            try:
+
+            with calc.outputs.retrieved.open('out.xml', 'rb') as outxml:
                 corelevels, atomtypes = extract_corelevels(outxml)
-            finally:
-                outxml.close()
+
             #all_corelevels.append(core)
             #print('corelevels: {}'.format(corelevels))
             #print('atomtypes: {}'.format(atomtypes))
@@ -1012,7 +1007,7 @@ def extract_results(calcs):
             #raise ValueError("Calculation with pk {} must be in state FINISHED".format(pk))
 
         # TODO: maybe different, because it is prob know from before
-        fleurinp = calc.inputs.fleurinpdata
+        fleurinp = calc.inputs.fleurinp
         structure = fleurinp.get_structuredata_ncf()
         compound = structure.get_formula()
         #print compound

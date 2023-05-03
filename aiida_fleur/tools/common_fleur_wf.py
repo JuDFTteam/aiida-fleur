@@ -42,10 +42,15 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
 
 
     '''
-    Dict = DataFactory('dict')
+    Dict = DataFactory('core.dict')
     inputs = {}
 
-    add_comp_para_default = {'only_even_MPI': False, 'max_queue_nodes': 20, 'max_queue_wallclock_sec': 86400}
+    add_comp_para_default = {
+        'only_even_MPI': False,
+        'forbid_single_mpi': False,
+        'max_queue_nodes': 20,
+        'max_queue_wallclock_sec': 86400
+    }
     if add_comp_para is None:
         add_comp_para = {}
     add_comp_para = {**add_comp_para_default, **add_comp_para}
@@ -55,7 +60,7 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
     if code:
         inputs['code'] = code
     if fleurinp:
-        inputs['fleurinpdata'] = fleurinp
+        inputs['fleurinp'] = fleurinp
 
     if description:
         inputs['description'] = description
@@ -86,16 +91,16 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
             options['resources'] = {'num_machines': 1, 'num_mpiprocs_per_machine': 1}
 
     inputs['clean_workdir'] = Bool(add_comp_para.pop('clean_workdir', False))
-    inputs['add_comp_para'] = Dict(dict=add_comp_para)
+    inputs['add_comp_para'] = Dict(add_comp_para)
 
     if settings:
         if isinstance(settings, Dict):
             inputs['settings'] = settings
         else:
-            inputs['settings'] = Dict(dict=settings)
+            inputs['settings'] = Dict(settings)
 
     if options:
-        inputs['options'] = Dict(dict=options)
+        inputs['options'] = Dict(options)
 
     return inputs
 
@@ -156,7 +161,7 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     return inputs
 
 
-def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
+def test_and_get_codenode(codenode, expected_code_type):
     """
     Pass a code node and an expected code (plugin) type. Check that the
     code exists, is unique, and return the Code object.
@@ -165,48 +170,33 @@ def test_and_get_codenode(codenode, expected_code_type, use_exceptions=False):
     :param expected_code_type: a string with the plugin that is expected to
       be loaded. In case no plugins exist with the given name, show all existing
       plugins of that type
-    :param use_exceptions: if True, raise a ValueError exception instead of
-      calling sys.exit(1)
     :return: a Code object
     """
-    import sys
-    from aiida.common.exceptions import NotExistent
-    from aiida.orm import Code
+    from aiida.orm.querybuilder import QueryBuilder
+    from aiida.orm import Code, load_code
 
-    try:
-        if codenode is None or not isinstance(codenode, Code):
-            raise ValueError
-        code = codenode
-        if code.get_input_plugin_name() != expected_code_type:
-            raise ValueError
-    except ValueError as exc:
-        from aiida.orm.querybuilder import QueryBuilder
+    if not isinstance(codenode, Code):
+        codenode = load_code(codenode)
+
+    plugin_name = codenode.get_input_plugin_name()
+    if plugin_name != expected_code_type:
+        message = f'Expected Code of type {expected_code_type}. Got: {plugin_name}\n'
+
         qb = QueryBuilder()
         qb.append(Code, filters={'attributes.input_plugin': {'==': expected_code_type}}, project='*')
 
-        valid_code_labels = [f'{c.label}@{c.computer.label}' for [c] in qb.all()]
+        valid_code_labels = [f'{c.label}@{c.computer.label}' for c in qb.all(flat=True)]
 
         if valid_code_labels:
-            msg = ('Given Code node is not of expected code type.\n'
-                   'Valid labels for a {} executable are:\n'.format(expected_code_type))
-            msg += '\n'.join(f'* {l}' for l in valid_code_labels)
-
-            if use_exceptions:
-                raise ValueError(msg) from exc
-            else:
-                print(msg)  # , file=sys.stderr)
-                sys.exit(1)
+            message += f'Valid labels for a {expected_code_type} executable are:\n'
+            message += '\n'.join(f'* {l}' for l in valid_code_labels)
         else:
-            msg = ('Code not valid, and no valid codes for {}.\n'
-                   'Configure at least one first using\n'
-                   '    verdi code setup'.format(expected_code_type))
-            if use_exceptions:
-                raise ValueError(msg) from exc
-            else:
-                print(msg)  # , file=sys.stderr)
-                sys.exit(1)
+            message += f'No valid labels for a {expected_code_type} executable are available\n' \
+                        'Configure at least one first using\n' \
+                        '    verdi code setup'
+        raise ValueError(message)
 
-    return code
+    return codenode
 
 
 def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
@@ -217,7 +207,7 @@ def get_kpoints_mesh_from_kdensity(structure, kpoint_density):
     returns: tuple (mesh, offset)
     returns: kpointsdata node
     """
-    KpointsData = DataFactory('array.kpoints')
+    KpointsData = DataFactory('core.array.kpoints')
     kp = KpointsData()
     kp.set_cell_from_structure(structure)
     density = kpoint_density  # 1/A
@@ -476,7 +466,8 @@ def optimize_calc_options(nodes,
                           fleurinpData=None,
                           kpts=None,
                           sacrifice_level=0.9,
-                          only_even_MPI=False):
+                          only_even_MPI=False,
+                          forbid_single_mpi=False):
     """
     Makes a suggestion on parallelisation setup for a particular fleurinpData.
     Only the total number of k-points is analysed: the function suggests ideal k-point
@@ -498,7 +489,8 @@ def optimize_calc_options(nodes,
     :param kpts: the total number of kpts
     :param sacrifice_level: sets a level of performance sacrifice that a user can afford for better
                             MPI/OMP ratio.
-    :parm only_even_MPI: if set to True, the function does not set MPI to an odd number (if possible)
+    :param only_even_MPI: if set to True, the function does not set MPI to an odd number (if possible)
+    :param forbid_single_mpi: if set to True, the configuration 1 node 1 MPI per node will be forbidden
     :returns nodes, MPI_tasks, OMP_per_MPI, message: first three are parallelisation info and
                                                      the last one is an exit message.
     """
@@ -542,6 +534,13 @@ def optimize_calc_options(nodes,
     best_resources = max(np.prod(suggestions, axis=1))
     top_suggestions = suggestions[np.prod(suggestions, axis=1) > sacrifice_level * best_resources]
 
+    if forbid_single_mpi:
+        top_suggestions = [s for s in top_suggestions if s[0] * s[1] != 1]
+
+    if len(top_suggestions) == 0:
+        raise ValueError('A Parallelization meeting the requirements could not be determined'
+                         f'for the given number k-points ({kpts})')
+
     def best_criterion(suggestion):
         if use_omp:
             return -abs(suggestion[1] / suggestion[2] - mpi_omp_ratio)
@@ -560,7 +559,8 @@ def optimize_calc_options(nodes,
                    ''.format(mpi_per_node, best_suggestion[1], omp_per_mpi, best_suggestion[2], nodes,
                              best_suggestion[0], kpts))
         raise ValueError(message)
-    elif best_suggestion[1] * best_suggestion[2] == cpus_per_node:
+
+    if best_suggestion[1] * best_suggestion[2] == cpus_per_node:
         if best_suggestion[0] != nodes:
             message = f'WARNING: Changed the number of nodes from {nodes} to {best_suggestion[0]}'
         else:
@@ -583,13 +583,11 @@ def find_last_submitted_calcjob(restart_wc):
     """
     from aiida.common.exceptions import NotExistent
     from aiida.orm import CalcJobNode
-    links = restart_wc.get_outgoing().all()
-    calls = [x for x in links if isinstance(x.node, CalcJobNode)]
+    calls = restart_wc.get_outgoing(node_class=CalcJobNode).all()
     if calls:
         calls = sorted(calls, key=lambda x: x.node.pk)
         return calls[-1].node.uuid
-    else:
-        raise NotExistent
+    raise NotExistent
 
 
 def find_last_submitted_workchain(restart_wc):
@@ -599,13 +597,11 @@ def find_last_submitted_workchain(restart_wc):
     """
     from aiida.common.exceptions import NotExistent
     from aiida.orm import WorkChainNode
-    links = restart_wc.get_outgoing().all()
-    calls = [x for x in links if isinstance(x.node, WorkChainNode)]
+    calls = restart_wc.get_outgoing(node_class=WorkChainNode).all()
     if calls:
         calls = sorted(calls, key=lambda x: x.node.pk)
         return calls[-1].node.uuid
-    else:
-        raise NotExistent
+    raise NotExistent
 
 
 def find_nested_process(wc_node, p_class):

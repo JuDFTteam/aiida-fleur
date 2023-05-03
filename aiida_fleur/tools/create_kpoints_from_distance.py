@@ -109,7 +109,7 @@ def create_kpoints_from_distance_parameter_ncf(structure, distance, force_parity
     if include_gamma:
         mesh_spec['kpt']['gamma'] = True
 
-    new_calc_para = Dict(dict=mesh_spec)
+    new_calc_para = Dict(mesh_spec)
     if calc_parameters is not None:
         # Override false, since we want to keep other kpts keys in calc_parameters
         new_calc_para = merge_parameter(new_calc_para, calc_parameters, overwrite=False, merge=True)

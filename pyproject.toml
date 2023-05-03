@@ -1,3 +1,143 @@
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "aiida-fleur"
+dynamic = ["version", "description"]  # read from aiida_fleur/__init__.py
+authors = [{name = "The JuDFT team", email = "j.broeder@fz-juelich.de"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = [
+            "Framework :: AiiDA",
+            "License :: OSI Approved :: MIT License",
+            "Operating System :: POSIX :: Linux",
+            "Operating System :: MacOS :: MacOS X",
+            "Programming Language :: Python :: 3",
+            "Programming Language :: Python :: 3.8",
+            "Programming Language :: Python :: 3.9",
+            "Programming Language :: Python :: 3.10",
+            "Programming Language :: Python :: 3.11",
+            "Environment :: Plugins",
+            "Intended Audience :: Science/Research",
+            "Topic :: Scientific/Engineering :: Physics",
+            "Natural Language :: English"
+        ]
+keywords = ['fleur', 'aiida', 'inpgen', 'workflows', 'flapw', 'juelich', 'dft', 'all-electron']
+requires-python = ">=3.8"
+dependencies = [
+            "aiida-core[atomic_tools]>=2.0.1,<3.0.0",
+            "lxml~=4.8",
+            "numpy~=1.16,>=1.16.4",
+            "sympy",
+            "masci-tools~=0.13",
+            "future",
+            "pyhull",
+            "more_itertools",
+            "MarkupSafe<2.1.0"
+        ]
+
+[project.optional-dependencies]
+graphs = [
+        "matplotlib",
+        "masci-tools[bokeh-plots]"
+    ]
+docs = [
+    "sphinx~=4.0",
+    "sphinx_rtd_theme",
+    "sphinx-click",
+    "myst-parser~=0.15.2"
+    ]
+testing = [
+    "pytest>=2.9",
+    "pytest-timeout",
+    "pytest-cov~=3.0",  #For reading configuration from pyproject.toml
+    "pytest-mpl>=0.12",
+    "pgtest",
+    "pytest-regressions>=1.0"
+    ]
+pre-commit = [
+    "pre-commit>=2.6.0",
+    "yapf~=0.30",
+    "pylint>=2.5",
+    "mypy==0.990",
+    "types-PyYAML",
+    "lxml-stubs~=0.4"
+    ]
+dev = [
+    'bumpver'
+]
+
+[project.scripts]
+aiida-fleur = "aiida_fleur.cmdline:cmd_root"
+
+[project.urls]
+Home = "https://aiida-fleur..readthedocs.io"
+Documentation = "https://aiida-fleur.readthedocs.io"
+Source = "https://github.com/JuDFTteam/aiida-fleur"
+
+[project.entry-points."aiida.data"]
+"fleur.fleurinp" = "aiida_fleur.data.fleurinp:FleurinpData"
+
+[project.entry-points."aiida.calculations"]
+"fleur.fleur" = "aiida_fleur.calculation.fleur:FleurCalculation"
+"fleur.inpgen" = "aiida_fleur.calculation.fleurinputgen:FleurinputgenCalculation"
+
+[project.entry-points."aiida.parsers"]
+"fleur.fleurparser" = "aiida_fleur.parsers.fleur:FleurParser"
+"fleur.fleurinpgenparser" = "aiida_fleur.parsers.fleur_inputgen:Fleur_inputgenParser"
+
+[project.entry-points."aiida.workflows"]
+"fleur.scf" = "aiida_fleur.workflows.scf:FleurScfWorkChain"
+"fleur.dos" = "aiida_fleur.workflows.dos:fleur_dos_wc"
+"fleur.banddos" = "aiida_fleur.workflows.banddos:FleurBandDosWorkChain"
+"fleur.orbcontrol" = "aiida_fleur.workflows.orbcontrol:FleurOrbControlWorkChain"
+"fleur.strain" = "aiida_fleur.workflows.strain:FleurStrainWorkChain"
+"fleur.eos" = "aiida_fleur.workflows.eos:FleurEosWorkChain"
+"fleur.cfcoeff" = "aiida_fleur.workflows.cfcoeff:FleurCFCoeffWorkChain"
+"fleur.init_cls" = "aiida_fleur.workflows.initial_cls:FleurInitialCLSWorkChain"
+"fleur.corehole" = "aiida_fleur.workflows.corehole:FleurCoreholeWorkChain"
+"fleur.mae" = "aiida_fleur.workflows.mae:FleurMaeWorkChain"
+"fleur.mae_conv" = "aiida_fleur.workflows.mae_conv:FleurMaeConvWorkChain"
+"fleur.ssdisp" = "aiida_fleur.workflows.ssdisp:FleurSSDispWorkChain"
+"fleur.ssdisp_conv" = "aiida_fleur.workflows.ssdisp_conv:FleurSSDispConvWorkChain"
+"fleur.dmi" = "aiida_fleur.workflows.dmi:FleurDMIWorkChain"
+"fleur.relax" = "aiida_fleur.workflows.relax:FleurRelaxWorkChain"
+"fleur.relax_torque" = "aiida_fleur.workflows.relax_torque:FleurRelaxTorqueWorkChain"
+"fleur.create_magnetic" = "aiida_fleur.workflows.create_magnetic_film:FleurCreateMagneticWorkChain"
+"fleur.base_relax" = "aiida_fleur.workflows.base_relax:FleurBaseRelaxWorkChain"
+"fleur.base" = "aiida_fleur.workflows.base_fleur:FleurBaseWorkChain"
+
+[tool.coverage.run]
+omit = [
+    "venv/*",
+]
+
+[tool.flit.module]
+name = "aiida_fleur"
+
+[tool.flit.sdist]
+exclude = ['tests/']
+
+[tool.mypy]
+python_version = "3.8"
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+show_error_codes = true
+warn_no_return = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+
+[[tool.mypy.overrides]]
+module = [
+    'ruamel.*',
+    'pymatgen',
+    'plumpy'
+]
+follow_imports = 'skip'
+ignore_missing_imports = true
+
 [tool.pylint.basic]
 good-names = [
     "_",
@@ -39,7 +179,6 @@ disable = [
     "line-too-long",
     "locally-disabled",
     "wildcard-import",
-    "locally-enabled",
     "too-many-instance-attributes",
     "fixme",
     "len-as-condition",
@@ -53,7 +192,6 @@ disable = [
     "missing-function-docstring",
     "too-many-locals",
     "too-many-branches",
-    "no-self-use",
     "c-extension-no-member",
     "too-many-statements",
     "too-many-nested-blocks",
@@ -66,11 +204,11 @@ disable = [
     "no-else-raise", # FIXME ?
     "no-else-return", # FIXME ?
     "inconsistent-return-statements",
-    "unspecified-encoding",
     "protected-access",
     "unexpected-keyword-arg",
     "missing-module-docstring",
-    "consider-using-with",
+    "unsubscriptable-object", #QueryBuilder outputs always raise this??
+    "superfluous-parens", # FIXME ?
 ]
 
 [tool.pytest.ini_options]
@@ -88,3 +226,16 @@ coalesce_brackets = true
 align_closing_bracket_with_visual_indent = true
 split_arguments_when_comma_terminated = true
 indent_dictionary_value = false
+
+[bumpver]
+current_version = "2.0.0"
+version_pattern = "MAJOR.MINOR.PATCH[TAGNUM]"
+commit_message = "bump version {old_version} -> {new_version}"
+commit = true
+tag = false
+push = false
+
+[bumpver.file_patterns]
+"aiida_fleur/__init__.py" = [
+    "__version__ = '{version}'",
+]

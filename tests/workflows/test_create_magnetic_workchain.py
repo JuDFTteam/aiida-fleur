@@ -24,20 +24,23 @@ CALC2_ENTRY_POINT = 'fleur.inpgen'
 
 
 # tests
-@pytest.mark.skip
 @pytest.mark.usefixtures('aiida_profile', 'clear_database')
 class Test_FleurCreateMagneticWorkChain:
     """
     Regression tests for the FleurCreateMagneticWorkChain
     """
 
-    @pytest.mark.timeout(500, method='thread')
-    def test_fleur_create_mag_FePt(self, run_with_cache, fleur_local_code, inpgen_local_code):
+    @pytest.mark.skip(reason='Caching does not work. After the EOS workchain finishes the structure'
+                      '(probably) has a different hash due to numerical differences')
+    @pytest.mark.regression_test
+    @pytest.mark.timeout(9000, method='thread')
+    def test_fleur_create_mag_FePt(self, enable_archive_cache, fleur_local_code, inpgen_local_code,
+                                   show_workchain_summary):
         """
         full example using scf workflow with just a fleurinp data as input.
         Several fleur runs needed till convergence
         """
-        from aiida.orm import Code, load_node, Dict, StructureData
+        from aiida.orm import Dict
 
         # input from examples, just with less computations
 
@@ -49,31 +52,31 @@ class Test_FleurCreateMagneticWorkChain:
             'lattice': 'fcc',
             'directions': [[-1, 1, 0], [0, 0, 1], [1, 1, 0]],
             'host_symbol': 'Pt',
-            'latticeconstant': 4.0,
+            'latticeconstant': 0,
             'size': (1, 1, 5),
             'replacements': {
-                0: 'Fe',
+                1: 'Fe',
                 -1: 'Fe'
             },
-            'decimals': 10,
+            'decimals': 5,
             'pop_last_layers': 1,
             'total_number_layers': 8,
             'num_relaxed_layers': 3
         }
 
-        wf_para = Dict(dict=wf_para)
+        wf_para = Dict(wf_para)
 
-        wf_eos = {'points': 9, 'step': 0.015, 'guess': 1.00}
+        wf_eos = {'points': 5, 'step': 0.015, 'guess': 1.00}
 
-        wf_eos_scf = {'fleur_runmax': 4, 'density_converged': 0.0002, 'itmax_per_run': 50, 'inpxml_changes': []}
+        wf_eos_scf = {'fleur_runmax': 4, 'density_converged': 0.002, 'itmax_per_run': 50, 'inpxml_changes': []}
 
-        wf_eos_scf = Dict(dict=wf_eos_scf)
+        wf_eos_scf = Dict(wf_eos_scf)
 
-        wf_eos = Dict(dict=wf_eos)
+        wf_eos = Dict(wf_eos)
 
         calc_eos = {
             'comp': {
-                'kmax': 3.8,
+                'kmax': 3.2,
             },
             'kpt': {
                 'div1': 4,
@@ -82,7 +85,7 @@ class Test_FleurCreateMagneticWorkChain:
             }
         }
 
-        calc_eos = Dict(dict=calc_eos)
+        calc_eos = Dict(calc_eos)
 
         options_eos = {
             'resources': {
@@ -92,18 +95,20 @@ class Test_FleurCreateMagneticWorkChain:
             },
             'queue_name': '',
             'custom_scheduler_commands': '',
-            'max_wallclock_seconds': 1 * 60 * 60
+            'max_wallclock_seconds': 1 * 60 * 60,
+            'withmpi': False
         }
 
-        options_eos = Dict(dict=options_eos)
+        options_eos = Dict(options_eos)
 
         wf_relax = {'film_distance_relaxation': False, 'force_criterion': 0.049}  #, 'use_relax_xml': True}
 
         wf_relax_scf = {
-            'fleur_runmax': 5,
-            'itmax_per_run': 50,
+            'fleur_runmax': 2,
+            'itmax_per_run': 100,
             #'alpha_mix': 0.015,
             #'relax_iter': 25,
+            'density_converged': 0.02,
             'force_converged': 0.001,
             'force_dict': {
                 'qfix': 2,
@@ -113,16 +118,16 @@ class Test_FleurCreateMagneticWorkChain:
             'inpxml_changes': []
         }
 
-        wf_relax = Dict(dict=wf_relax)
-        wf_relax_scf = Dict(dict=wf_relax_scf)
+        wf_relax = Dict(wf_relax)
+        wf_relax_scf = Dict(wf_relax_scf)
 
         calc_relax = {
             'comp': {
-                'kmax': 4.0,
+                'kmax': 3.2,
             },
             'kpt': {
-                'div1': 24,
-                'div2': 20,
+                'div1': 6,
+                'div2': 5,
                 'div3': 1
             },
             'atom': {
@@ -141,7 +146,7 @@ class Test_FleurCreateMagneticWorkChain:
             },
         }
 
-        calc_relax = Dict(dict=calc_relax)
+        calc_relax = Dict(calc_relax)
 
         options_relax = {
             'resources': {
@@ -151,12 +156,13 @@ class Test_FleurCreateMagneticWorkChain:
             },
             'queue_name': '',
             'custom_scheduler_commands': '',
-            'max_wallclock_seconds': 1 * 60 * 60
+            'max_wallclock_seconds': 1 * 60 * 60,
+            'withmpi': False
         }
 
-        options_relax = Dict(dict=options_relax)
+        options_relax = Dict(options_relax)
 
-        settings = Dict(dict={})
+        settings = Dict({})
 
         inputs = {
             'eos': {
@@ -182,25 +188,66 @@ class Test_FleurCreateMagneticWorkChain:
                 'description': 'describtion',
                 'max_iterations': Int(5)
             },
-            'wf_parameters': wf_para
+            'wf_parameters': wf_para,
+            'distance_suggestion': Dict({
+                'Pt': {
+                    'Pt': 4.0,
+                    'Fe': 4.0
+                },
+                'Fe': {
+                    'Pt': 4.0,
+                    'Fe': 4.0
+                }
+            })
         }
 
-        # now run calculation
-        out, node = run_with_cache(inputs, process_class=FleurCreateMagneticWorkChain)
+        with enable_archive_cache('fleur_create_magnetic_FePt.tar.gz'):
+            # now run calculation
+            out, node = run_get_node(FleurCreateMagneticWorkChain, **inputs)
+
+        show_workchain_summary(node, verbose=True)
+        assert node.is_finished_ok
 
         print(out)
         print(node)
 
-        outpara = out.get('output_eos_wc_para', None)
-        assert outpara is not None
-        outpara = outpara.get_dict()
-        print(outpara)
+        magnetic_struc = out.get('magnetic_structure', None)
+        assert magnetic_struc is not None
 
-        outstruc = out.get('output_eos_wc_structure', None)
-        assert outstruc is not None
+        assert magnetic_struc.sites == [{
+            'kind_name': 'Fe',
+            'position': [0.0, 0.0, -6.32946436]
+        }, {
+            'kind_name': 'Pt',
+            'position': [1.84976249, 2.61595921, -4.76652996]
+        }, {
+            'kind_name': 'Pt',
+            'position': [0.0, 0.0, -2.91934811]
+        }, {
+            'kind_name': 'Pt',
+            'position': [1.84976249, 2.61595921, -1.06958561]
+        }, {
+            'kind_name': 'Pt',
+            'position': [0.0, 0.0, 0.78017688]
+        }, {
+            'kind_name': 'Pt',
+            'position': [1.84976249, 2.61595921, 2.62993937]
+        }, {
+            'kind_name': 'Pt',
+            'position': [0.0, 0.0, 4.47970187]
+        }, {
+            'kind_name': 'Pt',
+            'position': [1.84976249, 2.61595921, 6.32946436]
+        }]
+        # outpara = out.get('output_eos_wc_para', None)
+        # assert outpara is not None
+        # outpara = outpara.get_dict()
+        # print(outpara)
 
-        assert node.is_finished_ok
-        assert False
+        # outstruc = out.get('output_eos_wc_structure', None)
+        # assert outstruc is not None
+
+        # assert False
         # check output
         #distance, bulk modulus, optimal structure, opt scaling
         #assert abs(outpara.get('scaling_gs') - 0.99268546558578) < 10**14
@@ -209,7 +256,7 @@ class Test_FleurCreateMagneticWorkChain:
 
     @pytest.mark.skip
     @pytest.mark.timeout(500, method='thread')
-    def test_fleur_create_mag_validation_wrong_inputs(self, run_with_cache, mock_code_factory, generate_structure2):
+    def test_fleur_create_mag_validation_wrong_inputs(self, fleur_local_code, inpgen_local_code, generate_structure2):
         """
         Test the validation behavior of FleurCreateMagneticWorkChain if wrong input is provided it should throw
         an exitcode and not start a Fleur run or crash
@@ -228,18 +275,7 @@ class Test_FleurCreateMagneticWorkChain:
         }
         options = Dict(dict=options).store()
 
-        FleurCode = mock_code_factory(
-            label='fleur',
-            data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'calc_data_dir/'),
-            entry_point=CALC_ENTRY_POINT,
-            ignore_files=['cdnc', 'out', 'FleurInputSchema.xsd', 'cdn.hdf', 'usage.json', 'cdn??'])
-        InpgenCode = mock_code_factory(label='inpgen',
-                                       data_dir_abspath=os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                                     'calc_data_dir/'),
-                                       entry_point=CALC2_ENTRY_POINT,
-                                       ignore_files=['_aiidasubmit.sh', 'FleurInputSchema.xsd'])
-
-        wf_parameters = Dict(dict={'points': 9, 'step': 0.002, 'guess': 1.00, 'wrong_key': None})
+        wf_parameters = Dict({'points': 9, 'step': 0.002, 'guess': 1.00, 'wrong_key': None})
         wf_parameters.store()
         structure = generate_structure2()
         structure.store()
@@ -252,8 +288,8 @@ class Test_FleurCreateMagneticWorkChain:
         builder_additionalkeys = FleurCreateMagneticWorkChain.get_builder()
         builder_additionalkeys.structure = structure
         builder_additionalkeys.wf_parameters = wf_parameters
-        builder_additionalkeys.scf.fleur = FleurCode
-        builder_additionalkeys.scf.inpgen = InpgenCode
+        builder_additionalkeys.scf.fleur = fleur_local_code
+        builder_additionalkeys.scf.inpgen = inpgen_local_code
 
         ###################
         # now run the builders all should fail early with exit codes

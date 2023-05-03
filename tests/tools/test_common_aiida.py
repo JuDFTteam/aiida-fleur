@@ -10,7 +10,7 @@ def test_create_group(capsys, clear_database):
     from aiida_fleur.tools.common_aiida import create_group
     from aiida.orm import Group, Dict
 
-    para = Dict(dict={})
+    para = Dict({})
     para.store()
     group = create_group(name='test_group', nodes=[para.pk, 'not-existent-uuid'], description='test_description')
 
@@ -54,7 +54,7 @@ def test_export_extras(temp_dir):
 
     test_pk = []
     for i in range(3):
-        test_dict = Dict(dict={})
+        test_dict = Dict({})
         test_dict.store()
         test_dict.set_extra('test_extra', i)
         test_pk.append(test_dict.pk)
@@ -62,7 +62,7 @@ def test_export_extras(temp_dir):
     extra_filename = os.path.join(temp_dir, 'node_extras.txt')
     export_extras(test_pk, extra_filename)
 
-    with open(extra_filename) as json_file:
+    with open(extra_filename, encoding='utf-8') as json_file:
         data = json.load(json_file)
 
     test_extras = [x['test_extra'] for x in data.values()]
@@ -76,13 +76,13 @@ def test_import_extras(temp_dir, capsys):
     from aiida_fleur.tools.common_aiida import export_extras, import_extras
     from aiida.orm import Dict
 
-    test_dict = Dict(dict={})
+    test_dict = Dict({})
     test_dict.store()
 
     extra_filename = os.path.join(temp_dir, 'node_extras.txt')
     export_extras([test_dict.pk], extra_filename)
 
-    with open(extra_filename) as json_file:
+    with open(extra_filename, encoding='utf-8') as json_file:
         data = json.load(json_file)
 
     existent_uuid = list(data.keys())[0]
@@ -90,7 +90,7 @@ def test_import_extras(temp_dir, capsys):
     data['not_existent_uuid'] = {}
     data['not_existent_uuid']['test_extra'] = 'data to be not written'
 
-    with open(extra_filename, 'w') as json_file:
+    with open(extra_filename, 'w', encoding='utf-8') as json_file:
         json.dump(data, json_file)
 
     import_extras(extra_filename)
@@ -101,7 +101,7 @@ def test_import_extras(temp_dir, capsys):
     assert captured.out == 'node with uuid not_existent_uuid does not exist in DB\n'
 
     empty_file = os.path.join(temp_dir, 'empty_file')
-    open(empty_file, 'w').close()  #pylint: disable=consider-using-with
+    open(empty_file, 'w', encoding='utf-8').close()  #pylint: disable=consider-using-with
     import_extras(empty_file)
 
     captured = capsys.readouterr()
@@ -143,7 +143,7 @@ def test_get_nodes_from_group():
 
     test_pk = []
     for i in range(3):
-        test_dict = Dict(dict={})
+        test_dict = Dict({})
         test_dict.store()
         test_pk.append(test_dict.pk)
 

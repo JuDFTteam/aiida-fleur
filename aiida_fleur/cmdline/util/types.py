@@ -38,7 +38,7 @@ class StructureNodeOrFileParamType(click.ParamType):
         from aiida.orm import StructureData, QueryBuilder
 
         try:
-            structure = types.DataParamType(sub_classes=('aiida.data:structure',)).convert(value, param, ctx)
+            structure = types.DataParamType(sub_classes=('aiida.data:core.structure',)).convert(value, param, ctx)
         except (NotExistent, click.exceptions.BadParameter) as er:
             echo.echo(f'Tried to load node, could not fine one for {value}. '
                       'I will further check if it is a filepath.')

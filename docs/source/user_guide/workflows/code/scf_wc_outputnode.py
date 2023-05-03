@@ -13,7 +13,6 @@
     'force_largest': 0.0,
     'info': [],
     'iterations_total': 23,
-    'last_calc_uuid': 'b20b5b94-5d80-41a8-82bf-b4d8eee9bddc',
     'loop_count': 1,
     'material': 'FePt2',
     'total_energy': -38166.176928494,

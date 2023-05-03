@@ -10,20 +10,17 @@
 ###############################################################################
 ''' Contains tests for the FleurCFWorkchain '''
 import pytest
-import aiida_fleur
 from aiida_fleur.workflows.cfcoeff import FleurCFCoeffWorkChain
 from aiida import orm
 from aiida.engine import run_get_node
 from aiida.cmdline.utils.common import get_workchain_report, get_calcjob_report
-import os
-
-aiida_path = os.path.dirname(aiida_fleur.__file__)
 
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
-def test_fleur_cfcoeff_structure_no_analogue(with_export_cache, fleur_local_code, inpgen_local_code,
-                                             generate_smco5_structure, clear_database, aiida_caplog):
+def test_fleur_cfcoeff_structure_no_analogue(enable_archive_cache, fleur_local_code, inpgen_local_code,
+                                             generate_smco5_structure, clear_database, aiida_caplog,
+                                             show_workchain_summary):
     """
     Full example using the CFCoeff workchain with just a structure as input.
     Calls scf for analogue and rare-earth system
@@ -80,19 +77,16 @@ def test_fleur_cfcoeff_structure_no_analogue(with_export_cache, fleur_local_code
         })
     builder.wf_parameters = orm.Dict(dict={'element': 'Sm'})
 
-    # now run calculation
-    #run_with_cache(builder)
-    data_dir_path = os.path.join(aiida_path,
-                                 '../tests/workflows/caches/fleur_cfcoeff_smco5_structure_no_analogue.tar.gz')
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with enable_archive_cache('fleur_cfcoeff_smco5_structure_no_analogue.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
+    assert 'output_cfcoeff_wc_para' in out
     n = out['output_cfcoeff_wc_para']
     n = n.get_dict()
     assert 'output_cfcoeff_wc_potentials' in out
@@ -118,8 +112,9 @@ def test_fleur_cfcoeff_structure_no_analogue(with_export_cache, fleur_local_code
 
 @pytest.mark.regression_test
 @pytest.mark.timeout(1000, method='thread')
-def test_fleur_cfcoeff_structure_analogue(with_export_cache, fleur_local_code, inpgen_local_code,
-                                          generate_smco5_structure, clear_database, aiida_caplog):
+def test_fleur_cfcoeff_structure_analogue(enable_archive_cache, fleur_local_code, inpgen_local_code,
+                                          generate_smco5_structure, clear_database, aiida_caplog,
+                                          show_workchain_summary):
     """
     Full example using the CFCoeff workchain with just a structure as input.
     Calls scf for analogue and rare-earth system
@@ -179,18 +174,16 @@ def test_fleur_cfcoeff_structure_analogue(with_export_cache, fleur_local_code, i
     builder.scf_rare_earth_analogue.options = orm.Dict(dict=options).store()
     builder.wf_parameters = orm.Dict(dict={'element': 'Sm', 'rare_earth_analogue': True})
 
-    # now run calculation
-    #run_with_cache(builder)
-    data_dir_path = os.path.join(aiida_path, '../tests/workflows/caches/fleur_cfcoeff_smco5_structure_analogue.tar.gz')
-    with with_export_cache(data_dir_abspath=data_dir_path):
+    with enable_archive_cache('fleur_cfcoeff_smco5_structure_analogue.tar.gz'):
         out, node = run_get_node(builder)
     #print(out)
     #print(node)
 
-    print(get_workchain_report(node, 'REPORT'))
+    show_workchain_summary(node)
 
     #assert node.is_finished_ok
     # check output
+    assert 'output_cfcoeff_wc_para' in out
     n = out['output_cfcoeff_wc_para']
     n = n.get_dict()
     assert 'output_cfcoeff_wc_potentials' in out
