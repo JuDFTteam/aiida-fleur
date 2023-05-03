@@ -95,6 +95,13 @@ jobs:
         add-name: ['']
         allowed-to-fail: [false]
         include:
+          - python-version: "3.11"
+            aiida: {version: 'aiida-core==2.3.0', name: '2.3.0'}
+            masci-tools: {version: 'masci-tools', name: 'stable'}
+            bokeh-version: 'bokeh==3.0.3'
+            mpl-version: 'matplotlib==3.6.3'
+            add-name: ''
+            allowed-to-fail: false
           - python-version: 3.9
             aiida: {version: 'git+https://github.com/aiidateam/aiida-core.git@main', name: 'latest'}
             masci-tools: {version: 'masci-tools', name: 'stable'}
