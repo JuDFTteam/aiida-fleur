@@ -199,7 +199,7 @@ def test_test_and_get_codenode_inpgen(fixture_code):
         test_and_get_codenode(code, nonexpected)
     assert str(msg.value) == ('Expected Code of type fleur.fleur. Got: fleur.inpgen\n'
                               'Valid labels for a fleur.fleur executable are:\n'
-                              '* fleur_test@localhost-test')
+                              f'* {code_fleur.full_label}')
 
     with pytest.raises(ValueError) as msg:
         test_and_get_codenode(code, not_existing)
@@ -336,7 +336,7 @@ def test_performance_extract_calcs(fixture_localhost, generate_calc_job_node):
         'walltime_sec_per_it': [3.909090909090909],
         'n_iterations_total': [11],
         'density_distance': [0.0682602474],
-        'computer': ['localhost-test'],
+        'computer': [fixture_localhost.label],
         'n_atoms': [4],
         'kmax': [4.2],
         'cost': [75866.11200000001],

@@ -5,3 +5,4 @@ archive_cache:
     ignore:
         calcjob_attributes: 
             - environment_variables_double_quotes
+            - metadata_inputs
