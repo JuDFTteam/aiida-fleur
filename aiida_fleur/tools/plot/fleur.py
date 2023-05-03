@@ -166,7 +166,7 @@ def classify_node(node):
 
     #Define any additional node hat should be passed to the plotting function
     ADDITIONAL_OUTPUTS = {
-        'FleurBandDosWorkChain': ('last_calc_retrieved',),
+        'FleurBandDosWorkChain': ('banddos_calc__retrieved',),
         'FleurCFCoeffWorkChain': ('output_cfcoeff_wc_charge_densities', 'output_cfcoeff_wc_potentials')
     }
 
