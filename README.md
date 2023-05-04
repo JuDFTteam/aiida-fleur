@@ -2,10 +2,10 @@
 
 [![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![GitHub release](https://img.shields.io/github/release/JuDFTteam/aiida-fleur.svg)](https://github.com/JuDFTteam/aiida-fleur/releases)
-[![PyPI version](https://badge.fury.io/py/aiida-fleur.svg)](https://badge.fury.io/py/aiida-fleur)
+[![PyPI version](https://img.shields.io/pypi/v/aiida-fleur)](https://pypi.org/project/aiida-fleur/)
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/aiida-fleur.svg)](https://anaconda.org/conda-forge/aiida-fleur)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/aiida-fleur.svg)](https://pypi.python.org/pypi/aiida-fleur)
-[![Fleur Compatibility][Fleur v1.2]](https://www.flapw.de/rel)
+[![Fleur Compatibility][Fleur v2.0]](https://www.flapw.de/rel)
 [![Build status](https://github.com/JuDFTteam/aiida-fleur/workflows/aiida-fleur/badge.svg?branch=develop&event=push)](https://github.com/JuDFTteam/aiida-fleur/actions)
 [![Documentation Status](https://readthedocs.org/projects/aiida-fleur/badge/?version=develop)](https://aiida-fleur.readthedocs.io/en/develop/?badge=develop)
 [![codecov](https://codecov.io/gh/JuDFTteam/aiida-fleur/branch/develop/graph/badge.svg)](https://codecov.io/gh/JuDFTteam/aiida-fleur)
@@ -20,8 +20,8 @@ Developed at [Forschungszentrum Jülich GmbH](http://www.fz-juelich.de/pgi/pgi-1
 
 | FLEUR Plugin | AiiDA CORE | Python | FLEUR/XML file version | 
 |-|-|-|-|
-| `v2.0.0 < v3.0.0` | ![Compatibility for v2.0][AiiDA v2.0] |  [![PyPI pyversions](https://img.shields.io/badge/python-3.8_\|_3.9_\|_3.10-blue)](https://pypi.org/project/aiida-fleur.svg) |![Fleur Compatibility][Fleur v2.0]/`<=0.37` |
-| `v1.2.0 < v2.0.0` | ![Compatibility for v1.2][AiiDA v1.2] |  [![PyPI pyversions](https://img.shields.io/pypi/pyversions/aiida-fleur.svg)](https://pypi.org/project/aiida-fleur) | ![Fleur Compatibility][Fleur v1.2]/`<=0.35` |
+| `v2.0.0 < v3.0.0` | ![Compatibility for v2.0][AiiDA v2.0] |  [![PyPI pyversions](https://img.shields.io/pypi/pyversions/aiida-fleur.svg)](https://pypi.org/project/aiida-fleur.svg) |![Fleur Compatibility][Fleur v2.0]/`<=0.37` |
+| `v1.2.0 < v2.0.0` | ![Compatibility for v1.2][AiiDA v1.2] |  [![PyPI pyversions](https://img.shields.io/badge/python-3.7_\|_3.8_\|_3.9_\|_3.10-blue)](https://pypi.org/project/aiida-fleur/1.3.1) | ![Fleur Compatibility][Fleur v1.2]/`<=0.35` |
 | `v1.0.0 < v1.2.0` | ![Compatibility for v1.0][AiiDA v1.0] |  [![PyPI pyversions](https://img.shields.io/badge/python-3.6_\|_3.7_\|_3.8_\|_3.9-blue)](https://pypi.org/project/aiida-fleur/1.2.0) | ![Fleur Compatibility][Fleur v1.0]/`<=0.33` |
 | `< v0.6.3` | ![Compatibility for v0.6.3][AiiDA v0.6.3] | [![PyPI pyversions](https://img.shields.io/badge/python-2.7-blue)](https://pypi.python.org/pypi/aiida-fleur/0.6.3/) | ![Fleur Compatibility][Fleur v0.6.3]/`<=0.31` |
 
