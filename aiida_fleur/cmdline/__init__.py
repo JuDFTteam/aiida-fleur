@@ -17,7 +17,13 @@ import difflib
 
 from aiida_fleur import __version__
 from aiida.cmdline.params import options, types
-from aiida.cmdline.groups import VerdiCommandGroup
+try:
+    #This class was added in AiiDA 2.1.0 and is needed to correctly
+    #access the AiiDA profile in these versions
+    from aiida.cmdline.groups import VerdiCommandGroup
+    command_cls = VerdiCommandGroup
+except ImportError:
+    command_cls = click.Group
 
 from .launch import cmd_launch
 from .data import cmd_data
@@ -35,7 +41,7 @@ click_completion.init()
 
 
 # Uncomment this for now, has problems with sphinx-click
-@click.command('aiida-fleur', cls=VerdiCommandGroup, context_settings={'help_option_names': ['-h', '--help']})
+@click.command('aiida-fleur', cls=command_cls, context_settings={'help_option_names': ['-h', '--help']})
 @options.PROFILE(type=types.ProfileParamType(load_profile=True))
 # Note, __version__ should always be passed explicitly here,
 # because click does not retrieve a dynamic version when installed in editable mode
