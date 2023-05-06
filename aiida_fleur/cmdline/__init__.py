@@ -17,6 +17,8 @@ import difflib
 
 from aiida_fleur import __version__
 from aiida.cmdline.params import options, types
+from aiida.cmdline.groups import VerdiCommandGroup
+
 from .launch import cmd_launch
 from .data import cmd_data
 from .workflows import cmd_workflow
@@ -32,42 +34,8 @@ click_completion.init()
 # less material science specific
 
 
-class MostSimilarCommandGroup(click.Group):
-    """
-    Overloads the get_command to display a list of possible command
-    candidates if the command could not be found with an exact match.
-    """
-
-    def get_command(self, ctx, cmd_name):
-        """
-        Override the default click.Group get_command with one giving the user
-        a selection of possible commands if the exact command name could not be found.
-        """
-        cmd = click.Group.get_command(self, ctx, cmd_name)
-
-        # return the exact match
-        if cmd is not None:
-            return cmd
-
-        matches = difflib.get_close_matches(cmd_name, self.list_commands(ctx), cutoff=0.5)
-
-        if not matches:
-            # single letters are sometimes not matched, try with a simple startswith
-            matches = [c for c in sorted(self.list_commands(ctx)) if c.startswith(cmd_name)][:3]
-
-        if matches:
-            ctx.fail("'{cmd}' is not a aiida-fleur command.\n\n"
-                     'The most similar commands are: \n'
-                     '{matches}'.format(cmd=cmd_name, matches='\n'.join(f'\t{m}' for m in sorted(matches))))
-        else:
-            ctx.fail(f"'{cmd_name}' is not a aiida-fleur command.\n\nNo similar commands found.")
-
-        return None
-
-
 # Uncomment this for now, has problems with sphinx-click
-#@click.command('aiida-fleur', cls=MostSimilarCommandGroup, context_settings={'help_option_names': ['-h', '--help']})
-@click.group('aiida-fleur', context_settings={'help_option_names': ['-h', '--help']})
+@click.command('aiida-fleur', cls=VerdiCommandGroup, context_settings={'help_option_names': ['-h', '--help']})
 @options.PROFILE(type=types.ProfileParamType(load_profile=True))
 # Note, __version__ should always be passed explicitly here,
 # because click does not retrieve a dynamic version when installed in editable mode
