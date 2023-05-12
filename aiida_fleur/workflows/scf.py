@@ -59,7 +59,7 @@ class FleurScfWorkChain(WorkChain):
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.6.3'
+    _workflowversion = '0.6.4'
     _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
@@ -118,6 +118,7 @@ class FleurScfWorkChain(WorkChain):
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
         spec.input('remote_data', valid_type=RemoteData, required=False)
         spec.input('options', valid_type=Dict, required=False)
+        spec.input('options_inpgen', valid_type=Dict, required=False)
         spec.input('settings', valid_type=Dict, required=False)
         spec.input('settings_inpgen', valid_type=Dict, required=False)
         spec.outline(cls.start, cls.validate_input,
@@ -170,29 +171,10 @@ class FleurScfWorkChain(WorkChain):
                 wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-        # fleur = self.inputs.fleur
-        # fleur_extras = fleur.extras
-        # inpgen_extras = None
-        # if 'inpgen' in self.inputs:
-        #     inpgen = self.inputs.inpgen
-        #     inpgen_extras = inpgen.extras
-
         defaultoptions = self._default_options.copy()
-        user_options = {}
+
         if 'options' in self.inputs:
-            user_options = self.inputs.options.get_dict()
-        '''
-        # extend options by code defaults given in code extras
-        # Maybe do full recursive merge
-        if 'queue_defaults' in fleur_extras:
-            qd = fleur_extras['queue_defaults']
-            queue = user_options.get('queue', 'default')
-            defaults_queue = qd.get(queue, {})
-            for key, val in defaultoptions.items():
-                defaultoptions[key] = defaults_queue.get(key, val)
-        '''
-        if 'options' in self.inputs:
-            options = user_options
+            options = self.inputs.options.get_dict()
         else:
             options = defaultoptions
         # we use the same options for both codes, inpgen resources get overridden
@@ -399,6 +381,8 @@ class FleurScfWorkChain(WorkChain):
             'resources': self.ctx.options.get('resources'),
             'queue_name': self.ctx.options.get('queue_name', '')
         }
+        if 'options_inpgen' in self.inputs:
+            options = {**options, **self.inputs.options_inpgen.get_dict()}
 
         inputs_build = get_inputs_inpgen(structure,
                                          inpgencode,

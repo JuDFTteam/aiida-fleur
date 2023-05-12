@@ -1009,8 +1009,8 @@ def test_create_all_slabs(generate_structure):
     film_strucs = create_all_slabs(structure, 2, 5)
 
     assert len(film_strucs.keys()) == 9
-    assert list(film_strucs.keys()) == [(1, 1, 1), (2, 2, 1), (1, 1, 0), (2, 2, -1), (2, 1, 1), (2, 1, -1), (2, 1, -2),
-                                        (2, 0, -1), (2, -1, -1)]
+    assert list(film_strucs.keys()) == [(1, 1, 1), (1, 1, 0), (1, 1, -1), (1, 0, -1), (2, 2, -1), (2, 1, -1),
+                                        (2, 1, -2), (2, 0, -1), (2, -1, -1)]
     for key, film_struc in film_strucs.items():
         assert isinstance(film_struc, StructureData)
 
