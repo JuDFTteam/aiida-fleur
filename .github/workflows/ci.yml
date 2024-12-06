@@ -168,12 +168,11 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install --upgrade wheel setuptools
-        pip install git+https://github.com/aiidateam/aiida-testing.git@main
+        pip install aiida-test-cache~=0.0.1
         pip install --no-deps git+https://github.com/aiidateam/aiida-common-workflows.git@master
         pip install .[testing,graphs]
         pip install ${{ matrix.aiida.version }} ${{ matrix.masci-tools.version }}
         pip install ${{ matrix.bokeh-version }} ${{ matrix.mpl-version }}
-        reentry scan || true
 
     - name: Run pytest
       run: |
