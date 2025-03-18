@@ -129,9 +129,25 @@ class FleurParser(Parser):
                 else:
                     error_file_lines = error_file_lines.replace('\x00', ' ')
 
+        # check if something was written to the shell output file
+        if FleurCalculation._SHELLOUTPUT_FILE_NAME in list_of_files:
+            shelloutfile = FleurCalculation._SHELLOUTPUT_FILE_NAME
+            try:
+                with output_folder.open(shelloutfile, 'r') as sofile:
+                    shellout_file_lines = sofile.read()
+            except OSError:
+                self.logger.error(f'Failed to open shellout file: {shelloutfile}.')
+                return self.exit_codes.ERROR_OPENING_OUTPUTS
+            if shellout_file_lines:
+                if isinstance(shellout_file_lines, bytes):
+                    shellout_file_lines = shellout_file_lines.replace(b'\x00', b' ')
+                else:
+                    shellout_file_lines = shellout_file_lines.replace('\x00', ' ')
+
         # Open log-file as well
         try:
-            run_was_successful="finished successfully" in error_file_lines
+            run_was_successful = "finished successfully" in error_file_lines
+            run_was_successful = run_was_successful or ("finished successfully" in shellout_file_lines)
         except:
             run_was_successful=False    
         if FleurCalculation._LOG_FILE_NAME in list_of_files:
