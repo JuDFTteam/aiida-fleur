@@ -220,6 +220,9 @@ class FleurinputgenCalculation(CalcJob):
         if 'profile' in settings_dict:
             cmdline_params.extend(['-profile', settings_dict['profile']])
 
+        if 'kpt' in settings_dict:
+            cmdline_params.extend(['-kpt', settings_dict['kpt']])
+        
         # user specific commandline_options
         for command in settings_dict.get('cmdline', []):
             cmdline_params.append(command)
