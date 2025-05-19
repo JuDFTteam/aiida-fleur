@@ -82,7 +82,7 @@ jobs:
         allowed-to-fail: [false]
         include:
           - python-version: "3.11"
-            aiida: {version: 'aiida-core==2.6.3', name: '2.6'}
+            aiida: {version: 'aiida-core==2.3.0', name: '2.3.0'}
             masci-tools: {version: 'masci-tools', name: 'stable'}
             bokeh-version: 'bokeh==3.0.3'
             mpl-version: 'matplotlib==3.6.3'
