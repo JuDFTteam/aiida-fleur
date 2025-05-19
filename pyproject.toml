@@ -46,7 +46,7 @@ docs = [
     "sphinx~=5.0",
     "sphinx_rtd_theme",
     "sphinx-click",
-    "myst-parser~=0.15.2"
+    "myst-parser==0.18.1"
     ]
 testing = [
     "pytest>=2.9",
