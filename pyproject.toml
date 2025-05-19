@@ -55,7 +55,7 @@ testing = [
     "pytest-mpl>=0.12",
     "pgtest",
     "pytest-regressions>=1.0",
-    "aiida-test-cache @ git+https://github.com/aiidateam/aiida-testing.git@backport-2.6-support",
+    "aiida-test-cache==0.0.1",
     ]
 pre-commit = [
     "pre-commit>=2.6.0",
