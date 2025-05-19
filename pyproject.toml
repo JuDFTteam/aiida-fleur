@@ -43,7 +43,7 @@ graphs = [
         "masci-tools[bokeh-plots]"
     ]
 docs = [
-    "sphinx~=4.0",
+    "sphinx~=5.0",
     "sphinx_rtd_theme",
     "sphinx-click",
     "myst-parser~=0.15.2"
