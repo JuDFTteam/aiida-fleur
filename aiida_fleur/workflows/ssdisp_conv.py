@@ -111,9 +111,9 @@ class FleurSSDispConvWorkChain(WorkChain):
         if 'calc_parameters' in input_scf:
             calc_parameters = input_scf.calc_parameters.get_dict()
             if self.ctx.wf_dict['suppress_symmetries']:
-               calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
+                calc_parameters['qss'] = {'x': 1.221, 'y': 0.522, 'z': -0.5251}
             else:
-               calc_parameters['qss'] = {'x': qss[0], 'y': qss[1], 'z': qss[2]}
+                calc_parameters['qss'] = {'x': qss[0], 'y': qss[1], 'z': qss[2]}
             input_scf.calc_parameters = Dict(calc_parameters)
 
         return input_scf

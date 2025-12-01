@@ -2,21 +2,17 @@
 Here we specify some defaults for cli commands
 """
 
+
 def get_default_dict():
     import os
-    HOME=os.getenv("HOME")
+    HOME = os.getenv('HOME')
     #first see if we have already a setting file
     try:
-        with open(f"{HOME}/.aiida-fleur/cli.json","r") as f:
-            dict=json.load(f)
+        with open(f"{HOME}/.aiida-fleur/cli.json") as f:
+            dict = json.load(f)
     except:
-        dict={"fleur":None,
-              "inpgen":None,
-              "copyback":False,
-              "resources":None
-              }
-    return dict    
-
+        dict = {'fleur': None, 'inpgen': None, 'copyback': False, 'resources': None}
+    return dict
 
 
 # Structures
@@ -99,19 +95,19 @@ def get_fept_film_structure():
 # Codes
 def get_inpgen():
     """Return a `Code` node of the latest added inpgen executable in the database."""
-    inpgen=get_default_dict()["inpgen"]
-    if inpgen==None:
-        inpgen=get_last_code("fleur.inpgen")
-    return inpgen    
+    inpgen = get_default_dict()['inpgen']
+    if inpgen == None:
+        inpgen = get_last_code('fleur.inpgen')
+    return inpgen
+
 
 def get_fleur():
     """Return a `Code` node of the latest added inpgen executable in the database."""
-    fleur=fleur=get_default_dict()["fleur"]
-    if fleur==None:
-        fleur=get_last_code('fleur.fleur')
-    return fleur    
+    fleur = fleur = get_default_dict()['fleur']
+    if fleur == None:
+        fleur = get_last_code('fleur.fleur')
+    return fleur
 
-    
 
 def get_last_code(entry_point_name):
     """Return a `Code` node of the latest code executable of the given entry_point_name in the database.
@@ -138,7 +134,7 @@ def get_last_code(entry_point_name):
     return results[0].uuid
 
 
-def get_code_interactive(entry_point_name,default_uuid=None):
+def get_code_interactive(entry_point_name, default_uuid=None):
     """Return a `Code` node of the given entry_point_name in the database.
 
     The database will be queried for the existence the possible codes, they will be listed and
@@ -160,20 +156,19 @@ def get_code_interactive(entry_point_name,default_uuid=None):
 
     if not builder.all():
         raise NotExistent(f'ERROR: Could not find any Code in the database with entry point: {entry_point_name}!')
- 
-    print(f"Selection for {entry_point_name}:") 
-    i=0
-    default_i=0
+
+    print(f"Selection for {entry_point_name}:")
+    i = 0
+    default_i = 0
     for code in builder.all():
-        if code[0].uuid==default_uuid:
-            default_i=i
+        if code[0].uuid == default_uuid:
+            default_i = i
         print(f"{i}:{code[0].full_label}")
-        i=i+1
-    i=click.prompt("Please enter your choice",type=int,default=default_i)
+        i = i + 1
+    i = click.prompt('Please enter your choice', type=int, default=default_i)
     try:
-        result=builder.all()[i]
+        result = builder.all()[i]
     except:
         return default_uuid
-        
 
     return result[0].uuid

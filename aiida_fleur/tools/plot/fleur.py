@@ -62,12 +62,12 @@ def plot_fleur(*args, save=False, show_dict=False, show=True, backend=None, **kw
     for arg in args:
         if isinstance(arg, list):
             # try plot together
-            print("mn:",arg)
+            print('mn:', arg)
             p1 = plot_fleur_mn(arg, save=save, show=show, backend=backend, **kwargs)
             if len(p1) == 1:
                 p1 = p1[0]
         else:
-            print("sn:",arg)
+            print('sn:', arg)
             # plot alone
             p1 = plot_fleur_sn(arg, show_dict=show_dict, show=show, save=save, backend=backend, **kwargs)
         all_plots.append(p1)
@@ -201,7 +201,8 @@ def classify_node(node):
     if add_outputs:
         if workchain_node is None:
             workchain_node = parameter_node.get_incoming(node_class=WorkChainNode).one().node
-        add_nodes = tuple(workchain_node.base.links.get_outgoing().get_node_by_label(out_label) for out_label in add_outputs)
+        add_nodes = tuple(
+            workchain_node.base.links.get_outgoing().get_node_by_label(out_label) for out_label in add_outputs)
 
     outputs = (parameter_node,) + add_nodes
 
@@ -442,7 +443,7 @@ def plot_fleur_relax_wc(node, labels=None, save=False, show=True, backend='bokeh
 
     if labels is None:
         labels = [n.pk for n in node]
-    
+
     if isinstance(node, list):
         if len(node) > 2:
             return  # TODO
@@ -451,15 +452,14 @@ def plot_fleur_relax_wc(node, labels=None, save=False, show=True, backend='bokeh
 
     output_d = node.get_dict()
     forces = output_d.get('force')
-    total_energies=output_d.get('energy')
-    iteration=range(len(forces))
-        
+    total_energies = output_d.get('energy')
+    iteration = range(len(forces))
+
     add_args = {}
     if backend == 'bokeh':
         add_args['legend_label'] = labels
     else:
         add_args['plot_label'] = labels
-
 
     plot_res = convergence_plot(iteration,
                                 forces,
@@ -467,10 +467,11 @@ def plot_fleur_relax_wc(node, labels=None, save=False, show=True, backend='bokeh
                                 show=show,
                                 save_plots=save,
                                 backend=backend,
-                                saveas_distance="force_convergence",
-                                ylabel_distance="Largest force [Htr/bohr]",
+                                saveas_distance='force_convergence',
+                                ylabel_distance='Largest force [Htr/bohr]',
                                 **kwargs)
     return plot_res
+
 
 def plot_fleur_corehole_wc(nodes, labels=None, save=False, show=True, **kwargs):
     """

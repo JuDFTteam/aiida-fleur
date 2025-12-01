@@ -39,7 +39,7 @@ __all__ = ('FleurinpModifier', 'inpxml_changes', 'modify_fleurinpdata')
 def inpxml_changes(wf_parameters: dict | orm.Dict | ProcessBuilderNamespace,
                    append: bool = True,
                    builder_entry: str = 'wf_parameters',
-                   builder_replace_stored: bool = True) -> Generator[FleurinpModifier, None, None]:
+                   builder_replace_stored: bool = True) -> Generator[FleurinpModifier]:
     """
     Contextmanager to construct an `inpxml_changes` entry in the given dictionary
 

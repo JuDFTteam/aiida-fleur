@@ -17,7 +17,7 @@ import click
 from aiida.cmdline.params import types
 from aiida.cmdline.params.options import OverridableOption
 from .defaults import get_inpgen, get_fleur, get_si_bulk_structure
-from .types import StructureNodeOrFileParamType,WFParameterType,RemoteType,FleurinpType,OptionsType
+from .types import StructureNodeOrFileParamType, WFParameterType, RemoteType, FleurinpType, OptionsType
 
 STRUCTURE_OR_FILE = OverridableOption(
     '-s',

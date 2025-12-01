@@ -28,8 +28,9 @@ def cmd_workflow():
 
 
 @cmd_workflow.command('res')
-@arguments.PROCESS('process', type=ProcessParamType()
-                   )  #, type=WorkflowParamType(sub_classes=('aiida.node:process.workflow.workchain',)))
+@arguments.PROCESS(
+    'process',
+    type=ProcessParamType())  #, type=WorkflowParamType(sub_classes=('aiida.node:process.workflow.workchain',)))
 @click.option('--info/--no-info', default=False, help='Print an info header above each node.')
 @click.option('-l', '--label', 'label', type=str, help='Print only output dicts with a certain link_label.')
 @options_fl.SHOW()
@@ -69,8 +70,9 @@ def workchain_res(process, info, label, show, keys, fmt):
 
 
 @cmd_workflow.command('inputdict')
-@arguments.PROCESS('process', type=ProcessParamType()
-                   )  #, type=WorkflowParamType(sub_classes=('aiida.node:process.workflow.workchain',)))
+@arguments.PROCESS(
+    'process',
+    type=ProcessParamType())  #, type=WorkflowParamType(sub_classes=('aiida.node:process.workflow.workchain',)))
 @click.option('--info/--no-info', default=False, help='Print an info header above each node.')
 @click.option('-l', '--label', 'label', type=str, help='Print only output dicts with a certain link_label.')
 @options_fl.SHOW()
