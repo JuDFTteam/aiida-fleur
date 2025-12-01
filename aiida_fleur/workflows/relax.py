@@ -103,7 +103,7 @@ class FleurRelaxWorkChain(WorkChain):
         # Pre-initialization of some variables
         self.ctx.loop_count = 0  # Counts relax restarts
         self.ctx.forces = []  # Collects forces
-        self.ctx.total_energy = [] #Collect total energies
+        self.ctx.total_energy = []  #Collect total energies
         self.ctx.final_cell = None  # The relaxed Bravais matrix
         self.ctx.final_atom_positions = None  # Relaxed atom positions
         self.ctx.pbc = None  # Boundary conditions
@@ -472,15 +472,14 @@ class FleurRelaxWorkChain(WorkChain):
         except KeyError:
             return self.exit_codes.ERROR_NO_RELAX_OUTPUT
 
-        self.ctx.total_energy_last=total_energy
+        self.ctx.total_energy_last = total_energy
         self.ctx.total_energy_units = total_energy_units
         self.ctx.atomtype_info = atomtype_info
 
-        
-        input_fleurinp_files=['inp.xml', 'relax.xml']
-        for file in ['kpts.xml','sym.xml']:
+        input_fleurinp_files = ['inp.xml', 'relax.xml']
+        for file in ['kpts.xml', 'sym.xml']:
             if file in retrieved_node.list_object_names():
-                input_fleurinp_files=input_fleurinp_files+[file]
+                input_fleurinp_files = input_fleurinp_files + [file]
         fleurinp = FleurinpData(files=input_fleurinp_files, node=retrieved_node)
         structure = fleurinp.get_structuredata_ncf()
 
@@ -528,7 +527,7 @@ class FleurRelaxWorkChain(WorkChain):
             'workflow_name': self.__class__.__name__,
             'workflow_version': self._workflowversion,
             'energy': self.ctx.total_energy,
-            'last_energy' : self.ctx.total_energy_last,
+            'last_energy': self.ctx.total_energy_last,
             'energy_units': self.ctx.total_energy_units,
             'info': self.ctx.info,
             'warnings': self.ctx.warnings,

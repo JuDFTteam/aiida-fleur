@@ -155,7 +155,7 @@ def launch_fleur(fleurinp, fleur, parent_folder, settings, daemon, max_num_machi
 
 
 @click.command('scf')
-@options.STRUCTURE_OR_FILE(default="inp.xml", show_default=True)
+@options.STRUCTURE_OR_FILE(default='inp.xml', show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
 @options.SETTINGS()
@@ -171,13 +171,13 @@ def launch_scf(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
     """
     Launch a scf workchain
     """
-    fleurinp=None
-    
+    fleurinp = None
+
     if isinstance(structure, FleurinpData):
-        fleurinp=structure
-        structure=None
-        inpgen=None
-    
+        fleurinp = structure
+        structure = None
+        inpgen = None
+
     workchain_class = WorkflowFactory('fleur.scf')
     inputs = {
         'inpgen': inpgen,
@@ -194,31 +194,32 @@ def launch_scf(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    pk=utils.launch_process(builder, daemon)
+    pk = utils.launch_process(builder, daemon)
 
     #Now create output files
     if fleurinp and not daemon:
         from aiida.orm import load_node
-        wf=load_node(pk)
-        scf_output=wf.outputs.output_scf_wc_para.get_dict()
-        scf_output["SCF-uuid"]=wf.uuid
-        
+        wf = load_node(pk)
+        scf_output = wf.outputs.output_scf_wc_para.get_dict()
+        scf_output['SCF-uuid'] = wf.uuid
+
         #json with dict
         import json
-        with open("scf.json","w") as file:
-            json.dump(scf_output,file,indent=2)
+        with open('scf.json', 'w') as file:
+            json.dump(scf_output, file, indent=2)
         #plot
         from aiida_fleur.tools.plot.fleur import plot_fleur
-        plot_fleur(wf,save=True,show=False)
+        plot_fleur(wf, save=True, show=False)
 
         #store files
-        for file in ["out.xml","cdn1","cdn_last.hdf"]:
+        for file in ['out.xml', 'cdn1', 'cdn_last.hdf']:
             if file in wf.outputs.last_calc.retrieved.list_object_names():
-                with open(file,"wb") as f:
-                    f.write(wf.outputs.last_calc.retrieved.get_object_content(file,"rb"))
+                with open(file, 'wb') as f:
+                    f.write(wf.outputs.last_calc.retrieved.get_object_content(file, 'rb'))
+
 
 @click.command('relax')
-@options.STRUCTURE_OR_FILE(default="inp.xml", show_default=True)
+@options.STRUCTURE_OR_FILE(default='inp.xml', show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
 @options.FLEUR()
@@ -235,19 +236,16 @@ def launch_relax(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_p
     # TODO final scf input
     """
     from aiida_fleur.workflows.relax import FleurRelaxWorkChain
-   
+
     if isinstance(structure, FleurinpData):
-        fleurinp=structure
-        structure=None
-        inpgen=None
+        fleurinp = structure
+        structure = None
+        inpgen = None
 
     # we need a scf_paramters dict to change the forcemix if required later
-    if scf_parameters==None:
-        scf_parameters=Dict(dict= {
-                'force_dict': {'forcemix': 'BFGS'},
-                'inpxml_changes': []
-                })
-    
+    if scf_parameters == None:
+        scf_parameters = Dict(dict={'force_dict': {'forcemix': 'BFGS'}, 'inpxml_changes': []})
+
     #workchain_class = WorkflowFactory('fleur.base_relax')
     inputs = {
         'scf': {
@@ -262,37 +260,36 @@ def launch_relax(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_p
         'wf_parameters': wf_parameters
     }
 
-    
     inputs = clean_nones(inputs)
     builder = FleurRelaxWorkChain.get_builder()
     builder.update(inputs)
-    pk=utils.launch_process(builder, daemon)
+    pk = utils.launch_process(builder, daemon)
 
     #Now create output files
     if fleurinp and not daemon:
         from aiida.orm import load_node
-        wf=load_node(pk)
-        relax_output=wf.outputs.output_relax_wc_para.get_dict()
-        relax_output["Relax-uuid"]=wf.uuid
-        relax_output["retrieved-uuid"]=wf.outputs.last_scf.last_calc.retrieved.uuid
-        
-        
+        wf = load_node(pk)
+        relax_output = wf.outputs.output_relax_wc_para.get_dict()
+        relax_output['Relax-uuid'] = wf.uuid
+        relax_output['retrieved-uuid'] = wf.outputs.last_scf.last_calc.retrieved.uuid
+
         #json with dict
         import json
-        with open("relax.json","w") as file:
-            json.dump(relax_output,file,indent=2)
+        with open('relax.json', 'w') as file:
+            json.dump(relax_output, file, indent=2)
         #plot
         from aiida_fleur.tools.plot.fleur import plot_fleur
-        plot_fleur([wf],save=True,show=False)
+        plot_fleur([wf], save=True, show=False)
 
         #store files
-        for file in ["relax.xml","out.xml","cdn1","cdn_last.hdf"]:
+        for file in ['relax.xml', 'out.xml', 'cdn1', 'cdn_last.hdf']:
             if file in wf.outputs.last_scf.last_calc.retrieved.list_object_names():
-                with open(file,"wb") as f:
-                    f.write(wf.outputs.last_scf.last_calc.retrieved.get_object_content(file,"rb"))
+                with open(file, 'wb') as f:
+                    f.write(wf.outputs.last_scf.last_calc.retrieved.get_object_content(file, 'rb'))
+
 
 @click.command('eos')
-@options.STRUCTURE_OR_FILE(default="inp.xml", show_default=True)
+@options.STRUCTURE_OR_FILE(default='inp.xml', show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
 @options.FLEUR()
@@ -307,13 +304,13 @@ def launch_eos(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_par
     """
 
     workchain_class = WorkflowFactory('fleur.eos')
-    
-    fleurinp=None
-    
+
+    fleurinp = None
+
     if isinstance(structure, FleurinpData):
-        fleurinp=structure
-        structure=None
-        
+        fleurinp = structure
+        structure = None
+
     inputs = {
         'scf': {
             'wf_parameters': scf_parameters,
@@ -329,34 +326,34 @@ def launch_eos(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_par
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    pk=utils.launch_process(builder, daemon)
+    pk = utils.launch_process(builder, daemon)
 
     #Now create output files
     if fleurinp and not daemon:
         from aiida.orm import load_node
-        wf=load_node(pk)
-        eos_output=wf.outputs.output_eos_wc_para.get_dict()
+        wf = load_node(pk)
+        eos_output = wf.outputs.output_eos_wc_para.get_dict()
         #json with dict
         import json
-        with open("eos.json","w") as file:
-            json.dump(eos_output,file,indent=2)
+        with open('eos.json', 'w') as file:
+            json.dump(eos_output, file, indent=2)
         #cif file
-        if "output_eos_wc_structure" in wf.outputs:
+        if 'output_eos_wc_structure' in wf.outputs:
             import os.path
-            if os.path.isfile("opt_struct.cif"): os.remove("opt_struct.cif")    
-            cif_struct=wf.outputs.output_eos_wc_structure.get_cif()
-            cif_struct.export("opt_struct.cif")
+            if os.path.isfile('opt_struct.cif'):
+                os.remove('opt_struct.cif')
+            cif_struct = wf.outputs.output_eos_wc_structure.get_cif()
+            cif_struct.export('opt_struct.cif')
         #plot
-        if eos_output["volume_gs"] >0 :
+        if eos_output['volume_gs'] > 0:
             from aiida_fleur.tools.plot.fleur import plot_fleur
-            plot_fleur(wf,save=True,show=False)
+            plot_fleur(wf, save=True, show=False)
 
-        for i,uuid in enumerate(eos_output["calculations"]):
-            scf=load_node(uuid)
-            scale=eos_output["scaling"][i]
-            with open(f"out_{scale}.xml","w") as f:
-                f.write(scf.outputs.last_calc.retrieved.get_object_content("out.xml"))
-
+        for i, uuid in enumerate(eos_output['calculations']):
+            scf = load_node(uuid)
+            scale = eos_output['scaling'][i]
+            with open(f"out_{scale}.xml", 'w') as f:
+                f.write(scf.outputs.last_calc.retrieved.get_object_content('out.xml'))
 
 
 @click.command('dos')
@@ -371,15 +368,15 @@ def launch_dos(fleurinp, fleur, wf_parameters, parent_folder, daemon, settings, 
     """
     Launch a banddos workchain (special command to set the dos as a default mode)
     """
-    if wf_parameters==None:
-        wf_parameters=Dict({"mode":"dos"})
+    if wf_parameters == None:
+        wf_parameters = Dict({'mode': 'dos'})
     else:
-        wf_dict=wf_parameters.get_dict()
-        wf_dict["mode"]="dos" 
-        wf_parameters=Dict(wf_dict)
+        wf_dict = wf_parameters.get_dict()
+        wf_dict['mode'] = 'dos'
+        wf_parameters = Dict(wf_dict)
 
     launch_banddos(fleurinp, fleur, wf_parameters, parent_folder, daemon, settings, option_node)
-    
+
 
 @click.command('band')
 @options.FLEURINP(default='inp.xml')
@@ -395,11 +392,12 @@ def launch_band(fleurinp, fleur, wf_parameters, parent_folder, daemon, settings,
     """
     #Band is default
     launch_banddos(fleurinp, fleur, wf_parameters, parent_folder, daemon, settings, option_node)
-    
+
+
 def launch_banddos(fleurinp, fleur, wf_parameters, parent_folder, daemon, settings, option_node):
     """
     Launch a banddos workchain
-    """   
+    """
     workchain_class = WorkflowFactory('fleur.banddos')
     inputs = {
         'wf_parameters': wf_parameters,
@@ -411,23 +409,23 @@ def launch_banddos(fleurinp, fleur, wf_parameters, parent_folder, daemon, settin
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    pk=utils.launch_process(builder, daemon)
+    pk = utils.launch_process(builder, daemon)
 
     #Now create output files
     from aiida.orm import load_node
-    wf=load_node(pk)
-    banddos_output=wf.outputs.output_banddos_wc_para.get_dict()
+    wf = load_node(pk)
+    banddos_output = wf.outputs.output_banddos_wc_para.get_dict()
     #json with dict
     import json
-    with open("banddos.json","w") as file:
-        json.dump(banddos_output,file,indent=2)
-    #the banddos.hdf file    
-    with open(f"banddos.hdf","wb") as f:
-        f.write(wf.outputs.banddos_calc.retrieved.get_object_content("banddos.hdf",'rb'))
+    with open('banddos.json', 'w') as file:
+        json.dump(banddos_output, file, indent=2)
+    #the banddos.hdf file
+    with open(f"banddos.hdf", 'wb') as f:
+        f.write(wf.outputs.banddos_calc.retrieved.get_object_content('banddos.hdf', 'rb'))
 
     #plot
     from aiida_fleur.tools.plot.fleur import plot_fleur
-    plot_fleur(wf,save=True,show=False)
+    plot_fleur(wf, save=True, show=False)
 
 
 @click.command('init_cls')
@@ -607,8 +605,9 @@ def launch_ssdisp(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_
     builder.update(inputs)
     utils.launch_process(builder, daemon)
 
+
 @click.command('ssdisp_conv')
-@options.STRUCTURE_OR_FILE(default="inp.xml", show_default=True)
+@options.STRUCTURE_OR_FILE(default='inp.xml', show_default=True)
 @options.INPGEN()
 @options.CALC_PARAMETERS()
 @options.FLEUR()
@@ -622,12 +621,12 @@ def launch_ssdisp(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_
     """
     workchain_class = WorkflowFactory('fleur.ssdisp_conv')
 
-    fleurinp=None
-    if (isinstance(structure,FleurinpData)):
-        fleurinp=structure
-        structure=None
-        inpgen=None
-        calc_parameters=None
+    fleurinp = None
+    if (isinstance(structure, FleurinpData)):
+        fleurinp = structure
+        structure = None
+        inpgen = None
+        calc_parameters = None
 
     inputs = {
         'scf': {
@@ -644,17 +643,18 @@ def launch_ssdisp(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_
     inputs = clean_nones(inputs)
     builder = workchain_class.get_builder()
     builder.update(inputs)
-    pk=utils.launch_process(builder, daemon)
+    pk = utils.launch_process(builder, daemon)
 
     if not daemon:
         from aiida.orm import load_node
-        wf=load_node(pk)
-        ssdisp_output=wf.outputs.output_ssdisp_conv_wc_para.get_dict()
+        wf = load_node(pk)
+        ssdisp_output = wf.outputs.output_ssdisp_conv_wc_para.get_dict()
         #json with dict
         import json
-        with open("ssdisp_conv.json","w") as file:
-            json.dump(ssdisp_output,file,indent=2)
-        #TODO plotting would be nice here 
+        with open('ssdisp_conv.json', 'w') as file:
+            json.dump(ssdisp_output, file, indent=2)
+        #TODO plotting would be nice here
+
 
 @click.command('dmi')
 @options.STRUCTURE_OR_FILE(default=defaults.get_fept_film_structure, show_default=True)

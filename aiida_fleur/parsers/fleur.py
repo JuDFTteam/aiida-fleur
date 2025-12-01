@@ -146,10 +146,10 @@ class FleurParser(Parser):
 
         # Open log-file as well
         try:
-            run_was_successful = "finished successfully" in error_file_lines
-            run_was_successful = run_was_successful or ("finished successfully" in shellout_file_lines)
+            run_was_successful = 'finished successfully' in error_file_lines
+            run_was_successful = run_was_successful or ('finished successfully' in shellout_file_lines)
         except:
-            run_was_successful=False    
+            run_was_successful = False
         if FleurCalculation._LOG_FILE_NAME in list_of_files:
             logfile = FleurCalculation._LOG_FILE_NAME
             # read
@@ -157,13 +157,13 @@ class FleurParser(Parser):
             try:
                 with output_folder.open(logfile, 'r') as efile:
                     log_file_entries = json.load(efile)
-                    run_was_successful="Success" in log_file_entries[-1]
+                    run_was_successful = 'Success' in log_file_entries[-1]
             except OSError:
                 self.logger.error(f'Failed to open log file: {logfile}.')
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             except json.JSONDecodeError:
-                self.logger.error("logfile not correctly formatted")
-                
+                self.logger.error('logfile not correctly formatted')
+
         #Now check for different kind of errors
         if not run_was_successful:
             self.logger.warning('The following was written into std error and piped to {}'
@@ -175,8 +175,7 @@ class FleurParser(Parser):
 
             kb_used = 0.0
             if has_xml_outfile:
-                with output_folder.open(FleurCalculation._OUTXML_FILE_NAME,
-                                        'r') as out_file:  # lazy out.xml parsing
+                with output_folder.open(FleurCalculation._OUTXML_FILE_NAME, 'r') as out_file:  # lazy out.xml parsing
                     outlines = out_file.read()
                     try:
                         line_avail = re.findall(r'<mem memoryPerNode="\d+', outlines)[0]

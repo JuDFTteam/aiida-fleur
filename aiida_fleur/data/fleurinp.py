@@ -39,8 +39,6 @@ __all__ = ('FleurinpData', 'get_fleurinp_from_folder_data', 'get_fleurinp_from_r
            'get_fleurinp_from_remote_data_cf')
 
 
-
-
 class FleurinpData(orm.Data):
     """
     AiiDA data object representing everything a FLEUR calculation needs.
@@ -694,6 +692,7 @@ def convert_inpxml(fleurinp: FleurinpData, to_version: orm.Str) -> FleurinpData:
         FleurinpData will contain only the combined inp.xml
     """
     return fleurinp.convert_inpxml_ncf(to_version.value)
+
 
 @cf
 def get_fleurinp_from_folder_data_cf(folder_node: orm.FolderData,

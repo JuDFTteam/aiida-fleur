@@ -1674,7 +1674,7 @@ def request_average_bond_length(first_bin, second_bin, user_api_key, ignore_seco
     from collections import defaultdict
     from copy import deepcopy
 
-    bond_data = defaultdict(lambda: defaultdict(lambda: 0.0))
+    bond_data = defaultdict(lambda: defaultdict(float))
     if ignore_second_bin:
         symbols = first_bin
         second_bin_calculate = first_bin
