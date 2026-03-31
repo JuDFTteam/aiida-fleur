@@ -637,6 +637,125 @@ def plot_fleur_cfcoeff_wc(param_node,
     return plot_res
 
 
+def plot_fleur_cutoff_conv_wc(nodes, labels=None, save=False, show=True, backend='matplotlib', **kwargs):
+    """
+    Plot the custom FleurCutoffConvWorkChain.
+
+    Expected keys in the workflow output Dict:
+      - kmax_results
+      - kpoints_results
+      - smearing_results
+
+    Energies are kept in Htr.
+    """
+    import matplotlib.pyplot as plt
+
+    if backend not in ('matplotlib', 'mpl', None):
+        warnings.warn(f'Backend {backend} not supported for FleurCutoffConvWorkChain, using matplotlib')
+
+    if not isinstance(nodes, list):
+        nodes = [nodes]
+
+    if labels is None:
+        labels = [str(node.pk) for node in nodes]
+
+    plot_results = []
+
+    # Plot 1: Total energy vs Kmax
+    fig1, ax1 = plt.subplots()
+    plotted_any = False
+
+    for node, label in zip(nodes, labels):
+        outpara = node.get_dict()
+        kmax_results = outpara.get('kmax_results', [])
+        if not kmax_results:
+            warnings.warn(f'No kmax_results found, skip this node: {node}')
+            continue
+
+        xvals = [entry['kmax'] for entry in kmax_results]
+        yvals = [entry['total_energy'] for entry in kmax_results]
+
+        ax1.plot(xvals, yvals, marker='o', label=label)
+        plotted_any = True
+
+    if plotted_any:
+        ax1.set_xlabel('Kmax')
+        ax1.set_ylabel('Total energy [Htr]')
+        ax1.set_title('Total energy vs Kmax')
+        if len(labels) > 1:
+            ax1.legend()
+        fig1.tight_layout()
+        if save:
+            fig1.savefig('cutoff_conv_kmax.png', dpi=200)
+        plot_results.append(fig1)
+    else:
+        plt.close(fig1)
+
+    # Plot 2: Total energy vs k-point mesh
+    fig2, ax2 = plt.subplots()
+    plotted_any = False
+
+    for node, label in zip(nodes, labels):
+        outpara = node.get_dict()
+        kpoint_results = outpara.get('kpoints_results', [])
+        if not kpoint_results:
+            warnings.warn(f'No kpoints_results found, skip this node: {node}')
+            continue
+
+        xvals = [entry['mesh'][0] for entry in kpoint_results]
+        yvals = [entry['total_energy'] for entry in kpoint_results]
+
+        ax2.plot(xvals, yvals, marker='o', label=label)
+        plotted_any = True
+
+    if plotted_any:
+        ax2.set_xlabel('k-point mesh')
+        ax2.set_ylabel('Total energy [Htr]')
+        ax2.set_title('Total energy vs k-point mesh')
+        if len(labels) > 1:
+            ax2.legend()
+        fig2.tight_layout()
+        if save:
+            fig2.savefig('cutoff_conv_kpoints.png', dpi=200)
+        plot_results.append(fig2)
+    else:
+        plt.close(fig2)
+
+    # Plot 3: Total energy vs smearing
+    fig3, ax3 = plt.subplots()
+    plotted_any = False
+
+    for node, label in zip(nodes, labels):
+        outpara = node.get_dict()
+        smearing_results = outpara.get('smearing_results', [])
+        if not smearing_results:
+            warnings.warn(f'No smearing_results found, skip this node: {node}')
+            continue
+
+        xvals = [entry['smearing'] for entry in smearing_results]
+        yvals = [entry['total_energy'] for entry in smearing_results]
+
+        ax3.plot(xvals, yvals, marker='o', label=label)
+        plotted_any = True
+
+    if plotted_any:
+        ax3.set_xlabel('Fermi smearing energy [Htr]')
+        ax3.set_ylabel('Total energy [Htr]')
+        ax3.set_title('Total energy vs smearing')
+        if len(labels) > 1:
+            ax3.legend()
+        fig3.tight_layout()
+        if save:
+            fig3.savefig('cutoff_conv_smearing.png', dpi=200)
+        plot_results.append(fig3)
+    else:
+        plt.close(fig3)
+
+    if show:
+        plt.show()
+
+    return plot_results
+
 FUNCTIONS_DICT = {
     'fleur_scf_wc': plot_fleur_scf_wc,  #support of < 1.0 release
     'fleur_eos_wc': plot_fleur_eos_wc,  #support of < 1.0 release
@@ -653,4 +772,5 @@ FUNCTIONS_DICT = {
     #'FleurInitialCLSWorkChain' : plot_fleur_initial_cls_wc,
     #'FleurCoreholeWorkChain' :  plot_fleur_corehole_wc,
     'FleurOrbControlWorkChain': plot_fleur_orbcontrol_wc,
+    'FleurCutoffConvWorkChain': plot_fleur_cutoff_conv_wc,
 }
