@@ -85,7 +85,7 @@ def test_cutoff_conv_create_plot_nodes():
     assert kmax_plot['x'] == [3.0, 3.25]
 
     assert kpoints_plot['ylabel'] == 'Total energy (Htr)'
-    assert kpoints_plot['x'] == [64, 512]
+    assert kpoints_plot['x'] == [4, 8]
     assert kpoints_plot['mesh_labels'] == ['4x4x4', '8x8x8']
 
 
