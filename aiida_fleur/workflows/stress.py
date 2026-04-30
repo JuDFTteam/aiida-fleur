@@ -54,7 +54,8 @@ class FleurStressWorkChain(WorkChain):
 
     _workflowversion = '0.6.0'
 
-    _default_wf_para = {'points': 9, 'step': 0.005, 'guess': 1.00, 'enforce_same_para': True}
+    # _default_wf_para = {'points': 9, 'step': 0.005, 'guess': 1.00, 'enforce_same_para': True}
+    _default_wf_para = {'scale': 0.01, 'enforce_same_para': True}
     _default_options = FleurScfWorkChain._default_options
 
     @classmethod
@@ -73,6 +74,8 @@ class FleurStressWorkChain(WorkChain):
 
         spec.output('output_stress_wc_para', valid_type=Dict)
         spec.output('output_stress_wc_structure', valid_type=StructureData)
+        #new output with dynamic
+        spec.output_namespace('structures', valid_type=StructureData, dynamic=True)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -125,39 +128,80 @@ class FleurStressWorkChain(WorkChain):
             wf_dict[key] = wf_dict.get(key, val)
         self.ctx.wf_dict = wf_dict
 
-        self.ctx.points = wf_dict.get('points', 9)
-        self.ctx.step = wf_dict.get('step', 0.005)
-        self.ctx.guess = wf_dict.get('guess', 1.00)
+        # self.ctx.points = wf_dict.get('points', 9)
+        # self.ctx.step = wf_dict.get('step', 0.005)
+        # self.ctx.guess = wf_dict.get('guess', 1.00)
+        self.ctx.scale = wf_dict.get('scale', 0.01)
+        
         self.ctx.enforce_para = wf_dict.get('enforce_same_para', True)
+
 
     def structures(self):
         """
-        Creates structure data nodes with different Volume (lattice constants)
+        Creates structure data nodes, for diagonal element of strain matrix
         """
-        points = self.ctx.points
-        step = self.ctx.step
-        guess = self.ctx.guess
-        startscale = guess - (points - 1) / 2 * step
+        # Define the deformation
+        scale = float(self.ctx.scale)
+        self.ctx.strains = [
+            ("ref", (1.0, 1.0, 1.0)),
+            ("xx_plus", (1+scale, 1, 1)),
+            ("yy_plus", (1, 1+scale, 1)),
+            ("zz_plus", (1, 1, 1+scale)),
+            ("xx_minus", (1-scale, 1, 1)),
+            ("yy_minus", (1, 1-scale, 1)),
+            ("zz_minus", (1, 1, 1-scale))
+        ]
 
-        for point in range(points):
-            self.ctx.scalelist.append(startscale + point * step)
+        self.ctx.scalelist = [s[1] for s in self.ctx.strains]
+        self.ctx.labels = [s[0] for s in self.ctx.strains]
 
-        self.report(f'scaling factors which will be calculated:{self.ctx.scalelist}')
+        self.report(f'Scaling factors: {self.ctx.scalelist}')
+        self.report(f'Labels: {self.ctx.labels}')
+
         if 'structure' in self.inputs:
-            self.ctx.org_volume = self.inputs.structure.get_cell_volume()
-            struct_dict=stress_structures(self.inputs.structure, List(list=self.ctx.scalelist))
-        elif 'fleurinp' in self.inputs:
-            self.ctx.org_volume = self.inputs.fleurinp.get_structuredata_ncf().get_cell_volume()
-            struct_dict=self.inpxml_structures(List(list=self.ctx.scalelist))
+            structure = self.inputs.structure
+            self.ctx.org_volume = structure.get_cell_volume()
+            
+            strain_dict = {label: vals for label, vals in self.ctx.strains}
+            
+            strained_structures = apply_strain_structures(
+                structure,
+                Dict(dict=strain_dict)
+                )
+            
+            for label, new_struct in strained_structures.items():
+                self.ctx.structures.append(new_struct)
+                self.out(f"structures.{label}", new_struct)
+            
         else:
-            error = f'ERROR: input wf_parameters for stress contains neither struct not fleurinp'
-            self.report(error)
+            self.report("No input structure found")
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
 
-       
+        self.report(f'Created {len(self.ctx.structures)} strained structures.')
+                
+        # points = self.ctx.points
+        # step = self.ctx.step
+        # guess = self.ctx.guess
+        # startscale = guess - (points - 1) / 2 * step
+
+        # for point in range(points):
+        #     self.ctx.scalelist.append(startscale + point * step)
+
+        # self.report(f'scaling factors which will be calculated:{self.ctx.scalelist}')
         
-        # since cf this has to be a dict, we sort to assure ordering of scale
-        self.ctx.structures = [struct_dict[key] for key in sorted(struct_dict)]
+        # if 'structure' in self.inputs:
+        #     self.ctx.org_volume = self.inputs.structure.get_cell_volume()
+        #     struct_dict=stress_structures(self.inputs.structure, List(list=self.ctx.scalelist))
+        # elif 'fleurinp' in self.inputs:
+        #     self.ctx.org_volume = self.inputs.fleurinp.get_structuredata_ncf().get_cell_volume()
+        #     struct_dict=self.inpxml_structures(List(list=self.ctx.scalelist))
+        # else:
+        #     error = f'ERROR: input wf_parameters for stress contains neither struct not fleurinp'
+        #     self.report(error)
+        #     return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+        
+        # # since cf this has to be a dict, we sort to assure ordering of scale
+        # self.ctx.structures = [struct_dict[key] for key in sorted(struct_dict)]
 
     def run_first(self):
         """
@@ -175,7 +219,10 @@ class FleurStressWorkChain(WorkChain):
             inputs.structure = struc_or_fleurinp
             struc=inputs.structure
         natoms = len(struc.sites)
-        label = f'scale_{self.ctx.scalelist[i]}'.replace('.', '_')
+
+        label = self.ctx.labels[i]
+        # label = f'scale_{self.ctx.scalelist[i]}'.replace('.', '_')
+        
         label_c = '|stress| fleur_scf_wc'
         description = f'|FleurStressWorkChain|fleur_scf_wc|{label}, {i}'
 
@@ -184,14 +231,14 @@ class FleurStressWorkChain(WorkChain):
         self.ctx.structures_uuids.append(struc.uuid)
 
         result = self.submit(FleurScfWorkChain, **inputs)
-        self.ctx.labels.append(label)
+        # self.ctx.labels.append(label) 
         calcs[label] = result
 
         return ToContext(**calcs)
 
     def inspect_first(self):
         """
-        Check if the first calculation failed and
+        Check if the first calculation failed
         """
         label = self.ctx.labels[0]
         first_scf = self.ctx[label]
@@ -205,12 +252,23 @@ class FleurStressWorkChain(WorkChain):
 
     def converge_scf(self):
         """
-        Launch fleur_scfs from the generated structures
+        Launch fleur_scfs from the generated structures, ensuring
+        numerical parameters are frozen from the first calculation.
         """
+        self.report('INFO: Moving to secondary volume points. Freezing parameters...')
         calcs = {}
+        
+        first_params = getattr(self.ctx, 'first_calc_parameters', None)
+        if first_params:
+            p_dict = first_params.get_dict()
+            kmax = p_dict.get('comp', {}).get('kmax', 'unknown')
+            rmt = p_dict.get('atom0', {}).get('rmt', 'unknown')
+            self.report(f"DEBUG: Using frozen parameters: Kmax={kmax}, Rmt={rmt}")
 
         for i, struc_or_fleurinp in enumerate(self.ctx.structures[1:]):
             inputs = self.get_inputs_scf()
+            if first_params:
+                inputs.calc_parameters = first_params
             if isinstance(struc_or_fleurinp,FleurinpData):
                 inputs.fleurinp=struc_or_fleurinp
                 struc=struc_or_fleurinp.get_structuredata_ncf()
@@ -219,8 +277,8 @@ class FleurStressWorkChain(WorkChain):
                 struc=struc_or_fleurinp
             natoms = len(struc.sites)
             label = f'scale_{self.ctx.scalelist[i + 1]}'.replace('.', '_')
-            label_c = '|stress| fleur_scf_wc'
-            description = f'|FleurStressWorkChain|fleur_scf_wc|{label}, {i+1}'
+            label_c = '|eos| fleur_scf_wc'
+            description = f'|FleurEosWorkChain|fleur_scf_wc|{label}, {i+1}'
             #inputs.label = label_c
             #inputs.description = description
 
@@ -233,6 +291,38 @@ class FleurStressWorkChain(WorkChain):
             calcs[label] = result
 
         return ToContext(**calcs)
+
+    # def converge_scf(self):
+    #     """
+    #     Launch fleur_scfs from the generated structures
+    #     """
+    #     calcs = {}
+
+    #     for i, struc_or_fleurinp in enumerate(self.ctx.structures[1:]):
+    #         inputs = self.get_inputs_scf()
+    #         if isinstance(struc_or_fleurinp,FleurinpData):
+    #             inputs.fleurinp=struc_or_fleurinp
+    #             struc=struc_or_fleurinp.get_structuredata_ncf()
+    #         else:
+    #             inputs.structure = struc_or_fleurinp
+    #             struc=struc_or_fleurinp
+    #         natoms = len(struc.sites)
+    #         label = f'scale_{self.ctx.scalelist[i + 1]}'.replace('.', '_')
+    #         label_c = '|eos| fleur_scf_wc'
+    #         description = f'|FleurEosWorkChain|fleur_scf_wc|{label}, {i+1}'
+    #         #inputs.label = label_c
+    #         #inputs.description = description
+
+    #         self.ctx.volume.append(struc.get_cell_volume())
+    #         self.ctx.volume_peratom[label] = struc.get_cell_volume() / natoms
+    #         self.ctx.structures_uuids.append(struc.uuid)
+
+    #         result = self.submit(FleurScfWorkChain, **inputs)
+    #         self.ctx.labels.append(label)
+    #         calcs[label] = result
+
+    #     return ToContext(**calcs)
+
 
     def get_inputs_scf_first(self):
         """
@@ -366,9 +456,12 @@ class FleurStressWorkChain(WorkChain):
             uuid=self.inputs.structure.uuid
 
         calc_uuids=[]
-        for i,scale in enumerate(self.ctx.scalelist):
-            label = f'scale_{self.ctx.scalelist[i]}'.replace('.', '_')
+        for label in self.ctx.labels:
             calc_uuids.append(self.ctx[label].uuid)
+    
+        # for i,scale in enumerate(self.ctx.scalelist):
+        #     label = f'scale_{self.ctx.scalelist[i]}'.replace('.', '_')
+        #     calc_uuids.append(self.ctx[label].uuid)
 
         out = {
             'workflow_name': self.__class__.__name__,
@@ -387,9 +480,10 @@ class FleurStressWorkChain(WorkChain):
             'scf_wfs': [],  # self.converge_scf_uuids,
             'distance_charge': distancelist,
             'distance_charge_units': dis_u,
-            'nsteps': self.ctx.points,
-            'guess': self.ctx.guess,
-            'stepsize': self.ctx.step,
+            'scale': self.ctx.scale,
+            # 'nsteps': self.ctx.points,
+            # 'guess': self.ctx.guess,
+            # 'stepsize': self.ctx.step,
             # 'fitresults' : [a, latticeconstant, c],
             # 'fit' : fit_new,
             'residuals': residuals,
@@ -495,57 +589,82 @@ def create_stress_result_node(**kwargs):
 
     return outdict
 
+def apply_strain(structure: StructureData, sx: float, sy: float, sz: float) -> StructureData:
+    """
+    Apply diagonal strain tensor by deforming lattice vectors
+    """
+
+    cell = np.array(structure.cell)
+    new_cell = cell * np.array([[sx], [sy], [sz]])
+
+    new_structure = structure.clone()
+    new_structure.set_cell(new_cell)
+
+    return new_structure
 
 @cf
-def stress_structures(structure,  scalelist):
-    """
-    Calcfunction, which creates many rescaled StructureData nodes out of a given crystal structure.
-    Keeps the provenance in the database
+def apply_strain_structures(structure, strains):
+    import numpy as np
 
-    :param StructureData, a StructureData node
-    :param fleurinp_structure, a Fleurinp node
-    :param scalelist, AiiDA List, list of floats, scaling factors for the cell
+    strains = strains.get_dict()
+    result = {}
 
-    :returns: dict of New StructureData nodes with rescalled structure, which are linked to input
-              Structure
-    """
-    # we do this in one calcfunction now to store less nodes in the DB
-    re_strucs = stress_structures_nocf(structure, scalelist)
+    for label, (sx, sy, sz) in strains.items():
+        new_structure = apply_strain(structure, sx, sy, sz)
+        result[label] = new_structure
 
-    # in AiiDA link labels are always strings, because of namespaces '.' are not allowed.
-    # replace '.' by underscore to store floats in link label
-    res_new = {}
-    for key, struc in re_strucs.items():
-        # label already set by rescale_nowf
-        struc.description = str(key)
-        link_name = f'scale_{key}'.replace('.', '_')
-        res_new[link_name] = struc
+    return result
 
-    return res_new
+# @cf
+# def stress_structures(structure,  scalelist):
+#     """
+#     Calcfunction, which creates many rescaled StructureData nodes out of a given crystal structure.
+#     Keeps the provenance in the database
+
+#     :param StructureData, a StructureData node
+#     :param fleurinp_structure, a Fleurinp node
+#     :param scalelist, AiiDA List, list of floats, scaling factors for the cell
+
+#     :returns: dict of New StructureData nodes with rescalled structure, which are linked to input
+#               Structure
+#     """
+#     # we do this in one calcfunction now to store less nodes in the DB
+#     re_strucs = stress_structures_nocf(structure, scalelist)
+
+#     # in AiiDA link labels are always strings, because of namespaces '.' are not allowed.
+#     # replace '.' by underscore to store floats in link label
+#     res_new = {}
+#     for key, struc in re_strucs.items():
+#         # label already set by rescale_nowf
+#         struc.description = str(key)
+#         link_name = f'scale_{key}'.replace('.', '_')
+#         res_new[link_name] = struc
+
+#     return res_new
 
 
-def stress_structures_nocf(inp_structure,scalelist):
-    """
-    Creates many rescalled StructureData nodes out of a crystal structure.
-    Does NOT keep the provenance in the database.
+# def stress_structures_nocf(inp_structure,scalelist):
+#     """
+#     Creates many rescalled StructureData nodes out of a crystal structure.
+#     Does NOT keep the provenance in the database.
 
-    :param StructureData, a StructureData node (pk, sor uuid)
-    :param scalelist, list of floats, scaling factors for the cell
+#     :param StructureData, a StructureData node (pk, sor uuid)
+#     :param scalelist, list of floats, scaling factors for the cell
 
-    :returns: dict of New StructureData nodes with rescalled structure, key=scale
-    """
-    structure = is_structure(inp_structure)
-    if not structure:
-        # TODO: log something (test if it gets here at all)
-        return None
+#     :returns: dict of New StructureData nodes with rescalled structure, key=scale
+#     """
+#     structure = is_structure(inp_structure)
+#     if not structure:
+#         # TODO: log something (test if it gets here at all)
+#         return None
     
-    re_structures = {}
+#     re_structures = {}
 
-    for scale in scalelist:
-        structure_rescaled = rescale_nowf(structure, scale)  # this is not a cf
-        re_structures[scale] = structure_rescaled
+#     for scale in scalelist:
+#         structure_rescaled = rescale_nowf(structure, scale)  # this is not a cf
+#         re_structures[scale] = structure_rescaled
 
-    return re_structures
+#     return re_structures
 
 
 
@@ -616,3 +735,8 @@ def birch_murnaghan(volumes, volume0, bulk_modulus0, bulk_deriv0):
                                       (6 - 4 * (v0 / vol)**(2 / 3.)))
         EV.append(ev_val)
     return EV, PV
+
+
+
+
+
