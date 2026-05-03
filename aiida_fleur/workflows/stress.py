@@ -265,7 +265,7 @@ class FleurStressWorkChain(WorkChain):
             rmt = p_dict.get('atom0', {}).get('rmt', 'unknown')
             self.report(f"DEBUG: Using frozen parameters: Kmax={kmax}, Rmt={rmt}")
 
-        for i, struc_or_fleurinp in enumerate(self.ctx.structures[1:]):
+        for i, struc_or_fleurinp in enumerate(self.ctx.structures[1:],1):
             inputs = self.get_inputs_scf()
             if first_params:
                 inputs.calc_parameters = first_params
@@ -276,9 +276,10 @@ class FleurStressWorkChain(WorkChain):
                 inputs.structure = struc_or_fleurinp
                 struc=struc_or_fleurinp
             natoms = len(struc.sites)
-            label = f'scale_{self.ctx.scalelist[i + 1]}'.replace('.', '_')
-            label_c = '|eos| fleur_scf_wc'
-            description = f'|FleurEosWorkChain|fleur_scf_wc|{label}, {i+1}'
+            label = self.ctx.labels[i]
+            #label = f'scale_{self.ctx.scalelist[i + 1]}'.replace('.', '_')
+            #label_c = '|eos| fleur_scf_wc'
+            description = f'|FleurEosWorkChain|fleur_scf_wc|{label}, {i}'
             #inputs.label = label_c
             #inputs.description = description
 
@@ -287,7 +288,7 @@ class FleurStressWorkChain(WorkChain):
             self.ctx.structures_uuids.append(struc.uuid)
 
             result = self.submit(FleurScfWorkChain, **inputs)
-            self.ctx.labels.append(label)
+            #self.ctx.labels.append(label)
             calcs[label] = result
 
         return ToContext(**calcs)
