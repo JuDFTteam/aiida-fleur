@@ -94,6 +94,14 @@ class TestFleurWorkchainInterfaces:
 
         builder = FleurMaeConvWorkChain.get_builder()
 
+    def test_fleur_jij_wc_init(self):
+        """
+        Test the interface of the Jij workchain
+        """
+        from aiida_fleur.workflows.jij import FleurJijWorkChain
+
+        builder = FleurJijWorkChain.get_builder()
+
     def test_fleur_ssdisp_wc_init(self):
         """
         Test the interface of the dmi workchain
