@@ -2,6 +2,9 @@ name: aiida-fleur
 
 on: [push, pull_request]
 
+env:
+  FORCE_COLOR: 1
+
 jobs:
 
   docs:
@@ -27,20 +30,11 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: 3.8
-
-    - name: Cache python dependencies
-      id: cache-pip
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: pip-docs-${{ hashFiles('**/pyproject.toml') }}
-        restore-keys: |
-          pip-docs-
+        cache: pip
 
     - name: Install python dependencies
       run: |
         pip install -e .[docs]
-        reentry scan || true
 
     - name: Build documentation
       env:
@@ -57,19 +51,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Cache python dependencies
-      id: cache-pip
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: pip-pre-commit-${{ hashFiles('**/pyproject.toml') }}
-        restore-keys: |
-          pip-pre-commit-
-
-    - name: Set up Python 3.8
+    - name: Set up Python 3.9
       uses: actions/setup-python@v5
       with:
-        python-version: 3.8
+        python-version: 3.9
+        cache: pip
 
     - name: Install python dependencies
       run: |
@@ -167,13 +153,10 @@ jobs:
 
     - name: Install python dependencies
       run: |
-        pip install --upgrade wheel setuptools
-        pip install git+https://github.com/aiidateam/aiida-testing.git@main
         pip install --no-deps git+https://github.com/aiidateam/aiida-common-workflows.git@master
-        pip install .[testing,graphs]
-        pip install ${{ matrix.aiida.version }} ${{ matrix.masci-tools.version }}
-        pip install ${{ matrix.bokeh-version }} ${{ matrix.mpl-version }}
-        reentry scan || true
+        pip install -e .[testing,graphs] \
+            ${{ matrix.aiida.version }} ${{ matrix.masci-tools.version }} \
+            ${{ matrix.bokeh-version }} ${{ matrix.mpl-version }}
 
     - name: Run pytest
       run: |
