@@ -680,27 +680,59 @@ def create_aiida_dos_data(retrieved):
     :raises: ExitCode 300, banddos.hdf file is missing
     :raises: ExitCode 310, banddos.hdf reading failed
     """
+    return _create_aiida_dos_data_impl(retrieved)
+
+
+def _create_aiida_dos_data_impl(retrieved):
+    """Plain helper used both by the calcfunction wrapper and unit tests."""
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
     from masci_tools.io.parsers.hdf5.recipes import FleurDOS  #only standard DOS for now
     from aiida.engine import ExitCode
 
-    if 'banddos.hdf' in retrieved.list_object_names():
-        try:
-            with retrieved.open('banddos.hdf', 'rb') as f:
-                with HDF5Reader(f) as reader:
-                    data, attributes = reader.read(recipe=FleurDOS)
-        except (HDF5TransformationError, ValueError) as exc:
-            return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
-    else:
+    if 'banddos.hdf' not in retrieved.list_object_names():
         return ExitCode(300, message='banddos.hdf file not in the retrieved files')
 
-    dos = XyData()
-    dos.set_x(data['energy_grid'], 'energy', x_units='eV')
+    # First try the recipe-based path (newer FLEUR HDF5 schemas).
+    data = None
+    try:
+        with retrieved.open('banddos.hdf', 'rb') as f:
+            with HDF5Reader(f) as reader:
+                data, _ = reader.read(recipe=FleurDOS)
+    except (HDF5TransformationError, ValueError, KeyError, Exception):
+        data = None
 
-    names = [key for key in data if key != 'energy_grid']
-    arrays = [entry for key, entry in data.items() if key != 'energy_grid']
-    units = ['1/eV'] * len(names)
-    dos.set_y(arrays, names, y_units=units)
+    # Fallback: read /Local/DOS/{energyGrid,Total} directly. Compatible with older
+    # FLEUR HDF5 schemas where child datasets are named INT/MT:1s/Sym/Total rather
+    # than the multi-segment names expected by masci-tools' split_array.
+    if data is None:
+        try:
+            import h5py
+            with retrieved.open('banddos.hdf', 'rb') as f:
+                with h5py.File(f, 'r') as h5:
+                    energy = h5['/Local/DOS/energyGrid'][:]
+                    total = h5['/Local/DOS/Total'][:]
+            n_spin = total.shape[0]
+            if n_spin == 1:
+                names = ['dos_total']
+                arrays = [total[0]]
+            elif n_spin == 2:
+                names = ['dos_spin_up', 'dos_spin_down']
+                arrays = [total[0], total[1]]
+            else:  # non-collinear: 4 channels (tot, mx, my, mz)
+                names = ['dos_tot', 'dos_mx', 'dos_my', 'dos_mz']
+                arrays = list(total)
+            x_units, y_units = 'Ha', '1/Ha'
+        except (KeyError, ValueError, OSError, Exception) as exc:
+            return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
+    else:
+        x_units, y_units = 'eV', '1/eV'
+        energy = data['energy_grid']
+        names = [key for key in data if key != 'energy_grid']
+        arrays = [entry for key, entry in data.items() if key != 'energy_grid']
+
+    dos = XyData()
+    dos.set_x(energy, 'energy', x_units=x_units)
+    dos.set_y(arrays, names, y_units=[y_units] * len(names))
 
     dos.label = 'output_banddos_wc_dos'
     dos.description = (
