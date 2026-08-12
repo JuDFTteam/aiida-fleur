@@ -631,6 +631,11 @@ def create_aiida_bands_data(fleurinp, retrieved):
     :raises: ExitCode 310, banddos.hdf reading failed
     :raises: ExitCode 320, reading kpointsdata from Fleurinp failed
     """
+    return _create_aiida_bands_data_impl(fleurinp, retrieved)
+
+
+def _create_aiida_bands_data_impl(fleurinp, retrieved):
+    """Plain helper used both by the calcfunction wrapper and unit tests."""
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
     from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands  #no projections only eigenvalues for now
     from aiida.engine import ExitCode
@@ -640,25 +645,51 @@ def create_aiida_bands_data(fleurinp, retrieved):
     except ValueError as exc:
         return ExitCode(320, message=f'Retrieving kpoints data from fleurinp failed with: {exc}')
 
-    if 'banddos.hdf' in retrieved.list_object_names():
+    if 'banddos.hdf' not in retrieved.list_object_names():
+        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
+
+    # First try the recipe-based path (newer FLEUR HDF5 schemas).
+    data = None
+    attributes = None
+    try:
+        with retrieved.open('banddos.hdf', 'rb') as f:
+            with HDF5Reader(f) as reader:
+                data, attributes = reader.read(recipe=FleurSimpleBands)
+    except (HDF5TransformationError, ValueError, KeyError, Exception):
+        data = None
+
+    # Fallback: read /Local/EV/eigenvalues directly. Compatible with older
+    # FLEUR HDF5 schemas that lack fields (e.g. /kpts/specialPointLabels)
+    # masci-tools' FleurSimpleBands recipe expects.
+    if data is None:
         try:
+            import h5py
             with retrieved.open('banddos.hdf', 'rb') as f:
-                with HDF5Reader(f) as reader:
-                    data, attributes = reader.read(recipe=FleurSimpleBands)
-        except (HDF5TransformationError, ValueError) as exc:
+                with h5py.File(f, 'r') as h5:
+                    eig = h5['/Local/EV/eigenvalues'][:]
+            # FLEUR writes eigenvalues as (4, nkpts, nbands) regardless of
+            # actual spin treatment. Treat the leading axis as spin.
+            n_spin, nkpts, nbands = eig.shape
+            # In the new-schema path, BandsData.set_bands accepts either a
+            # single (nkpts, nbands) array (non-magnetic/collinear) or a list
+            # of arrays (one per spin). Map the 4-channel layout to that API.
+            if n_spin == 1:
+                eigenvalues = eig[0]
+            elif n_spin == 2:
+                eigenvalues = [eig[0], eig[1]]
+            else:  # 4: non-collinear, treat spin=1 as combined density
+                eigenvalues = eig[0]
+        except (KeyError, ValueError, OSError, Exception) as exc:
             return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
     else:
-        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
+        nkpts, nbands = attributes['nkpts'], attributes['nbands']
+        eigenvalues = data['eigenvalues_up'].reshape((nkpts, nbands))
+        if 'eigenvalues_down' in data:
+            eigenvalues_dn = data['eigenvalues_down'].reshape((nkpts, nbands))
+            eigenvalues = [eigenvalues, eigenvalues_dn]
 
     bands = BandsData()
     bands.set_kpointsdata(kpoints)
-
-    nkpts, nbands = attributes['nkpts'], attributes['nbands']
-    eigenvalues = data['eigenvalues_up'].reshape((nkpts, nbands))
-    if 'eigenvalues_down' in data:
-        eigenvalues_dn = data['eigenvalues_down'].reshape((nkpts, nbands))
-        eigenvalues = [eigenvalues, eigenvalues_dn]
-
     bands.set_bands(eigenvalues, units='eV')
 
     bands.label = 'output_banddos_wc_bands'
