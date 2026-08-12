@@ -22,6 +22,7 @@ from aiida_fleur.workflows.banddos import (
 
 
 BANDDOS_HDF5_PATH = Path(__file__).resolve().parents[2] / 'banddos.hdf'
+BANDDOS_BANDS_HDF5_PATH = Path(__file__).resolve().parents[2] / 'banddos_bands.hdf'
 
 
 def _make_retrieved_with_banddos(banddos_bytes):
@@ -39,6 +40,14 @@ def legacy_banddos_retrieved():
     if not BANDDOS_HDF5_PATH.exists():
         pytest.skip(f'Sample banddos.hdf not found at {BANDDOS_HDF5_PATH}')
     return _make_retrieved_with_banddos(BANDDOS_HDF5_PATH.read_bytes())
+
+
+@pytest.fixture
+def legacy_banddos_bands_retrieved():
+    """FolderData holding a band-mode banddos.hdf that uses /Local/BS/."""
+    if not BANDDOS_BANDS_HDF5_PATH.exists():
+        pytest.skip(f'Sample banddos_bands.hdf not found at {BANDDOS_BANDS_HDF5_PATH}')
+    return _make_retrieved_with_banddos(BANDDOS_BANDS_HDF5_PATH.read_bytes())
 
 
 def test_create_aiida_dos_data_legacy_schema(legacy_banddos_retrieved):
@@ -92,11 +101,16 @@ class _FakeFleurinp:
     requires a full FLEUR input. The fallback in create_aiida_bands_data only
     uses kpoints for BandsData.set_kpointsdata, so we hand it a KpointsData
     built from the same coordinates that are already inside banddos.hdf.
+
+    Set ``cls.hdf_path`` to point at a specific sample file if the default
+    one (DOS-mode ``banddos.hdf``) does not match the test data.
     """
+
+    hdf_path = BANDDOS_HDF5_PATH
 
     def get_kpointsdata_ncf(self, only_used=True):  # noqa: D401, ARG002
         import h5py
-        with h5py.File(BANDDOS_HDF5_PATH, 'r') as f:
+        with h5py.File(self.hdf_path, 'r') as f:
             coords = f['/kpts/coordinates'][:]
         kp = KpointsData()
         kp.set_kpoints(coords)
@@ -130,6 +144,25 @@ def test_missing_banddos_bands_returns_exit_300():
     result = create_aiida_bands_data(fleurinp=fleurinp, retrieved=folder)
     assert isinstance(result, ExitCode)
     assert result.status == 300
+
+
+def test_create_aiida_bands_data_local_bs_schema(legacy_banddos_bands_retrieved):
+    """A band-mode banddos.hdf that uses /Local/BS/ (older FLEUR) must also work.
+
+    The fallback looks up /Local/EV/eigenvalues first, then /Local/BS/eigenvalues.
+    This regression test guards against the second lookup going missing again.
+    """
+    fleurinp = _FakeFleurinp()
+    fleurinp.hdf_path = BANDDOS_BANDS_HDF5_PATH
+    result = create_aiida_bands_data(fleurinp=fleurinp, retrieved=legacy_banddos_bands_retrieved)
+    assert not isinstance(result, ExitCode), (
+        f'create_aiida_bands_data returned {result!r}; expected BandsData')
+    assert result.label == 'output_banddos_wc_bands'
+    result.store()
+    kp = result.base.attributes.get('array|kpoints')
+    bands = result.base.attributes.get('array|bands')
+    assert kp is not None and len(kp) > 0
+    assert bands is not None and len(bands) > 0
 
 
 def test_corrupted_banddos_bands_returns_exit_310():

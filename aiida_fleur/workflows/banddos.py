@@ -658,15 +658,19 @@ def _create_aiida_bands_data_impl(fleurinp, retrieved):
     except (HDF5TransformationError, ValueError, KeyError, Exception):
         data = None
 
-    # Fallback: read /Local/EV/eigenvalues directly. Compatible with older
-    # FLEUR HDF5 schemas that lack fields (e.g. /kpts/specialPointLabels)
-    # masci-tools' FleurSimpleBands recipe expects.
+    # Fallback: read /Local/{EV,BS}/eigenvalues directly. Compatible with
+    # older FLEUR HDF5 schemas that lack fields (e.g. /kpts/specialPointLabels)
+    # masci-tools' FleurSimpleBands recipe expects, or that use the
+    # alternative /Local/BS prefix for band-mode outputs.
     if data is None:
         try:
             import h5py
             with retrieved.open('banddos.hdf', 'rb') as f:
                 with h5py.File(f, 'r') as h5:
-                    eig = h5['/Local/EV/eigenvalues'][:]
+                    # /Local/EV in newer builds, /Local/BS in older band-mode ones.
+                    eig_path = '/Local/EV/eigenvalues' if '/Local/EV/eigenvalues' in h5 else \
+                        '/Local/BS/eigenvalues'
+                    eig = h5[eig_path][:]
             # FLEUR writes eigenvalues as (4, nkpts, nbands) regardless of
             # actual spin treatment. Treat the leading axis as spin.
             n_spin, nkpts, nbands = eig.shape
