@@ -637,6 +637,7 @@ def create_aiida_bands_data(fleurinp, retrieved):
 def _create_aiida_bands_data_impl(fleurinp, retrieved):
     """Plain helper used both by the calcfunction wrapper and unit tests."""
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
+    from masci_tools.util.constants import HTR_TO_EV
     from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands  #no projections only eigenvalues for now
     from aiida.engine import ExitCode
 
@@ -671,6 +672,16 @@ def _create_aiida_bands_data_impl(fleurinp, retrieved):
                     eig_path = '/Local/EV/eigenvalues' if '/Local/EV/eigenvalues' in h5 else \
                         '/Local/BS/eigenvalues'
                     eig = h5[eig_path][:]
+                    try:
+                        # h5py returns a numpy scalar/array for the attribute;
+                        # coerce to a plain python float (avoids NumPy 1.25+
+                        # deprecation of float() on non-scalar arrays).
+                        fermi_value = h5['/general'].attrs['lastFermiEnergy']
+                        fermi_hartree = float(np.asarray(fermi_value).reshape(-1)[0])
+                    except (KeyError, TypeError, ValueError):
+                        # Old schemas without a stored Fermi energy: keep the
+                        # raw Hartree scale (unit conversion only, no shift).
+                        fermi_hartree = 0.0
             # FLEUR writes eigenvalues as (4, nkpts, nbands) regardless of
             # actual spin treatment. Treat the leading axis as spin.
             n_spin, nkpts, nbands = eig.shape
@@ -683,6 +694,13 @@ def _create_aiida_bands_data_impl(fleurinp, retrieved):
                 eigenvalues = [eig[0], eig[1]]
             else:  # 4: non-collinear, treat spin=1 as combined density
                 eigenvalues = eig[0]
+            # The raw eigenvalues are in Hartree. Convert to eV and shift
+            # by the Fermi energy so the stored BandsData matches the
+            # recipe-path convention (energies relative to E_F in eV).
+            if isinstance(eigenvalues, list):
+                eigenvalues = [(e - fermi_hartree) * HTR_TO_EV for e in eigenvalues]
+            else:
+                eigenvalues = (eigenvalues - fermi_hartree) * HTR_TO_EV
         except (KeyError, ValueError, OSError, Exception) as exc:
             return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
     else:
@@ -721,6 +739,7 @@ def create_aiida_dos_data(retrieved):
 def _create_aiida_dos_data_impl(retrieved):
     """Plain helper used both by the calcfunction wrapper and unit tests."""
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
+    from masci_tools.util.constants import HTR_TO_EV
     from masci_tools.io.parsers.hdf5.recipes import FleurDOS  #only standard DOS for now
     from aiida.engine import ExitCode
 
@@ -756,7 +775,12 @@ def _create_aiida_dos_data_impl(retrieved):
             else:  # non-collinear: 4 channels (tot, mx, my, mz)
                 names = ['dos_tot', 'dos_mx', 'dos_my', 'dos_mz']
                 arrays = list(total)
-            x_units, y_units = 'Ha', '1/Ha'
+            # The raw energy grid is in Hartree and already relative to E_F
+            # (FLEUR convention). Convert to eV / 1/eV so the stored XyData
+            # matches the recipe-path convention.
+            energy = energy * HTR_TO_EV
+            arrays = [a / HTR_TO_EV for a in arrays]
+            x_units, y_units = 'eV', '1/eV'
         except (KeyError, ValueError, OSError, Exception) as exc:
             return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
     else:
