@@ -559,7 +559,7 @@ class FleurBandDosWorkChain(WorkChain):
         # # get efermi from last calculation
         scf_results = None
         efermi_scf = 0
-        bandgap_scf = 0
+        bandgap_scf = None
         if 'remote' in self.inputs:
             scf_results = self.inputs.remote.creator.res
         elif 'scf' in self.inputs:
@@ -568,7 +568,16 @@ class FleurBandDosWorkChain(WorkChain):
 
         if scf_results is not None:
             efermi_scf = scf_results.fermi_energy
-            bandgap_scf = scf_results.bandgap
+            try:
+                bandgap_scf = scf_results.bandgap
+            except AttributeError:
+                # masci-tools outxml_parser only extracts the bandgap for
+                # bz_integration mode 'hist'; with other modes (e.g. 'gauss',
+                # 'tria') the out.xml has no bandgap entry, so accessing it
+                # here raises AttributeError and aborts the whole WorkChain.
+                # None (not 0) keeps the "no data" case distinct from a
+                # metallic (zero-gap) system.
+                bandgap_scf = None
 
         efermi_band = last_calc_out_dict.get('fermi_energy', None)
         bandgap_band = last_calc_out_dict.get('bandgap', None)
@@ -578,7 +587,7 @@ class FleurBandDosWorkChain(WorkChain):
             diff_efermi = efermi_scf - efermi_band
 
         diff_bandgap = None
-        if bandgap_band is not None:
+        if bandgap_band is not None and bandgap_scf is not None:
             diff_bandgap = bandgap_scf - bandgap_band
 
         outputnode_dict = {}
