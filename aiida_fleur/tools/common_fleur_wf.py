@@ -239,7 +239,7 @@ def test_and_get_codenode(codenode, expected_code_type):
 
         if valid_code_labels:
             message += f'Valid labels for a {expected_code_type} executable are:\n'
-            message += '\n'.join(f'* {l}' for l in valid_code_labels)
+            message += '\n'.join(f'* {label}' for label in valid_code_labels)
         else:
             message += f'No valid labels for a {expected_code_type} executable are available\n' \
                         'Configure at least one first using\n' \
@@ -666,6 +666,6 @@ def find_nested_process(wc_node, p_class):
                 child_process.append(i.node)
             else:
                 child_process.extend(find_nested_process(i.node, p_class))
-        except:  #pylint: disable=bare-except
+        except Exception:
             pass
     return child_process
