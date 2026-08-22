@@ -31,6 +31,7 @@ from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+from aiida_fleur.tools.common_fleur_wf import get_primitive_structure
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 
 
@@ -74,6 +75,11 @@ class FleurBandDosWorkChain(WorkChain):
             'max_queue_wallclock_sec': 86400
         },
         'inpxml_changes': [],
+        # Convert the SCF structure to its seekpath primitive cell before
+        # running (SCF + band + DOS). Keeps the seekpath band k-points
+        # consistent with the cell the code actually runs on, so band
+        # structures are comparable across codes (e.g. with ABACUS).
+        'use_primitive_cell': False,
     }
 
     @classmethod
@@ -191,6 +197,34 @@ class FleurBandDosWorkChain(WorkChain):
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
             self.ctx.scf_needed = False
+
+        if self.ctx.wf_dict.get('use_primitive_cell'):
+            # Running the band structure on the seekpath primitive cell
+            # keeps the seekpath k-points (primitive reciprocal basis)
+            # consistent with the cell FLEUR actually runs on, so band
+            # structures are comparable across codes. Requires the SCF
+            # namespace (the cell cannot be changed when a pre-converged
+            # remote / fleurinp is reused).
+            if not self.ctx.scf_needed or 'structure' not in self.inputs.scf:
+                error = ('ERROR: use_primitive_cell requires the SCF namespace with a '
+                         '`structure` input (it cannot be combined with `remote` / '
+                         '`fleurinp` inputs).')
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            try:
+                primitive = get_primitive_structure(self.inputs.scf.structure)
+            except Exception as exc:  # seekpath can raise on exotic cells
+                error = f'ERROR: could not determine the primitive cell: {exc}'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            primitive.store()
+            self.ctx.scf_structure = primitive
+            n_atoms = len(primitive.get_ase().get_positions())
+            self.report(
+                f'INFO: converted the SCF structure to its seekpath primitive cell '
+                f'({n_atoms} atom(s)); the band / DOS k-points are now consistent '
+                f'with the cell.'
+            )
 
         if wf_dict['mode'] == 'dos' and wf_dict['kpath'] not in ('auto', 'skip'):
             error = 'ERROR: you specified the DOS mode but provided a non default kpath argument'
@@ -478,6 +512,9 @@ class FleurBandDosWorkChain(WorkChain):
         wf_param, options, calculation parameters, codes, structure
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+        if hasattr(self.ctx, 'scf_structure'):
+            # use_primitive_cell: run the SCF on the seekpath primitive cell
+            input_scf['structure'] = self.ctx.scf_structure
         return input_scf
 
     def return_results(self):
