@@ -19,7 +19,7 @@ from ase.dft.kpoints import bandpath
 import numpy as np
 
 from aiida.orm import Code, Dict, RemoteData, KpointsData
-from aiida.orm import load_node, FolderData, BandsData, XyData
+from aiida.orm import load_node, BandsData, XyData
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
@@ -736,6 +736,28 @@ def create_aiida_dos_data(retrieved):
     return _create_aiida_dos_data_impl(retrieved)
 
 
+def _fleur_dos_recipe_soc():
+    """Return a ``FleurDOS`` recipe variant for non-collinear (SOC) runs.
+
+    FLEUR writes 4 spin channels (``up``, ``down``, ``mx``, ``my``) per DOS
+    quantity for SOC/non-collinear calculations, but masci-tools' stock
+    ``FleurDOS`` recipe only splits the spin axis into ``up``/``down`` and
+    therefore raises ``Too few suffixes provided: Expected 4 Got: 2`` on such
+    files. This returns a deep copy of the recipe with all four suffixes, so
+    the recipe path (instead of the lossy fallback) parses SOC
+    ``banddos.hdf`` files and keeps the spin-resolved as well as the
+    orbital-projected (``MT:*``) channels.
+    """
+    import copy
+    from masci_tools.io.parsers.hdf5.recipes import FleurDOS
+
+    recipe = copy.deepcopy(FleurDOS)
+    for transform in recipe['datasets']['dos']['transforms']:
+        if getattr(transform, 'name', None) == 'split_array':
+            transform.kwargs['suffixes'] = ['up', 'down', 'mx', 'my']
+    return recipe
+
+
 def _create_aiida_dos_data_impl(retrieved):
     """Plain helper used both by the calcfunction wrapper and unit tests."""
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
@@ -754,6 +776,17 @@ def _create_aiida_dos_data_impl(retrieved):
                 data, _ = reader.read(recipe=FleurDOS)
     except (HDF5TransformationError, ValueError, KeyError, Exception):
         data = None
+
+    # Non-collinear (SOC) runs write 4 spin channels per DOS quantity, which
+    # the stock recipe cannot split; retry with a 4-suffix variant so SOC DOS
+    # (including the MT orbital projections) is parsed by the recipe path.
+    if data is None:
+        try:
+            with retrieved.open('banddos.hdf', 'rb') as f:
+                with HDF5Reader(f) as reader:
+                    data, _ = reader.read(recipe=_fleur_dos_recipe_soc())
+        except (HDF5TransformationError, ValueError, KeyError, Exception):
+            data = None
 
     # Fallback: read /Local/DOS/{energyGrid,Total} directly. Compatible with older
     # FLEUR HDF5 schemas where child datasets are named INT/MT:1s/Sym/Total rather

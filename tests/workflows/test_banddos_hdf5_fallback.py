@@ -7,9 +7,19 @@ recipe (which expects the newer multi-segment naming), or whose HDF5 file
 lacks the attributes (``/kpts/specialPointLabels``) the
 ``FleurSimpleBands`` recipe expects. The workchain must fall back to a
 direct h5py read instead of exiting with code 310.
+
+They also cover non-collinear (SOC, nspin=4) runs, whose ``banddos.hdf``
+stores four spin channels (``up``, ``down``, ``mx``, ``my``) per DOS
+quantity: the stock ``FleurDOS`` recipe only splits into ``up``/``down``
+and fails on those files, so the recipe path retries with a 4-suffix
+variant to keep the spin-resolved and orbital-projected (``MT:*``)
+channels.
 """
+import io
 from pathlib import Path
 
+import h5py
+import numpy as np
 import pytest
 
 from aiida.engine import ExitCode
@@ -29,6 +39,15 @@ def _make_retrieved_with_banddos(banddos_bytes):
     folder = FolderData()
     folder.put_object_from_bytes(banddos_bytes, 'banddos.hdf')
     return folder
+
+
+def _make_retrieved_from_hdf5(datasets):
+    """Build a FolderData holding an in-memory banddos.hdf from ``datasets``."""
+    buffer = io.BytesIO()
+    with h5py.File(buffer, 'w') as h5:
+        for path, array in datasets.items():
+            h5.create_dataset(path, data=array)
+    return _make_retrieved_with_banddos(buffer.getvalue())
 
 
 @pytest.fixture
@@ -51,7 +70,13 @@ def legacy_banddos_bands_retrieved():
 
 
 def test_create_aiida_dos_data_legacy_schema(legacy_banddos_retrieved):
-    """The legacy-schema fallback should produce an XyData, not ExitCode 310."""
+    """The sample banddos.hdf (a 4-channel SOC file) must produce an XyData.
+
+    This is a smoke test for the full DOS pipeline: whatever path parses the
+    file (recipe path with 4 spin suffixes for the SOC sample, or the direct
+    h5py fallback for truly legacy files), the result must be a complete
+    XyData with an energy axis and at least one y channel.
+    """
     result = create_aiida_dos_data(retrieved=legacy_banddos_retrieved)
 
     assert not isinstance(result, ExitCode), (
@@ -173,3 +198,90 @@ def test_corrupted_banddos_bands_returns_exit_310():
     result = create_aiida_bands_data(fleurinp=fleurinp, retrieved=folder)
     assert isinstance(result, ExitCode)
     assert result.status == 310
+
+
+# ---------------------------------------------------------------------------
+# Non-collinear (SOC, nspin=4) DOS: the recipe path must split the 4 spin
+# channels (up, down, mx, my) instead of degrading to the fallback.
+# ---------------------------------------------------------------------------
+
+
+def test_create_aiida_dos_data_soc_spin_channels(legacy_banddos_retrieved):
+    """A 4-channel (SOC) banddos.hdf must go through the recipe path.
+
+    The stock FleurDOS recipe only knows the suffixes ``['up', 'down']`` and
+    fails on non-collinear runs ("Too few suffixes provided: Expected 4
+    Got: 2"). The recipe path retries with a 4-suffix variant, which keeps
+    the spin-resolved channels (``Total_up``/``Total_down``) as well as the
+    orbital-projected (``MT:*``) ones.
+    """
+    result = create_aiida_dos_data(retrieved=legacy_banddos_retrieved)
+
+    assert not isinstance(result, ExitCode), (
+        f'create_aiida_dos_data returned {result!r}; expected XyData')
+    assert result.label == 'output_banddos_wc_dos'
+
+    result.store()
+    y_names = result.base.attributes.get('y_names')
+    assert y_names is not None
+
+    # Spin channels are now split up/down (not a single dos_tot = up only).
+    assert 'Total_up' in y_names
+    assert 'Total_down' in y_names
+    assert 'Total_mx' in y_names
+    assert 'Total_my' in y_names
+
+    # Orbital-projected channels survive (needed for projected-DOS plots).
+    assert any(name.startswith('MT:1s_') for name in y_names)
+    assert any(name.startswith('MT:1d_') for name in y_names)
+
+    # The up/down channels are Kramers-degenerate for non-magnetic SOC.
+    x_name, _, x_units = result.get_x()
+    assert x_name == 'energy'
+    y_by_name = {name: array for name, array, _ in result.get_y()}
+    assert np.allclose(y_by_name['Total_up'], y_by_name['Total_down'])
+    # The recipe path reports energies in eV.
+    assert x_units == 'eV'
+
+
+def test_create_aiida_dos_data_soc_fallback_4ch_minimal():
+    """A minimal 4-channel banddos.hdf still works via the fallback.
+
+    The recipe path (including the 4-suffix SOC variant) needs the HDF5
+    groups that the recipe's attributes section reads (``/general``,
+    ``/atoms``, ...). A file that only contains ``/Local/DOS`` falls through
+    to the direct h5py read, which must still return an XyData.
+    """
+    n_points = 50
+    retrieved = _make_retrieved_from_hdf5({
+        '/Local/DOS/energyGrid': np.linspace(-1.0, 1.0, n_points),
+        '/Local/DOS/Total': np.random.rand(4, n_points),
+    })
+    result = create_aiida_dos_data(retrieved=retrieved)
+    assert not isinstance(result, ExitCode), (
+        f'create_aiida_dos_data returned {result!r}; expected XyData')
+    assert result.label == 'output_banddos_wc_dos'
+    result.store()
+    y_names = result.base.attributes.get('y_names')
+    assert y_names is not None and len(y_names) >= 1
+    # The fallback emits the legacy 4-channel naming (tot, mx, my, mz).
+    assert 'dos_tot' in y_names
+
+
+def test_create_aiida_dos_data_nspin2_minimal():
+    """A minimal 2-channel (collinear) banddos.hdf produces spin-resolved dos.
+
+    Guards the n_spin == 2 branch of the fallback when the recipe path
+    cannot read the file (missing /general and /atoms groups).
+    """
+    n_points = 50
+    retrieved = _make_retrieved_from_hdf5({
+        '/Local/DOS/energyGrid': np.linspace(-1.0, 1.0, n_points),
+        '/Local/DOS/Total': np.random.rand(2, n_points),
+    })
+    result = create_aiida_dos_data(retrieved=retrieved)
+    assert not isinstance(result, ExitCode)
+    result.store()
+    y_names = result.base.attributes.get('y_names')
+    assert 'dos_spin_up' in y_names
+    assert 'dos_spin_down' in y_names
