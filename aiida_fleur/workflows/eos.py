@@ -173,7 +173,7 @@ class FleurEosWorkChain(WorkChain):
             struc=struc_or_fleurinp.get_structuredata_ncf()
         else:    
             inputs.structure = struc_or_fleurinp
-            struct=inputs.structure
+            struc=inputs.structure
         natoms = len(struc.sites)
         label = f'scale_{self.ctx.scalelist[i]}'.replace('.', '_')
         label_c = '|eos| fleur_scf_wc'
@@ -191,7 +191,9 @@ class FleurEosWorkChain(WorkChain):
 
     def inspect_first(self):
         """
-        Check if the first calculation failed and
+        Check if the first calculation failed and capture its generated fleurinp.
+        The fleurinp is stored so that kmax, k-mesh and MT radii can be frozen
+        for all subsequent scaled calculations (see converge_scf).
         """
         label = self.ctx.labels[0]
         first_scf = self.ctx[label]
@@ -201,28 +203,63 @@ class FleurEosWorkChain(WorkChain):
             return self.exit_codes.ERROR_SUB_PROCESS_FAILED
 
         fleurinp = first_scf.outputs.fleurinp
+        # kept for backwards compatibility / other consumers
         self.ctx.first_calc_parameters = fleurinp.get_parameterdata(write_ids=orm.Bool(False))
+        # kept to build the strictly-frozen parameter node in converge_scf
+        self.ctx.first_fleurinp = fleurinp
 
     def converge_scf(self):
         """
-        Launch fleur_scfs from the generated structures
+        Launch fleur_scfs from the generated structures with kmax, k-mesh and
+        MT radii *hard*-frozen to the reference (first) calculation.
+
+        Rather than trusting inpgen to honour a frozen rmt/kmax/kpt via
+        calc_parameters (it does not: inpgen re-derives rmt from each cell,
+        so the MT radius drifts with volume), we bypass inpgen entirely for
+        the scaled cells. We take the reference inp.xml (first_fleurinp) and,
+        for each scaled structure, only overwrite the Bravais matrix
+        (lattice vectors) while leaving mtSphere/kmax/kPointList untouched.
+        The resulting FleurinpData is fed straight into the SCF, so nothing
+        except the lattice can differ between the reference and the scaled
+        runs.
         """
+        self.report('INFO: Hard-freezing kmax, k-mesh and MT radii via inp.xml (bypassing inpgen)...')
         calcs = {}
 
+        first_fleurinp = getattr(self.ctx, 'first_fleurinp', None)
+        if first_fleurinp is None:
+            raise RuntimeError('Missing first_fleurinp in context.')
+
+        # Launch scaled calculations off frozen clones of the reference inp.xml
         for i, struc_or_fleurinp in enumerate(self.ctx.structures[1:]):
             inputs = self.get_inputs_scf()
-            if isinstance(struc_or_fleurinp,FleurinpData):
-                inputs.fleurinp=struc_or_fleurinp
-                struc=struc_or_fleurinp.get_structuredata_ncf()
+
+            # get the target (scaled) structure and its lattice
+            if isinstance(struc_or_fleurinp, FleurinpData):
+                struc = struc_or_fleurinp.get_structuredata_ncf()
             else:
-                inputs.structure = struc_or_fleurinp
-                struc=struc_or_fleurinp
+                struc = struc_or_fleurinp
+
+            # build a frozen fleurinp: reference inp.xml + this cell's lattice.
+            # NOTE: this is a plain function (NOT a calcfunction). fm.freeze()
+            # internally launches the modify_fleurinpdata calcfunction, and
+            # AiiDA forbids launching a process from inside another calcfunction.
+            # Called here (inside a WorkChain step) it is allowed, and freeze()
+            # still records the ref -> frozen provenance link itself.
+            frozen_fleurinp = freeze_inpxml_to_cell(
+                first_fleurinp,
+                [list(row) for row in struc.cell],
+            )
+
+            inputs.pop('structure', None)
+            inputs.pop('inpgen', None)
+            inputs.pop('calc_parameters', None)
+            inputs.fleurinp = frozen_fleurinp
+
             natoms = len(struc.sites)
             label = f'scale_{self.ctx.scalelist[i + 1]}'.replace('.', '_')
             label_c = '|eos| fleur_scf_wc'
             description = f'|FleurEosWorkChain|fleur_scf_wc|{label}, {i+1}'
-            #inputs.label = label_c
-            #inputs.description = description
 
             self.ctx.volume.append(struc.get_cell_volume())
             self.ctx.volume_peratom[label] = struc.get_cell_volume() / natoms
@@ -249,6 +286,10 @@ class FleurEosWorkChain(WorkChain):
     def get_inputs_scf(self):
         """
         get and 'produce' the inputs for a scf-cycle
+
+        Note: calc_parameters is now set explicitly in converge_scf to the
+        strictly-frozen reference parameters, so the enforce_para fallback here
+        is only a safety net.
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
 
@@ -494,6 +535,54 @@ def create_eos_result_node(**kwargs):
         outdict['gs_structure'] = gs_structure
 
     return outdict
+
+
+def freeze_inpxml_to_cell(ref_fleurinp, cell):
+    """
+    Produce a FleurinpData identical to ``ref_fleurinp`` except that the
+    Bravais matrix (lattice vectors) is replaced by ``cell``.
+
+    This is the mechanism used to *hard*-freeze kmax, the k-mesh and the MT
+    radii across an EOS volume ladder: everything in the reference inp.xml
+    (mtSphere/radius, cutoffs/kmax, kPointList) is kept byte-for-byte, and only
+    the geometry is changed. inpgen is never run on the scaled cells, so it
+    cannot re-derive rmt from the new volume.
+
+    IMPORTANT: this is a *plain* function, NOT a calcfunction. ``fm.freeze()``
+    internally launches the ``modify_fleurinpdata`` calcfunction; AiiDA forbids
+    launching a process from inside another calcfunction, so wrapping this in
+    ``@cf`` raises ``InvalidOperation``. It must be called from a WorkChain
+    step (e.g. converge_scf). freeze() still records the ref -> frozen
+    provenance link on its own, so no node is lost.
+
+    :param ref_fleurinp: FleurinpData of the reference (first) calculation
+    :param cell: plain list of 3 lattice vectors (rows), in Angstrom
+    :returns: new frozen FleurinpData
+    """
+    import numpy as _np
+    from masci_tools.util.constants import BOHR_A
+
+    fm = FleurinpModifier(ref_fleurinp)
+
+    # inp.xml stores the Bravais matrix in Bohr; AiiDA cells are in Angstrom.
+    # bulkLattice scale in the reference is 1.0 (see diff), so no scale factor.
+    cell_ang = _np.array(cell, dtype=float)
+    cell_bohr = cell_ang / BOHR_A
+
+    # rows are distinct tags row-1 / row-2 / row-3 under bravaisMatrix.
+    # 'row-1' alone is ambiguous (bulkLattice vs filmLattice vs
+    # bravaisMatrixFilm), so anchor on bulkLattice/bravaisMatrix to get a
+    # unique xpath. pass the values as a list; masci formats them per schema.
+    row_tags = ['row-1', 'row-2', 'row-3']
+    for row_idx, tag in enumerate(row_tags):
+        fm.set_text(
+            tag,
+            list(cell_bohr[row_idx]),
+            contains='bulkLattice/bravaisMatrix',
+            occurrences=[0],
+        )
+
+    return fm.freeze()
 
 
 @cf

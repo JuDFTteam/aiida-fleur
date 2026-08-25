@@ -72,7 +72,7 @@ dev = [
 aiida-fleur = "aiida_fleur.cmdline:cmd_root"
 
 [project.urls]
-Home = "https://aiida-fleur..readthedocs.io"
+Home = "https://aiida-fleur.readthedocs.io"
 Documentation = "https://aiida-fleur.readthedocs.io"
 Source = "https://github.com/JuDFTteam/aiida-fleur"
 
@@ -94,6 +94,7 @@ Source = "https://github.com/JuDFTteam/aiida-fleur"
 "fleur.orbcontrol" = "aiida_fleur.workflows.orbcontrol:FleurOrbControlWorkChain"
 "fleur.strain" = "aiida_fleur.workflows.strain:FleurStrainWorkChain"
 "fleur.eos" = "aiida_fleur.workflows.eos:FleurEosWorkChain"
+"fleur.stress" = "aiida_fleur.workflows.stress:FleurStressWorkChain"
 "fleur.cfcoeff" = "aiida_fleur.workflows.cfcoeff:FleurCFCoeffWorkChain"
 "fleur.init_cls" = "aiida_fleur.workflows.initial_cls:FleurInitialCLSWorkChain"
 "fleur.corehole" = "aiida_fleur.workflows.corehole:FleurCoreholeWorkChain"

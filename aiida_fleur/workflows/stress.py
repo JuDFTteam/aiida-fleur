@@ -143,40 +143,10 @@ class FleurStressWorkChain(WorkChain):
 
 
     def structures(self):
-        # #------------------------------------------------------------------
-        # #------------------------------------------------------------------
-        # # VALIDATION WITH M11 
-        # """
-        # Creates structure data nodes, for diagonal element of strain matrix
-        # """
-        # scale = float(self.ctx.scale)
-        # def get_strain(eta):
-        #     # Uniaxial strain eta in x, compensate in y and z to keep det(T) = 1
-        #     # T = diag(1+eta, 1/sqrt(1+eta), 1/sqrt(1+eta))
-        #     f = 1 + eta
-        #     iso = 1 / np.sqrt(f)
-        #     return ((f, 0, 0), 
-        #             (0, iso, 0), 
-        #             (0, 0, iso))
-
-        # scale2 = 2 * scale
-        # scale3 = 3 * scale
-        # scale4 = 4 * scale
-        
-        # self.ctx.strains = [
-        #     ("ref", ((1, 0, 0), (0, 1, 0), (0, 0, 1))),
-        #     ("xx_plus_s1",  get_strain(scale)),
-        #     ("xx_plus_s2",  get_strain(scale2)),
-        #     ("xx_plus_s3",  get_strain(scale3)),
-        #     ("xx_plus_s4",  get_strain(scale4)),
-        #     ("xx_minus_s1", get_strain(-scale)),
-        #     ("xx_minus_s2", get_strain(-scale2)),
-        #     ("xx_minus_s3", get_strain(-scale3)),
-        #     ("xx_minus_s4", get_strain(-scale4))
-        # ]
-        # #------------------------------------------------------------------
-        # #------------------------------------------------------------------
+        #------------------------------------------------------------------
+        #------------------------------------------------------------------
         # BUILDING STRESS TENSOR
+        # volume preserving
         """
         Creates structure data nodes for all 6 independent strain components
         (xx, yy, zz, yz, xz, xy), each with +/- delta -> 12 configs + reference.
@@ -211,7 +181,7 @@ class FleurStressWorkChain(WorkChain):
         
                 self.ctx.strains.append((f"{label}_{tag}", deform_matrix(eta)))
         # #------------------------------------------------------------------
-        # #------------------------------------------------------------------
+        # # #------------------------------------------------------------------
         
         # below should always there
         self.ctx.scalelist = [s[1] for s in self.ctx.strains]
