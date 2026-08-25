@@ -225,6 +225,13 @@ class FleurEosWorkChain(WorkChain):
         """
         self.report('INFO: Hard-freezing kmax, k-mesh and MT radii via inp.xml (bypassing inpgen)...')
         calcs = {}
+        
+        first_params = getattr(self.ctx, 'first_calc_parameters', None)
+        if first_params:
+            p_dict = first_params.get_dict()
+            kmax = p_dict.get('comp', {}).get('kmax', 'unknown')
+            rmt = p_dict.get('atom0', {}).get('rmt', 'unknown')
+            self.report(f"DEBUG: Using frozen parameters: Kmax={kmax}, Rmt={rmt}")
 
         first_fleurinp = getattr(self.ctx, 'first_fleurinp', None)
         if first_fleurinp is None:
@@ -234,9 +241,11 @@ class FleurEosWorkChain(WorkChain):
         for i, struc_or_fleurinp in enumerate(self.ctx.structures[1:]):
             inputs = self.get_inputs_scf()
 
-            # get the target (scaled) structure and its lattice
-            if isinstance(struc_or_fleurinp, FleurinpData):
-                struc = struc_or_fleurinp.get_structuredata_ncf()
+            if first_params:
+                inputs.calc_parameters = first_params
+            if isinstance(struc_or_fleurinp,FleurinpData):
+                inputs.fleurinp=struc_or_fleurinp
+                struc=struc_or_fleurinp.get_structuredata_ncf()
             else:
                 struc = struc_or_fleurinp
 
@@ -270,6 +279,37 @@ class FleurEosWorkChain(WorkChain):
             calcs[label] = result
 
         return ToContext(**calcs)
+
+    # def converge_scf(self):
+    #     """
+    #     Launch fleur_scfs from the generated structures
+    #     """
+    #     calcs = {}
+
+    #     for i, struc_or_fleurinp in enumerate(self.ctx.structures[1:]):
+    #         inputs = self.get_inputs_scf()
+    #         if isinstance(struc_or_fleurinp,FleurinpData):
+    #             inputs.fleurinp=struc_or_fleurinp
+    #             struc=struc_or_fleurinp.get_structuredata_ncf()
+    #         else:
+    #             inputs.structure = struc_or_fleurinp
+    #             struc=struc_or_fleurinp
+    #         natoms = len(struc.sites)
+    #         label = f'scale_{self.ctx.scalelist[i + 1]}'.replace('.', '_')
+    #         label_c = '|eos| fleur_scf_wc'
+    #         description = f'|FleurEosWorkChain|fleur_scf_wc|{label}, {i+1}'
+    #         #inputs.label = label_c
+    #         #inputs.description = description
+
+    #         self.ctx.volume.append(struc.get_cell_volume())
+    #         self.ctx.volume_peratom[label] = struc.get_cell_volume() / natoms
+    #         self.ctx.structures_uuids.append(struc.uuid)
+
+    #         result = self.submit(FleurScfWorkChain, **inputs)
+    #         self.ctx.labels.append(label)
+    #         calcs[label] = result
+
+    #     return ToContext(**calcs)
 
     def get_inputs_scf_first(self):
         """
@@ -651,7 +691,7 @@ def birch_murnaghan_fit(energies, volumes):
     # The following code is based on the source code of eos.py from the Atomic
     # Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>.
     :params energies: list (numpy arrays!) of total energies eV/atom
-    :params volumes: list (numpy arrays!) of volumes in A^3/atom
+    :params volumes: list (numpy arrays!) oif volumes in A^3/atom
 
     #volume, bulk_modulus, bulk_deriv, residuals = Birch_Murnaghan_fit(data)
     """

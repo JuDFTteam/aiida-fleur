@@ -563,3 +563,26 @@ def check_eos_energies(energylist):
             print('annormly detected')
 
     return abnormality, abnormalityindexlist
+
+def check_stress_energies(energylist):
+    """
+    Checks if there is an abnormality in the total energies from the Equation of states.
+    i.e. if one point has a larger energy then its two neighbors
+
+    :param energylist: list of floats
+    :returns nnormalies: integer
+    """
+    # TODO: possible improvements look at all differences, and introduce a threshold
+    # Also look at several points...
+    abnormalityindexlist = []
+    abnormality = False
+    i = 0
+    for x, y, z in zip(energylist, energylist[1:], energylist[2:]):
+        i = i + 1
+        if x < y > z:
+            abnormality = True
+            abnormalityindexlist.append(i)
+            print((x, y, z))
+            print('annormly detected')
+
+    return abnormality, abnormalityindexlist

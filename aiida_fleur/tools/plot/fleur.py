@@ -40,6 +40,7 @@ def plot_fleur(*args, save=False, show_dict=False, show=True, backend=None, **kw
 
         - `FleurSCFWorkChain`: Plots the convergence of energy and distance for the calculation
         - `FleurEOSWorkChain`: Plots the total energy vs. volume for the calculated scalings
+        - `FleurStressWorkChain`: Plots the total energy vs. volume for the calculated scalings
         - `FleurBandDosWorkChain`: Plot the bandstructure/DOS calculated
         - `FleurOrbControlWorkChain`: Plot the distribution of total energies for all run calculations
 
@@ -351,6 +352,45 @@ def plot_fleur_eos_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
     return plot_res
 
 
+def plot_fleur_stress_wc(nodes, labels=None, save=False, show=True, backend='bokeh', **kwargs):
+    """
+    This methods takes an AiiDA output parameter node from a equation of states
+    workchain and plots a simple scaling vs volume plot
+    """
+    from masci_tools.vis.common import stress_plot
+
+    if not isinstance(nodes, list):
+        nodes = [nodes]
+
+    energy = []
+    scaling = []
+    default_labels = []
+
+    for i, nd in enumerate(nodes):
+        outpara = nd.get_dict()
+        volume_gs = outpara.get('volume_gs')
+        scale_gs = outpara.get('scaling_gs')
+        total_e = outpara.get('total_energy')
+        if len(nodes) >= 2:
+            total_e_norm = np.array(total_e) - total_e[0]
+            energy.append(total_e_norm)
+        else:
+            energy.append(total_e)
+        scaling.append(outpara.get('scaling'))
+        default_labels.append(f'gs_vol: {volume_gs:.3} A^3, gs_scale {scale_gs:.3}, data {i}')
+
+    labels = default_labels
+
+    add_args = {}
+    if backend == 'bokeh':
+        add_args['legend_label'] = labels
+    else:
+        add_args['plot_label'] = labels
+
+    plot_res = stress_plot(scaling, energy, show=show, save_plots=save, backend=backend, **add_args, **kwargs)
+
+    return plot_res
+
 def plot_fleur_band_wc(node, labels=None, save=False, show=True, **kwargs):
     """
     This methods takes an AiiDA output parameter node from a band structure
@@ -640,8 +680,10 @@ def plot_fleur_cfcoeff_wc(param_node,
 FUNCTIONS_DICT = {
     'fleur_scf_wc': plot_fleur_scf_wc,  #support of < 1.0 release
     'fleur_eos_wc': plot_fleur_eos_wc,  #support of < 1.0 release
+    'fleur_stress_wc': plot_fleur_stress_wc,
     'FleurScfWorkChain': plot_fleur_scf_wc,
     'FleurEosWorkChain': plot_fleur_eos_wc,
+    'FleurStressWorkChain': plot_fleur_stress_wc,
     'fleur_dos_wc': plot_fleur_dos_wc,
     'fleur_band_wc': plot_fleur_band_wc,
     'FleurBandWorkChain': plot_fleur_band_wc,
