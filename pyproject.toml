@@ -109,6 +109,7 @@ Source = "https://github.com/JuDFTteam/aiida-fleur"
 "fleur.base_relax" = "aiida_fleur.workflows.base_relax:FleurBaseRelaxWorkChain"
 "fleur.base" = "aiida_fleur.workflows.base_fleur:FleurBaseWorkChain"
 "fleur.cutoff_conv" = "aiida_fleur.workflows.cutoff_conv:FleurCutoffConvWorkChain"
+"fleur.fsm" = "aiida_fleur.workflows.fsm:FleurFsmWorkChain"
 
 [tool.coverage.run]
 omit = [
@@ -241,3 +242,4 @@ push = false
 "aiida_fleur/__init__.py" = [
     "__version__ = '{version}'",
 ]
+
