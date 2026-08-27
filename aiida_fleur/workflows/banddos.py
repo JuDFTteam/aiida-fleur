@@ -19,7 +19,7 @@ from ase.dft.kpoints import bandpath
 import numpy as np
 
 from aiida.orm import Code, Dict, RemoteData, KpointsData
-from aiida.orm import load_node, FolderData, BandsData, XyData
+from aiida.orm import load_node, BandsData, XyData
 from aiida.engine import WorkChain, ToContext, if_
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
@@ -631,7 +631,13 @@ def create_aiida_bands_data(fleurinp, retrieved):
     :raises: ExitCode 310, banddos.hdf reading failed
     :raises: ExitCode 320, reading kpointsdata from Fleurinp failed
     """
+    return _create_aiida_bands_data_impl(fleurinp, retrieved)
+
+
+def _create_aiida_bands_data_impl(fleurinp, retrieved):
+    """Plain helper used both by the calcfunction wrapper and unit tests."""
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
+    from masci_tools.util.constants import HTR_TO_EV
     from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands  #no projections only eigenvalues for now
     from aiida.engine import ExitCode
 
@@ -640,25 +646,72 @@ def create_aiida_bands_data(fleurinp, retrieved):
     except ValueError as exc:
         return ExitCode(320, message=f'Retrieving kpoints data from fleurinp failed with: {exc}')
 
-    if 'banddos.hdf' in retrieved.list_object_names():
+    if 'banddos.hdf' not in retrieved.list_object_names():
+        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
+
+    # First try the recipe-based path (newer FLEUR HDF5 schemas).
+    data = None
+    attributes = None
+    try:
+        with retrieved.open('banddos.hdf', 'rb') as f:
+            with HDF5Reader(f) as reader:
+                data, attributes = reader.read(recipe=FleurSimpleBands)
+    except (HDF5TransformationError, ValueError, KeyError, Exception):
+        data = None
+
+    # Fallback: read /Local/{EV,BS}/eigenvalues directly. Compatible with
+    # older FLEUR HDF5 schemas that lack fields (e.g. /kpts/specialPointLabels)
+    # masci-tools' FleurSimpleBands recipe expects, or that use the
+    # alternative /Local/BS prefix for band-mode outputs.
+    if data is None:
         try:
+            import h5py
             with retrieved.open('banddos.hdf', 'rb') as f:
-                with HDF5Reader(f) as reader:
-                    data, attributes = reader.read(recipe=FleurSimpleBands)
-        except (HDF5TransformationError, ValueError) as exc:
+                with h5py.File(f, 'r') as h5:
+                    # /Local/EV in newer builds, /Local/BS in older band-mode ones.
+                    eig_path = '/Local/EV/eigenvalues' if '/Local/EV/eigenvalues' in h5 else \
+                        '/Local/BS/eigenvalues'
+                    eig = h5[eig_path][:]
+                    try:
+                        # h5py returns a numpy scalar/array for the attribute;
+                        # coerce to a plain python float (avoids NumPy 1.25+
+                        # deprecation of float() on non-scalar arrays).
+                        fermi_value = h5['/general'].attrs['lastFermiEnergy']
+                        fermi_hartree = float(np.asarray(fermi_value).reshape(-1)[0])
+                    except (KeyError, TypeError, ValueError):
+                        # Old schemas without a stored Fermi energy: keep the
+                        # raw Hartree scale (unit conversion only, no shift).
+                        fermi_hartree = 0.0
+            # FLEUR writes eigenvalues as (4, nkpts, nbands) regardless of
+            # actual spin treatment. Treat the leading axis as spin.
+            n_spin, nkpts, nbands = eig.shape
+            # In the new-schema path, BandsData.set_bands accepts either a
+            # single (nkpts, nbands) array (non-magnetic/collinear) or a list
+            # of arrays (one per spin). Map the 4-channel layout to that API.
+            if n_spin == 1:
+                eigenvalues = eig[0]
+            elif n_spin == 2:
+                eigenvalues = [eig[0], eig[1]]
+            else:  # 4: non-collinear, treat spin=1 as combined density
+                eigenvalues = eig[0]
+            # The raw eigenvalues are in Hartree. Convert to eV and shift
+            # by the Fermi energy so the stored BandsData matches the
+            # recipe-path convention (energies relative to E_F in eV).
+            if isinstance(eigenvalues, list):
+                eigenvalues = [(e - fermi_hartree) * HTR_TO_EV for e in eigenvalues]
+            else:
+                eigenvalues = (eigenvalues - fermi_hartree) * HTR_TO_EV
+        except (KeyError, ValueError, OSError, Exception) as exc:
             return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
     else:
-        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
+        nkpts, nbands = attributes['nkpts'], attributes['nbands']
+        eigenvalues = data['eigenvalues_up'].reshape((nkpts, nbands))
+        if 'eigenvalues_down' in data:
+            eigenvalues_dn = data['eigenvalues_down'].reshape((nkpts, nbands))
+            eigenvalues = [eigenvalues, eigenvalues_dn]
 
     bands = BandsData()
     bands.set_kpointsdata(kpoints)
-
-    nkpts, nbands = attributes['nkpts'], attributes['nbands']
-    eigenvalues = data['eigenvalues_up'].reshape((nkpts, nbands))
-    if 'eigenvalues_down' in data:
-        eigenvalues_dn = data['eigenvalues_down'].reshape((nkpts, nbands))
-        eigenvalues = [eigenvalues, eigenvalues_dn]
-
     bands.set_bands(eigenvalues, units='eV')
 
     bands.label = 'output_banddos_wc_bands'
@@ -680,27 +733,98 @@ def create_aiida_dos_data(retrieved):
     :raises: ExitCode 300, banddos.hdf file is missing
     :raises: ExitCode 310, banddos.hdf reading failed
     """
+    return _create_aiida_dos_data_impl(retrieved)
+
+
+def _fleur_dos_recipe_soc():
+    """Return a ``FleurDOS`` recipe variant for non-collinear (SOC) runs.
+
+    FLEUR writes 4 spin channels (``up``, ``down``, ``mx``, ``my``) per DOS
+    quantity for SOC/non-collinear calculations, but masci-tools' stock
+    ``FleurDOS`` recipe only splits the spin axis into ``up``/``down`` and
+    therefore raises ``Too few suffixes provided: Expected 4 Got: 2`` on such
+    files. This returns a deep copy of the recipe with all four suffixes, so
+    the recipe path (instead of the lossy fallback) parses SOC
+    ``banddos.hdf`` files and keeps the spin-resolved as well as the
+    orbital-projected (``MT:*``) channels.
+    """
+    import copy
+    from masci_tools.io.parsers.hdf5.recipes import FleurDOS
+
+    recipe = copy.deepcopy(FleurDOS)
+    for transform in recipe['datasets']['dos']['transforms']:
+        if getattr(transform, 'name', None) == 'split_array':
+            transform.kwargs['suffixes'] = ['up', 'down', 'mx', 'my']
+    return recipe
+
+
+def _create_aiida_dos_data_impl(retrieved):
+    """Plain helper used both by the calcfunction wrapper and unit tests."""
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
+    from masci_tools.util.constants import HTR_TO_EV
     from masci_tools.io.parsers.hdf5.recipes import FleurDOS  #only standard DOS for now
     from aiida.engine import ExitCode
 
-    if 'banddos.hdf' in retrieved.list_object_names():
+    if 'banddos.hdf' not in retrieved.list_object_names():
+        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
+
+    # First try the recipe-based path (newer FLEUR HDF5 schemas).
+    data = None
+    try:
+        with retrieved.open('banddos.hdf', 'rb') as f:
+            with HDF5Reader(f) as reader:
+                data, _ = reader.read(recipe=FleurDOS)
+    except (HDF5TransformationError, ValueError, KeyError, Exception):
+        data = None
+
+    # Non-collinear (SOC) runs write 4 spin channels per DOS quantity, which
+    # the stock recipe cannot split; retry with a 4-suffix variant so SOC DOS
+    # (including the MT orbital projections) is parsed by the recipe path.
+    if data is None:
         try:
             with retrieved.open('banddos.hdf', 'rb') as f:
                 with HDF5Reader(f) as reader:
-                    data, attributes = reader.read(recipe=FleurDOS)
-        except (HDF5TransformationError, ValueError) as exc:
+                    data, _ = reader.read(recipe=_fleur_dos_recipe_soc())
+        except (HDF5TransformationError, ValueError, KeyError, Exception):
+            data = None
+
+    # Fallback: read /Local/DOS/{energyGrid,Total} directly. Compatible with older
+    # FLEUR HDF5 schemas where child datasets are named INT/MT:1s/Sym/Total rather
+    # than the multi-segment names expected by masci-tools' split_array.
+    if data is None:
+        try:
+            import h5py
+            with retrieved.open('banddos.hdf', 'rb') as f:
+                with h5py.File(f, 'r') as h5:
+                    energy = h5['/Local/DOS/energyGrid'][:]
+                    total = h5['/Local/DOS/Total'][:]
+            n_spin = total.shape[0]
+            if n_spin == 1:
+                names = ['dos_total']
+                arrays = [total[0]]
+            elif n_spin == 2:
+                names = ['dos_spin_up', 'dos_spin_down']
+                arrays = [total[0], total[1]]
+            else:  # non-collinear: 4 channels (tot, mx, my, mz)
+                names = ['dos_tot', 'dos_mx', 'dos_my', 'dos_mz']
+                arrays = list(total)
+            # The raw energy grid is in Hartree and already relative to E_F
+            # (FLEUR convention). Convert to eV / 1/eV so the stored XyData
+            # matches the recipe-path convention.
+            energy = energy * HTR_TO_EV
+            arrays = [a / HTR_TO_EV for a in arrays]
+            x_units, y_units = 'eV', '1/eV'
+        except (KeyError, ValueError, OSError, Exception) as exc:
             return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
     else:
-        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
+        x_units, y_units = 'eV', '1/eV'
+        energy = data['energy_grid']
+        names = [key for key in data if key != 'energy_grid']
+        arrays = [entry for key, entry in data.items() if key != 'energy_grid']
 
     dos = XyData()
-    dos.set_x(data['energy_grid'], 'energy', x_units='eV')
-
-    names = [key for key in data if key != 'energy_grid']
-    arrays = [entry for key, entry in data.items() if key != 'energy_grid']
-    units = ['1/eV'] * len(names)
-    dos.set_y(arrays, names, y_units=units)
+    dos.set_x(energy, 'energy', x_units=x_units)
+    dos.set_y(arrays, names, y_units=[y_units] * len(names))
 
     dos.label = 'output_banddos_wc_dos'
     dos.description = (
