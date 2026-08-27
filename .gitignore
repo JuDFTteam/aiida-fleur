@@ -117,6 +117,11 @@ ENV/
 # .nfs files are created when an open file is removed but is still being accessed
 .nfs*
 
+# Local HDF5 fixtures used by tests/workflows/test_banddos_hdf5_fallback.py
+banddos.hdf
+banddos_bands.hdf
+fleur.md
+U-0K-NM-nosoc-band-*/
 
 ### macOS ###
 *.DS_Store
