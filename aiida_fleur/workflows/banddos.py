@@ -31,6 +31,7 @@ from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+from aiida_fleur.tools.common_fleur_wf import get_primitive_structure
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 
 
@@ -74,6 +75,11 @@ class FleurBandDosWorkChain(WorkChain):
             'max_queue_wallclock_sec': 86400
         },
         'inpxml_changes': [],
+        # Convert the SCF structure to its seekpath primitive cell before
+        # running (SCF + band + DOS). Keeps the seekpath band k-points
+        # consistent with the cell the code actually runs on, so band
+        # structures are comparable across codes (e.g. with ABACUS).
+        'use_primitive_cell': False,
     }
 
     @classmethod
@@ -191,6 +197,34 @@ class FleurBandDosWorkChain(WorkChain):
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
             self.ctx.scf_needed = False
+
+        if self.ctx.wf_dict.get('use_primitive_cell'):
+            # Running the band structure on the seekpath primitive cell
+            # keeps the seekpath k-points (primitive reciprocal basis)
+            # consistent with the cell FLEUR actually runs on, so band
+            # structures are comparable across codes. Requires the SCF
+            # namespace (the cell cannot be changed when a pre-converged
+            # remote / fleurinp is reused).
+            if not self.ctx.scf_needed or 'structure' not in self.inputs.scf:
+                error = ('ERROR: use_primitive_cell requires the SCF namespace with a '
+                         '`structure` input (it cannot be combined with `remote` / '
+                         '`fleurinp` inputs).')
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            try:
+                primitive = get_primitive_structure(self.inputs.scf.structure)
+            except Exception as exc:  # seekpath can raise on exotic cells
+                error = f'ERROR: could not determine the primitive cell: {exc}'
+                self.report(error)
+                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
+            primitive.store()
+            self.ctx.scf_structure = primitive
+            n_atoms = len(primitive.get_ase().get_positions())
+            self.report(
+                f'INFO: converted the SCF structure to its seekpath primitive cell '
+                f'({n_atoms} atom(s)); the band / DOS k-points are now consistent '
+                f'with the cell.'
+            )
 
         if wf_dict['mode'] == 'dos' and wf_dict['kpath'] not in ('auto', 'skip'):
             error = 'ERROR: you specified the DOS mode but provided a non default kpath argument'
@@ -478,6 +512,9 @@ class FleurBandDosWorkChain(WorkChain):
         wf_param, options, calculation parameters, codes, structure
         """
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
+        if hasattr(self.ctx, 'scf_structure'):
+            # use_primitive_cell: run the SCF on the seekpath primitive cell
+            input_scf['structure'] = self.ctx.scf_structure
         return input_scf
 
     def return_results(self):
@@ -631,6 +668,11 @@ def create_aiida_bands_data(fleurinp, retrieved):
     :raises: ExitCode 310, banddos.hdf reading failed
     :raises: ExitCode 320, reading kpointsdata from Fleurinp failed
     """
+    return _create_aiida_bands_data_impl(fleurinp, retrieved)
+
+
+def _create_aiida_bands_data_impl(fleurinp, retrieved):
+    """Plain helper used both by the calcfunction wrapper and unit tests."""
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
     from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands  #no projections only eigenvalues for now
     from aiida.engine import ExitCode
@@ -640,25 +682,55 @@ def create_aiida_bands_data(fleurinp, retrieved):
     except ValueError as exc:
         return ExitCode(320, message=f'Retrieving kpoints data from fleurinp failed with: {exc}')
 
-    if 'banddos.hdf' in retrieved.list_object_names():
+    if 'banddos.hdf' not in retrieved.list_object_names():
+        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
+
+    # First try the recipe-based path (newer FLEUR HDF5 schemas).
+    data = None
+    attributes = None
+    try:
+        with retrieved.open('banddos.hdf', 'rb') as f:
+            with HDF5Reader(f) as reader:
+                data, attributes = reader.read(recipe=FleurSimpleBands)
+    except (HDF5TransformationError, ValueError, KeyError, Exception):
+        data = None
+
+    # Fallback: read /Local/{EV,BS}/eigenvalues directly. Compatible with
+    # older FLEUR HDF5 schemas that lack fields (e.g. /kpts/specialPointLabels)
+    # masci-tools' FleurSimpleBands recipe expects, or that use the
+    # alternative /Local/BS prefix for band-mode outputs.
+    if data is None:
         try:
+            import h5py
             with retrieved.open('banddos.hdf', 'rb') as f:
-                with HDF5Reader(f) as reader:
-                    data, attributes = reader.read(recipe=FleurSimpleBands)
-        except (HDF5TransformationError, ValueError) as exc:
+                with h5py.File(f, 'r') as h5:
+                    # /Local/EV in newer builds, /Local/BS in older band-mode ones.
+                    eig_path = '/Local/EV/eigenvalues' if '/Local/EV/eigenvalues' in h5 else \
+                        '/Local/BS/eigenvalues'
+                    eig = h5[eig_path][:]
+            # FLEUR writes eigenvalues as (4, nkpts, nbands) regardless of
+            # actual spin treatment. Treat the leading axis as spin.
+            n_spin, nkpts, nbands = eig.shape
+            # In the new-schema path, BandsData.set_bands accepts either a
+            # single (nkpts, nbands) array (non-magnetic/collinear) or a list
+            # of arrays (one per spin). Map the 4-channel layout to that API.
+            if n_spin == 1:
+                eigenvalues = eig[0]
+            elif n_spin == 2:
+                eigenvalues = [eig[0], eig[1]]
+            else:  # 4: non-collinear, treat spin=1 as combined density
+                eigenvalues = eig[0]
+        except (KeyError, ValueError, OSError, Exception) as exc:
             return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
     else:
-        return ExitCode(300, message='banddos.hdf file not in the retrieved files')
+        nkpts, nbands = attributes['nkpts'], attributes['nbands']
+        eigenvalues = data['eigenvalues_up'].reshape((nkpts, nbands))
+        if 'eigenvalues_down' in data:
+            eigenvalues_dn = data['eigenvalues_down'].reshape((nkpts, nbands))
+            eigenvalues = [eigenvalues, eigenvalues_dn]
 
     bands = BandsData()
     bands.set_kpointsdata(kpoints)
-
-    nkpts, nbands = attributes['nkpts'], attributes['nbands']
-    eigenvalues = data['eigenvalues_up'].reshape((nkpts, nbands))
-    if 'eigenvalues_down' in data:
-        eigenvalues_dn = data['eigenvalues_down'].reshape((nkpts, nbands))
-        eigenvalues = [eigenvalues, eigenvalues_dn]
-
     bands.set_bands(eigenvalues, units='eV')
 
     bands.label = 'output_banddos_wc_bands'
@@ -680,27 +752,59 @@ def create_aiida_dos_data(retrieved):
     :raises: ExitCode 300, banddos.hdf file is missing
     :raises: ExitCode 310, banddos.hdf reading failed
     """
+    return _create_aiida_dos_data_impl(retrieved)
+
+
+def _create_aiida_dos_data_impl(retrieved):
+    """Plain helper used both by the calcfunction wrapper and unit tests."""
     from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
     from masci_tools.io.parsers.hdf5.recipes import FleurDOS  #only standard DOS for now
     from aiida.engine import ExitCode
 
-    if 'banddos.hdf' in retrieved.list_object_names():
-        try:
-            with retrieved.open('banddos.hdf', 'rb') as f:
-                with HDF5Reader(f) as reader:
-                    data, attributes = reader.read(recipe=FleurDOS)
-        except (HDF5TransformationError, ValueError) as exc:
-            return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
-    else:
+    if 'banddos.hdf' not in retrieved.list_object_names():
         return ExitCode(300, message='banddos.hdf file not in the retrieved files')
 
-    dos = XyData()
-    dos.set_x(data['energy_grid'], 'energy', x_units='eV')
+    # First try the recipe-based path (newer FLEUR HDF5 schemas).
+    data = None
+    try:
+        with retrieved.open('banddos.hdf', 'rb') as f:
+            with HDF5Reader(f) as reader:
+                data, _ = reader.read(recipe=FleurDOS)
+    except (HDF5TransformationError, ValueError, KeyError, Exception):
+        data = None
 
-    names = [key for key in data if key != 'energy_grid']
-    arrays = [entry for key, entry in data.items() if key != 'energy_grid']
-    units = ['1/eV'] * len(names)
-    dos.set_y(arrays, names, y_units=units)
+    # Fallback: read /Local/DOS/{energyGrid,Total} directly. Compatible with older
+    # FLEUR HDF5 schemas where child datasets are named INT/MT:1s/Sym/Total rather
+    # than the multi-segment names expected by masci-tools' split_array.
+    if data is None:
+        try:
+            import h5py
+            with retrieved.open('banddos.hdf', 'rb') as f:
+                with h5py.File(f, 'r') as h5:
+                    energy = h5['/Local/DOS/energyGrid'][:]
+                    total = h5['/Local/DOS/Total'][:]
+            n_spin = total.shape[0]
+            if n_spin == 1:
+                names = ['dos_total']
+                arrays = [total[0]]
+            elif n_spin == 2:
+                names = ['dos_spin_up', 'dos_spin_down']
+                arrays = [total[0], total[1]]
+            else:  # non-collinear: 4 channels (tot, mx, my, mz)
+                names = ['dos_tot', 'dos_mx', 'dos_my', 'dos_mz']
+                arrays = list(total)
+            x_units, y_units = 'Ha', '1/Ha'
+        except (KeyError, ValueError, OSError, Exception) as exc:
+            return ExitCode(310, message=f'banddos.hdf reading failed with: {exc}')
+    else:
+        x_units, y_units = 'eV', '1/eV'
+        energy = data['energy_grid']
+        names = [key for key in data if key != 'energy_grid']
+        arrays = [entry for key, entry in data.items() if key != 'energy_grid']
+
+    dos = XyData()
+    dos.set_x(energy, 'energy', x_units=x_units)
+    dos.set_y(arrays, names, y_units=[y_units] * len(names))
 
     dos.label = 'output_banddos_wc_dos'
     dos.description = (

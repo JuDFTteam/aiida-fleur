@@ -161,6 +161,56 @@ def get_inputs_inpgen(structure, inpgencode, options, label='', description='', 
     return inputs
 
 
+def get_primitive_structure(structure, symprec=1e-5):
+    """
+    Return the seekpath primitive cell of an AiiDA :class:`StructureData`.
+
+    Uses the exact same seekpath (spglib) primitivisation that
+    ``ase.dft.kpoints.get_explicit_kpoints_path`` (used for the banddos
+    ``kpath = 'seek'`` branch) and the aiida ``seekpath_structure_analysis``
+    calcfunction apply internally, so the returned cell matches the basis
+    of the seekpath band k-point path.
+
+    Running the SCF / band / DOS calculation on this cell (see
+    ``FleurBandDosWorkChain`` wf_parameters ``use_primitive_cell``) keeps
+    the band k-points consistent with the cell the code actually runs on.
+    Without it, seekpath k-points (expressed in the primitive reciprocal
+    basis) are interpreted by FLEUR in the basis of whatever (possibly
+    conventional, multi-atom) cell was provided, sampling a different
+    physical path and making band structures incomparable across codes.
+
+    :param structure: an AiiDA :class:`~aiida.orm.nodes.data.structure.StructureData`
+    :param symprec: symmetry precision passed to seekpath (default 1e-5,
+        the same default used by the seekpath wrappers)
+    :returns: primitive :class:`StructureData` (not stored; the caller
+        stores it before submitting)
+    """
+    import numpy as np
+    from ase import Atoms
+    from aiida.orm import StructureData
+    import seekpath
+
+    ase = structure.get_ase()
+    spglib_tuple = (
+        np.array(ase.get_cell()),
+        np.array(ase.get_scaled_positions()),
+        np.array(ase.get_atomic_numbers()),
+    )
+    kpath_data = seekpath.get_path(spglib_tuple, with_time_reversal=True, symprec=symprec)
+
+    # ``primitive_types`` carries the species labels of the primitive
+    # atoms; seekpath / spglib pass the input atomic numbers through
+    # unchanged, so they are already the atomic numbers to use.
+    numbers = [int(t) for t in kpath_data['primitive_types']]
+    primitive = Atoms(
+        cell=kpath_data['primitive_lattice'],
+        scaled_positions=kpath_data['primitive_positions'],
+        numbers=numbers,
+        pbc=True,
+    )
+    return StructureData(ase=primitive)
+
+
 def test_and_get_codenode(codenode, expected_code_type):
     """
     Pass a code node and an expected code (plugin) type. Check that the
