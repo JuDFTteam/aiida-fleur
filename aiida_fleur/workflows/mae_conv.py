@@ -13,17 +13,18 @@
     Magnetic Anisotropy Energy converging all the directions.
 """
 
-import copy
 
 from aiida.engine import WorkChain
 from aiida.engine import calcfunction as cf
 from aiida.orm import Dict
 from aiida.common import AttributeDict
+from aiida.common.exceptions import NotExistent
 
+from aiida_fleur.workflows._base import merge_parameter_dicts, unknown_parameter_keys
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.data.fleurinpmodifier import inpxml_changes
 
-from masci_tools.util.constants import HTR_TO_EV
+from pyfleur.util.constants import HTR_TO_EV
 
 
 class FleurMaeConvWorkChain(WorkChain):
@@ -34,18 +35,6 @@ class FleurMaeConvWorkChain(WorkChain):
     _workflowversion = '0.3.0'
 
     _default_wf_para = {'sqas': {'label': [0.0, 0.0]}, 'soc_off': []}
-    _default_options = {
-        'resources': {
-            'num_machines': 1,
-            'num_mpiprocs_per_machine': 1
-        },
-        'max_wallclock_seconds': 6 * 60 * 60,
-        'queue_name': '',
-        'custom_scheduler_commands': '',
-        'import_sys_environment': False,
-        'environment_variables': {}
-    }
-
     @classmethod
     def define(cls, spec):
         super().define(spec)
@@ -78,25 +67,13 @@ class FleurMaeConvWorkChain(WorkChain):
         self.ctx.mae_phis = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._default_wf_para)
-        if 'wf_parameters' in self.inputs:
-            wf_dict = self.inputs.wf_parameters.get_dict()
-        else:
-            wf_dict = wf_default
-
-        extra_keys = []
-        for key in wf_dict.keys():
-            if key not in wf_default.keys():
-                extra_keys.append(key)
+        wf_dict = self.inputs.wf_parameters.get_dict() if 'wf_parameters' in self.inputs else {}
+        extra_keys = unknown_parameter_keys(wf_dict, self._default_wf_para)
         if extra_keys:
-            error = f'ERROR: input wf_parameters for MAE Conv contains extra keys: {extra_keys}'
-            self.report(error)
+            self.report(f'ERROR: input wf_parameters for MAE Conv contains extra keys: {extra_keys}')
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
-
-        # extend wf parameters given by user using defaults
-        for key, val in wf_default.items():
-            wf_dict[key] = wf_dict.get(key, val)
-        self.ctx.wf_dict = wf_dict
+        self.ctx.wf_dict = merge_parameter_dicts(wf_dict, self._default_wf_para,
+                                                 nested=False)
 
     def get_inputs_scf(self, sqa):
         """
@@ -150,7 +127,7 @@ class FleurMaeConvWorkChain(WorkChain):
 
             try:
                 outnodedict[label] = calc.outputs.output_scf_wc_para
-            except KeyError:
+            except NotExistent:
                 message = f'One SCF workflow failed, no scf output node: {label}. I skip this one.'
                 self.ctx.errors.append(message)
                 continue

@@ -1,6 +1,8 @@
 """
 Here we specify some defaults for cli commands
 """
+import json
+
 
 def get_default_dict():
     import os
@@ -9,13 +11,13 @@ def get_default_dict():
     try:
         with open(f"{HOME}/.aiida-fleur/cli.json","r") as f:
             dict=json.load(f)
-    except:
+    except (OSError, json.JSONDecodeError):
         dict={"fleur":None,
               "inpgen":None,
               "copyback":False,
               "resources":None
               }
-    return dict    
+    return dict
 
 
 
@@ -75,7 +77,7 @@ def get_fept_film_structure():
     :return: the uuid of  `StructureData` representing a FePt film
     """
     from aiida.orm import StructureData, QueryBuilder
-    from masci_tools.util.constants import BOHR_A
+    from pyfleur.util.constants import BOHR_A
 
     a = 7.497 * BOHR_A
     cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
@@ -106,7 +108,7 @@ def get_inpgen():
 
 def get_fleur():
     """Return a `Code` node of the latest added inpgen executable in the database."""
-    fleur=fleur=get_default_dict()["fleur"]
+    fleur=get_default_dict()["fleur"]
     if fleur==None:
         fleur=get_last_code('fleur.fleur')
     return fleur    
@@ -172,7 +174,7 @@ def get_code_interactive(entry_point_name,default_uuid=None):
     i=click.prompt("Please enter your choice",type=int,default=default_i)
     try:
         result=builder.all()[i]
-    except:
+    except IndexError:
         return default_uuid
         
 

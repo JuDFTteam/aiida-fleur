@@ -14,16 +14,12 @@ Module to test the plot cmd from the commandline
 
 import os
 import pytest
-import aiida
-from packaging import version
 
 file_path = '../../files/exports/fleur_scf_fleurinp_Si.tar.gz'
 thisfilefolder = os.path.dirname(os.path.abspath(__file__))
 EXPORTFILE_FILE = os.path.abspath(os.path.join(thisfilefolder, file_path))
 
 
-@pytest.mark.skipif(version.parse(aiida.__version__) < version.parse('1.5.0'),
-                    reason='archive import and migration works only with aiida-core > 1.5.0')
 def test_cmd_plot(run_cli_command, temp_dir, import_with_migrate):
     """Test invoking the plot command in all variants.
 

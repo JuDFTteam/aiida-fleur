@@ -24,8 +24,8 @@ from aiida.parsers import Parser
 from aiida.orm import Dict
 from aiida.common.exceptions import NotExistent
 
-from masci_tools.io.parsers.fleur import outxml_parser
-from masci_tools.io.parsers.fleur_schema import InputSchemaDict
+from pyfleur.io.parsers.fleur import outxml_parser
+from pyfleur.io.parsers.fleur_schema import InputSchemaDict
 
 #Phrases in this list are used to detect out of
 #memory errors
@@ -35,6 +35,33 @@ OUT_OF_MEMORY_PHRASES = [
     'Allocation of array for communication failed'  #from io/eig66_mpi
 ]
 
+#FLEUR reports the macros it was built with in <additionalCompilerFlags>, e.g.
+#"CPP_MPI  CPP_HDF". The element is optional in every output schema (0.29-0.39), so an
+#older FLEUR may omit it entirely.
+COMPILER_FLAGS_REGEX = re.compile(r'<additionalCompilerFlags>([^<]*)</additionalCompilerFlags>')
+
+#the macro FLEUR defines when it is compiled against HDF5
+HDF5_COMPILER_FLAG = 'CPP_HDF'
+
+
+def fleur_was_built_with_hdf5(outxml_content):
+    """
+    Decide from the out.xml whether the FLEUR executable supports HDF5.
+
+    This asks FLEUR itself rather than the description of the AiiDA code node, which used
+    to carry the information and was only ever a hand-typed string.
+
+    :param outxml_content: content of the out.xml file as a string
+
+    :returns: True if HDF5 support is confirmed or cannot be determined, False only if
+              FLEUR explicitly reported a build without it
+    """
+    match = COMPILER_FLAGS_REGEX.search(outxml_content)
+    if match is None:
+        #nothing was reported, so give the calculation the benefit of the doubt
+        return True
+    return HDF5_COMPILER_FLAG in match.group(1)
+
 
 class FleurParser(Parser):
     """
@@ -43,7 +70,7 @@ class FleurParser(Parser):
     i.e checks if all files are there that should be and their condition.
     Then it parses the out.xml file and returns a (simple) parameterData node
     with the results of the last iteration.
-    Other files (DOS.x, bands.x, relax.xml, ...) are also parsed if they are retrieved.
+    The relax.xml file is also parsed if it was retrieved.
     """
 
     _setting_key = 'parser_options'
@@ -85,6 +112,10 @@ class FleurParser(Parser):
 
         has_xml_outfile = False
         has_relax_file = False
+        #both are only filled if the corresponding file was retrieved, but they are read
+        #unconditionally further down
+        error_file_lines = ''
+        shellout_file_lines = ''
 
         ######### Check presence of files ######
 
@@ -107,6 +138,22 @@ class FleurParser(Parser):
         else:
             has_xml_outfile = True
 
+            #A FLEUR built without HDF5 writes none of the files this plugin relies on,
+            #so there is nothing to be gained from parsing any further.
+            #Read as bytes: a crashed FLEUR can leave undecodable garbage in out.xml, and
+            #this check must never be the thing that breaks an otherwise parsable run
+            try:
+                with output_folder.open(FleurCalculation._OUTXML_FILE_NAME, 'rb') as out_file:
+                    outxml_content = out_file.read().decode('utf-8', errors='replace')
+            except OSError:
+                self.logger.error(f'Failed to open output file: {FleurCalculation._OUTXML_FILE_NAME}.')
+                return self.exit_codes.ERROR_OPENING_OUTPUTS
+
+            if not fleur_was_built_with_hdf5(outxml_content):
+                self.logger.error('The FLEUR executable was compiled without HDF5 support. '
+                                  'aiida-fleur requires a FLEUR built with HDF5.')
+                return self.exit_codes.ERROR_FLEUR_WITHOUT_HDF5
+
         # check if all files expected are there for the calculation
         for file in should_retrieve:
             if file not in list_of_files:
@@ -124,10 +171,10 @@ class FleurParser(Parser):
                 self.logger.error(f'Failed to open error file: {errorfile}.')
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             if error_file_lines:
+                #everything below treats this as text, so normalise rather than keep bytes
                 if isinstance(error_file_lines, bytes):
-                    error_file_lines = error_file_lines.replace(b'\x00', b' ')
-                else:
-                    error_file_lines = error_file_lines.replace('\x00', ' ')
+                    error_file_lines = error_file_lines.decode('utf-8', errors='replace')
+                error_file_lines = error_file_lines.replace('\x00', ' ')
 
         # check if something was written to the shell output file
         if FleurCalculation._SHELLOUTPUT_FILE_NAME in list_of_files:
@@ -140,20 +187,17 @@ class FleurParser(Parser):
                 return self.exit_codes.ERROR_OPENING_OUTPUTS
             if shellout_file_lines:
                 if isinstance(shellout_file_lines, bytes):
-                    shellout_file_lines = shellout_file_lines.replace(b'\x00', b' ')
-                else:
-                    shellout_file_lines = shellout_file_lines.replace('\x00', ' ')
+                    shellout_file_lines = shellout_file_lines.decode('utf-8', errors='replace')
+                shellout_file_lines = shellout_file_lines.replace('\x00', ' ')
 
         # Open log-file as well
-        try:
-            run_was_successful = "finished successfully" in error_file_lines
-            run_was_successful = run_was_successful or ("finished successfully" in shellout_file_lines)
-        except:
-            run_was_successful=False    
+        run_was_successful = ('finished successfully' in error_file_lines or
+                              'finished successfully' in shellout_file_lines)
         if FleurCalculation._LOG_FILE_NAME in list_of_files:
             logfile = FleurCalculation._LOG_FILE_NAME
-            # read
-            import json
+            #`json` is imported at module level; a second, function-local import here made `json`
+            #a local name for the WHOLE function, so the `json.load` further down raised
+            #UnboundLocalError whenever this branch did not run (no log file retrieved)
             try:
                 with output_folder.open(logfile, 'r') as efile:
                     log_file_entries = json.load(efile)
@@ -320,7 +364,7 @@ def parse_relax_file(relax_file, schema_dict):
     This function parsers relax.xml output file and
     returns a Dict containing all the data given there.
     """
-    from masci_tools.util.xml.xml_getters import get_relaxation_information
+    from pyfleur.util.xml.xml_getters import get_relaxation_information
 
     relax_file.seek(0)
     tree = etree.parse(relax_file)

@@ -21,13 +21,12 @@ from aiida import orm
 from aiida.common import AttributeDict
 from aiida.engine import WorkChain, ToContext, calcfunction
 from aiida.orm import Dict
-from aiida.plugins import CalculationFactory
 
+from aiida_fleur.calculation.inpgen_pyfleur import (InpgenGenerationFailed,
+                                                    generate_fleurinp_in_workchain)
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 from aiida_fleur.workflows.scf import FleurScfWorkChain
-
-InpgenCalculation = CalculationFactory('fleur.inpgen')
 
 
 @calcfunction
@@ -36,7 +35,7 @@ def create_result_node(result_data: Dict) -> Dict:
     Create the final stored result node with provenance.
     """
     outnode = orm.Dict(dict=result_data.get_dict())
-    outnode.label = 'output_convergence_wc_para'
+    outnode.label = 'output_cutoff_conv_wc_para'
     outnode.description = 'Contains Kmax, k-point and smearing convergence results.'
     return outnode
 
@@ -99,13 +98,13 @@ class FleurCutoffConvWorkChain(WorkChain):
     Sequential Kmax, k-point, and smearing convergence workflow starting from StructureData.
 
     Stage 0:
-      Run inpgen from structure to generate the initial FleurinpData.
+      Generate the initial FleurinpData from the structure.
 
     Stage 1:
       Converge Kmax using the generated FleurinpData.
 
     Stage 2:
-      For each k-point mesh, rerun inpgen from the same structure with a new k-mesh,
+      For each k-point mesh, regenerate from the same structure with a new k-mesh,
       obtain a fresh FleurinpData, set the converged Kmax, and run SCF.
 
     Stage 3:
@@ -113,7 +112,7 @@ class FleurCutoffConvWorkChain(WorkChain):
       Fermi smearing energy and run SCF.
     """
 
-    _workflowversion = '1.3.0'
+    _workflowversion = '1.4.0'
 
     _default_wf_para = {
         'kmax_values': [3.0, 3.3, 3.6, 3.9, 4.2, 4.5],
@@ -140,9 +139,13 @@ class FleurCutoffConvWorkChain(WorkChain):
 
         spec.input('structure', valid_type=orm.StructureData, required=True)
 
-        spec.input_namespace('inpgen', required=True)
-        spec.input('inpgen.code', valid_type=orm.Code, required=True)
-        spec.input('inpgen.options', valid_type=orm.Dict, required=True)
+        #input generation runs in-process, so `code` and `options` have nothing to point at
+        #and are accepted only so that existing submission scripts keep working. They are
+        #`non_db` so an unused Code is not recorded as an input. `parameters` and `settings`
+        #are still used. To be removed in the next major release
+        spec.input_namespace('inpgen', required=False)
+        spec.input('inpgen.code', valid_type=orm.Code, required=False, non_db=True)
+        spec.input('inpgen.options', valid_type=orm.Dict, required=False, non_db=True)
         spec.input('inpgen.parameters', valid_type=orm.Dict, required=False)
         spec.input('inpgen.settings', valid_type=orm.Dict, required=False)
 
@@ -150,13 +153,11 @@ class FleurCutoffConvWorkChain(WorkChain):
 
         spec.outline(
             cls.start,
-            cls.run_initial_inpgen,
-            cls.inspect_initial_inpgen,
+            cls.generate_initial_fleurinp,
             cls.run_kmax_series,
             cls.inspect_kmax_series,
             cls.determine_converged_kmax,
-            cls.run_kmesh_inpgen_series,
-            cls.inspect_kmesh_inpgen_series,
+            cls.generate_kmesh_fleurinps,
             cls.run_kpoints_series,
             cls.inspect_kpoints_series,
             cls.determine_converged_kpoints,
@@ -166,18 +167,19 @@ class FleurCutoffConvWorkChain(WorkChain):
             cls.return_results,
         )
 
-        spec.output('output_convergence_wc_para', valid_type=Dict)
+        spec.output('output_cutoff_conv_wc_para', valid_type=Dict)
         spec.output('output_kmax_plot', valid_type=Dict, required=False)
         spec.output('output_kpoints_plot', valid_type=Dict, required=False)
         spec.output('output_smearing_plot', valid_type=Dict, required=False)
 
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
-        spec.exit_code(231, 'ERROR_INITIAL_INPGEN_FAILED', message='Initial inpgen calculation failed.')
-        spec.exit_code(232, 'ERROR_INITIAL_FLEURINP_MISSING', message='Initial inpgen did not produce a FleurinpData.')
-        spec.exit_code(233, 'ERROR_NO_SUCCESSFUL_KMAX_RUN', message='No successful Kmax calculation available.')
-        spec.exit_code(234, 'ERROR_NO_SUCCESSFUL_KMESH_INPGEN_RUN', message='No successful inpgen calculation available for the k-point stage.')
-        spec.exit_code(235, 'ERROR_NO_SUCCESSFUL_KPOINT_RUN', message='No successful k-point calculation available.')
-        spec.exit_code(236, 'ERROR_NO_SUCCESSFUL_SMEARING_RUN', message='No successful smearing calculation available.')
+        spec.exit_code(360, 'ERROR_INITIAL_INPGEN_FAILED', message='Initial input generation failed.')
+        #232 (ERROR_INITIAL_FLEURINP_MISSING) is retired: generation either returns a
+        #FleurinpData or raises, so there is no "succeeded but produced nothing" state
+        spec.exit_code(240, 'ERROR_NO_SUCCESSFUL_KMAX_RUN', message='No successful Kmax calculation available.')
+        spec.exit_code(241, 'ERROR_NO_SUCCESSFUL_KMESH_INPGEN_RUN', message='Input generation failed for every k-mesh.')
+        spec.exit_code(242, 'ERROR_NO_SUCCESSFUL_KPOINT_RUN', message='No successful k-point calculation available.')
+        spec.exit_code(243, 'ERROR_NO_SUCCESSFUL_SMEARING_RUN', message='No successful smearing calculation available.')
 
     def start(self):
         self.report(f'Started FleurCutoffConvWorkChain version {self._workflowversion}')
@@ -217,7 +219,7 @@ class FleurCutoffConvWorkChain(WorkChain):
 
     def _scf_inputs(self):
         inputs = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
-        inputs.pop('inpgen', None)
+        #`inpgen` is already excluded from the exposed namespace, so there is nothing to pop
         inputs.pop('calc_parameters', None)
 
         settings_dict = {}
@@ -229,29 +231,25 @@ class FleurCutoffConvWorkChain(WorkChain):
 
         return inputs
 
-    def _inpgen_base_inputs(self):
-        inputs = AttributeDict()
-        inputs.code = self.inputs.inpgen.code
-        inputs.structure = self.inputs.structure
+    def _generate_fleurinp(self, parameters=None, call_link_label='inpgen'):
+        """
+        Generate a FleurinpData for this workchain's structure.
 
-        inputs.metadata = AttributeDict()
-        inputs.metadata.options = self.inputs.inpgen.options.get_dict()
+        :param parameters: the calc_parameters to use; defaults to ``inpgen.parameters``
+        :param call_link_label: the provenance link label for the generation node
+        :returns: the FleurinpData
 
-        if 'parameters' in self.inputs.inpgen:
-            inputs.parameters = self.inputs.inpgen.parameters
-        if 'settings' in self.inputs.inpgen:
-            inputs.settings = self.inputs.inpgen.settings
+        :raises InpgenGenerationFailed: mapped to an exit code by the caller
+        """
+        inpgen_inputs = self.inputs.get('inpgen', {})
+        if parameters is None:
+            parameters = inpgen_inputs.get('parameters', None)
 
-        return inputs
-
-    def _extract_fleurinp_from_calc(self, calc):
-        if 'fleurinp' in calc.outputs:
-            return calc.outputs.fleurinp
-        if 'output_fleurinp' in calc.outputs:
-            return calc.outputs.output_fleurinp
-        if 'fleurinpData' in calc.outputs:
-            return calc.outputs.fleurinpData
-        return None
+        return generate_fleurinp_in_workchain(self.inputs.structure,
+                                              self.report,
+                                              calc_parameters=parameters,
+                                              settings=inpgen_inputs.get('settings', None),
+                                              call_link_label=call_link_label)
 
     def _make_fleurinp_with_kmax(self, fleurinp: FleurinpData, kmax_value: float) -> FleurinpData:
         fm = FleurinpModifier(fleurinp)
@@ -318,28 +316,18 @@ class FleurCutoffConvWorkChain(WorkChain):
                 break
         return converged
 
-    def run_initial_inpgen(self):
-        inputs = self._inpgen_base_inputs()
-        future = self.submit(InpgenCalculation, **inputs)
-        self.report('Submitted initial inpgen generation from structure')
-        return ToContext(initial_inpgen=future)
-
-    def inspect_initial_inpgen(self):
-        calc = self.ctx.initial_inpgen
-
-        if not calc.is_finished_ok:
+    def generate_initial_fleurinp(self):
+        """Generate the FleurinpData the Kmax series starts from."""
+        try:
+            generated_fleurinp = self._generate_fleurinp()
+        except InpgenGenerationFailed as exc:
             self.ctx.successful = False
-            self.ctx.errors.append('Initial inpgen calculation failed')
+            self.ctx.errors.append(str(exc))
             return self.exit_codes.ERROR_INITIAL_INPGEN_FAILED
-
-        generated_fleurinp = self._extract_fleurinp_from_calc(calc)
-        if generated_fleurinp is None:
-            self.ctx.successful = False
-            self.ctx.errors.append('Initial inpgen produced no FleurinpData')
-            return self.exit_codes.ERROR_INITIAL_FLEURINP_MISSING
 
         self.ctx.initial_fleurinp = generated_fleurinp
         self.ctx.info.append(f'Initial FleurinpData generated from structure: {generated_fleurinp.uuid}')
+        return None
 
     def run_kmax_series(self):
         calcs = {}
@@ -388,43 +376,40 @@ class FleurCutoffConvWorkChain(WorkChain):
         self.report(f'Converged Kmax = {self.ctx.converged_kmax} (criterion: all later ΔE <= {tol} meV)')
         self.ctx.info.append(f'Converged Kmax determined as {self.ctx.converged_kmax} with tolerance {tol} meV')
 
-    def run_kmesh_inpgen_series(self):
-        calcs = {}
+    def generate_kmesh_fleurinps(self):
+        """
+        Generate one FleurinpData per k-mesh.
 
+        Generation is in-process and takes milliseconds, so these run one after another in
+        this step rather than being submitted and awaited. A mesh that fails is recorded as
+        a warning and skipped, exactly as a failed CalcJob was; only losing all of them is
+        fatal.
+        """
         for mesh in self.ctx.kpoint_meshes:
             label = f'inpgen_{mesh[0]}x{mesh[1]}x{mesh[2]}'
-            inputs = self._inpgen_base_inputs()
-            inputs.parameters = self._make_inpgen_parameters_with_mesh(mesh)
-            future = self.submit(InpgenCalculation, **inputs)
             self.ctx.kmesh_inpgen_labels.append(label)
-            calcs[label] = future
-            self.report(f'Submitted inpgen generation for mesh={mesh}')
-
-        return ToContext(**calcs)
-
-    def inspect_kmesh_inpgen_series(self):
-        for label, mesh in zip(self.ctx.kmesh_inpgen_labels, self.ctx.kpoint_meshes):
-            calc = self.ctx[label]
-            if not calc.is_finished_ok:
+            try:
+                generated_fleurinp = self._generate_fleurinp(
+                    parameters=self._make_inpgen_parameters_with_mesh(mesh),
+                    call_link_label=label)
+            except InpgenGenerationFailed as exc:
                 self.ctx.successful = False
-                self.ctx.warnings.append(f'inpgen run failed for {mesh}')
-                continue
-
-            generated_fleurinp = self._extract_fleurinp_from_calc(calc)
-            if generated_fleurinp is None:
-                self.ctx.successful = False
-                self.ctx.warnings.append(f'inpgen produced no FleurinpData for {mesh}')
+                self.ctx.warnings.append(f'input generation failed for {mesh}: {exc}')
                 continue
 
             self.ctx.kmesh_inpgen_results.append({
                 'mesh': list(mesh),
                 'nkpts_full_grid': int(mesh[0] * mesh[1] * mesh[2]),
                 'generated_fleurinp': generated_fleurinp,
-                'inpgen_uuid': calc.uuid,
+                #kept under its original name for the result node; it now identifies the
+                #FleurinpData rather than the calculation that produced it
+                'inpgen_uuid': generated_fleurinp.uuid,
             })
 
         if not self.ctx.kmesh_inpgen_results:
             return self.exit_codes.ERROR_NO_SUCCESSFUL_KMESH_INPGEN_RUN
+
+        return None
 
     def run_kpoints_series(self):
         calcs = {}
@@ -572,7 +557,7 @@ class FleurCutoffConvWorkChain(WorkChain):
 
         result_input = orm.Dict(dict=out)
         result_dict = create_result_node(result_input)
-        self.out('output_convergence_wc_para', result_dict)
+        self.out('output_cutoff_conv_wc_para', result_dict)
 
         plot_nodes = create_plot_nodes(result_input)
         self.out('output_kmax_plot', plot_nodes['output_kmax_plot'])

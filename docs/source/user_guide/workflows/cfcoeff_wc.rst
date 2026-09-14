@@ -41,7 +41,8 @@ is calculated using one of two options:
 This is done by first calculating the converged charge density for the 4f structure
 and if used the analogue structure with the FleurScfWorkChain. Then a subsequent calculation
 is done to extract the potentials/charge density. The calculation of the formula above
-is done after with the :py:class:`~masci_tools.tools.cf_calculation.CFCalculation` tool in `masci-tools`.
+is done after with the ``CFCalculation`` tool from `pyfleur
+<https://iffgit.fz-juelich.de/fleur/pyfleur>`_ (``pyfleur.tools.cf_calculation``).
 
 Input nodes
 ^^^^^^^^^^^

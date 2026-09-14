@@ -17,16 +17,18 @@ import numpy as np
 
 from aiida.plugins import DataFactory
 from aiida.orm import Code, load_node
+from aiida.common.exceptions import NotExistent
 from aiida.orm import Float, StructureData, Dict
 from aiida.engine import WorkChain, ToContext  # ,Outputs
 from aiida.engine import calcfunction as cf
 
 from aiida_fleur.tools.StructureData_util import rescale, rescale_nowf, is_structure
 from aiida_fleur.workflows.scf import FleurScfWorkChain
+from aiida_fleur.calculation.inpgen_pyfleur import warn_if_inpgen_code_given
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf_util import check_eos_energies
 
-from masci_tools.util.constants import HTR_TO_EV
+from pyfleur.util.constants import HTR_TO_EV
 
 # pylint: disable=invalid-name
 FleurInpData = DataFactory('fleur.fleurinp')
@@ -51,11 +53,12 @@ class FleurStrainWorkChain(WorkChain):
                                 about general succeed, fit results and so on.
     """
 
-    _workflowversion = '0.3.6'
+    _workflowversion = '0.4.0'
 
     _default_options = {
         'resources': {
-            'num_machines': 1
+            'num_machines': 1,
+            'num_mpiprocs_per_machine': 1
         },
         'max_wallclock_seconds': 6 * 60 * 60,
         'queue_name': '',
@@ -64,10 +67,13 @@ class FleurStrainWorkChain(WorkChain):
         'environment_variables': {}
     }
 
-    _wf_default = {
-        'fleur_runmax': 4,
-        'density_converged': 0.02,
-        'itmax_per_run': 30,
+    #the first three are handed straight to the sub-SCF via _scf_keys, so they are taken
+    #from FleurScfWorkChain rather than re-typed. 'density_converged' used to read 0.02
+    #here, 1000x looser than SCF's own default, with nothing recording that as deliberate
+    _default_wf_para = {
+        'fleur_runmax': FleurScfWorkChain._default_wf_para['fleur_runmax'],
+        'density_converged': FleurScfWorkChain._default_wf_para['density_converged'],
+        'itmax_per_run': FleurScfWorkChain._default_wf_para['itmax_per_run'],
         'inpxml_changes': [],
         'points': 3,
         'step': 0.02,
@@ -82,7 +88,10 @@ class FleurStrainWorkChain(WorkChain):
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('structure', valid_type=StructureData, required=True)
         spec.input('calc_parameters', valid_type=Dict, required=False)
-        spec.input('inpgen', valid_type=Code, required=True)
+        #optional: without a code the input is generated in-process by pyfleur
+        #accepted and ignored; the input is generated in-process. non_db so an unused Code
+        #is not recorded as an input. To be removed in the next major release
+        spec.input('inpgen', valid_type=Code, required=False, non_db=True)
         spec.input('fleur', valid_type=Code, required=True)
         spec.input('options', valid_type=Dict, required=False)
         spec.input('settings', valid_type=Dict, required=False)
@@ -92,7 +101,7 @@ class FleurStrainWorkChain(WorkChain):
         spec.output('output_strain_wc_para', valid_type=Dict)
 
         # exit codes
-        spec.exit_code(331,
+        spec.exit_code(233,
                        'ERROR_INVALID_CODE_PROVIDED',
                        message='Invalid code node specified, check inpgen and fleur code nodes.')
 
@@ -121,7 +130,7 @@ class FleurStrainWorkChain(WorkChain):
         # TODO get all successful from convergence, if all True this
 
         # initialize the dictionary using defaults if no wf parameters are given
-        wf_default = self._wf_default
+        wf_default = self._default_wf_para
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
@@ -149,15 +158,9 @@ class FleurStrainWorkChain(WorkChain):
             options[key] = options.get(key, val)
         self.ctx.options = options
 
-        # Check if user gave valid inpgen and fleur executables
+        # Check if user gave a valid fleur executable
         inputs = self.inputs
-        if 'inpgen' in inputs:
-            try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen')
-            except ValueError:
-                error = ('The code you provided for inpgen of FLEUR does not use the plugin fleur.inpgen')
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+        warn_if_inpgen_code_given(inputs, self.report)
 
         if 'fleur' in inputs:
             try:
@@ -228,8 +231,11 @@ class FleurStrainWorkChain(WorkChain):
             calc_para = {}
         inputs['calc_parameters'] = calc_para
 
-        inputs['inpgen'] = self.inputs.inpgen
         inputs['fleur'] = self.inputs.fleur
+
+        #the settings port used to be declared and then dropped on the floor
+        if 'settings' in self.inputs:
+            inputs['settings'] = self.inputs.settings
 
         inputs['options'] = Dict(inputs['options'])
         inputs['wf_parameters'] = Dict(inputs['wf_parameters'])
@@ -261,7 +267,7 @@ class FleurStrainWorkChain(WorkChain):
 
             try:
                 _ = calc.outputs.output_scf_wc_para
-            except KeyError:
+            except NotExistent:
                 message = f'One SCF workflow failed, no scf output node: {label}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
@@ -344,6 +350,7 @@ class FleurStrainWorkChain(WorkChain):
         outputnode_dict['info'] = self.ctx.info
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['errors'] = self.ctx.errors
+        outputnode_dict['successful'] = self.ctx.successful
 
         if self.ctx.successful:
             self.report('Done, Strain calculation complete')

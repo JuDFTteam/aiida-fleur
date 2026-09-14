@@ -245,15 +245,19 @@ FLEUR code can be set up the same way as the input generator. However, there is 
 that has to be mentioned.
 
 .. note::
-        If you use an HDF version of the FLEUR code then AiiDA-FLEUR plugin should know this. The
-        main reason for this is that names of output files vary between HDF and standard FLEUR versions.
-        To properly set up an HDF version of the code, you *must* mention HDF5 (or hdf5) in the code
-        description and not change it in the future. An example of setting up an HDF version:
+        The FLEUR executable **must be compiled with HDF5 support**. AiiDA-FLEUR reads the charge
+        density, band structure, DOS, Green's functions and crystal field data from the HDF5 files
+        that only such a build writes, so a FLEUR without HDF5 cannot be used.
+
+        Nothing has to be configured for this: earlier versions of the plugin decided from the code
+        node's description whether the executable supported HDF5, and that is no longer inspected.
+        If FLEUR reports a build without HDF5 in its ``out.xml``, the calculation fails with the
+        exit code ``ERROR_FLEUR_WITHOUT_HDF5``.
 
         .. code-block:: bash
 
             Label: fleur
-            Description []: This is the FLEUR code compiled with HDF5.
+            Description []: FLEUR MaX 6.0
             Default calculation input plugin: fleur.fleur
             Installed on target computer? [True]: True
             Computer: remote_cluster
@@ -286,7 +290,7 @@ the automated standard test set once to check on the installation
 
 .. code-block:: shell
 
-  cd aiida_fleur/tests/
+  cd tests/
   ./run_all_cov.sh
 
 

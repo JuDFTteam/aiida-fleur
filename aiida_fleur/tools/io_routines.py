@@ -120,10 +120,10 @@ def compress_fleuroutxml(outxmlfilepath, dest_file_path=None, delete_eig=True, i
      compress_fleuroutxml(outxmlsrc, dest_file_path=outxmldes, iterations_to_keep=14)
      compress_fleuroutxml(outxmlsrc, dest_file_path=outxmldes, iterations_to_keep=-1)
     """
-    from masci_tools.util.xml.xml_setters_names import delete_tag
-    from masci_tools.util.schema_dict_util import get_number_of_nodes
-    from masci_tools.util.schema_dict_util import eval_simple_xpath
-    from masci_tools.io.fleur_xml import load_outxml
+    from pyfleur.util.xml.xml_setters_names import delete_tag
+    from pyfleur.util.schema_dict_util import get_number_of_nodes
+    from pyfleur.util.schema_dict_util import eval_simple_xpath
+    from pyfleur.io.fleur_xml import load_outxml
     from lxml import etree
 
     xmltree, schema_dict = load_outxml(outxmlfilepath)

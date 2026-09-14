@@ -68,7 +68,7 @@ class FleurInitialCLSWorkChain(WorkChain):
     #     'relax_para' : 'default'
     #     'calculate_doses' : False
     #     'dos_para' : 'default'
-    _workflowversion = '0.5.1'
+    _workflowversion = '0.6.0'
     _default_wf_para = {
         'references': {},
         'relax': True,
@@ -96,16 +96,6 @@ class FleurInitialCLSWorkChain(WorkChain):
         'environment_variables': {}
     }
 
-    ERROR_INVALID_INPUT_RESOURCES = 1
-    ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED = 2
-    ERROR_INVALID_CODE_PROVIDED = 3
-    ERROR_INPGEN_CALCULATION_FAILED = 4
-    ERROR_CHANGING_FLEURINPUT_FAILED = 5
-    ERROR_CALCULATION_INVALID_INPUT_FILE = 6
-    ERROR_FLEUR_CALCULATION_FALIED = 7
-    ERROR_CONVERGENCE_NOT_ARCHIVED = 8
-    ERROR_REFERENCE_MISSING = 9
-
     @classmethod
     def define(cls, spec):
         super().define(spec)
@@ -121,6 +111,10 @@ class FleurInitialCLSWorkChain(WorkChain):
         spec.outline(cls.check_input, cls.get_references, cls.run_fleur_scfs,
                      if_(cls.relaxation_needed)(cls.relax), cls.find_parameters, cls.run_scfs_ref, cls.return_results)
         spec.output('output_initial_cls_wc_para', valid_type=Dict)
+
+        # exit codes
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
+        spec.exit_code(347, 'ERROR_REFERENCE_MISSING', message='Reference calculation missing for at least one element.')
 
     def check_input(self):
         """
@@ -146,6 +140,7 @@ class FleurInitialCLSWorkChain(WorkChain):
         self.ctx.ref_calcs_res = []
         self.ctx.struc_to_relax = []
         self.ctx.successful = True
+        self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
         self.ctx.ref = {}
@@ -173,7 +168,7 @@ class FleurInitialCLSWorkChain(WorkChain):
         self.ctx.scf_para = wf_dict.get('scf_para', default.get('scf_para'))
         self.ctx.relax = wf_dict.get('relax', default.get('relax'))
         self.ctx.relax_mode = wf_dict.get('relax_mode', default.get('relax_mode'))
-        self.ctx.relax_para = wf_dict.get('relax_para', default.get('dos_para'))
+        self.ctx.relax_para = wf_dict.get('relax_para', default.get('relax_para'))
 
         defaultoptions = self._default_options
         if 'options' in self.inputs:
@@ -203,11 +198,6 @@ class FleurInitialCLSWorkChain(WorkChain):
         elif 'structure' in inputs:
             self.ctx.elements = list(inputs.structure.get_composition().keys())
             #self.ctx.elements = list(s.get_symbols_set())
-            if 'inpgen' not in inputs:
-                error = 'ERROR: StructureData was provided, but no inpgen code was provided'
-                self.ctx.errors.append(error)
-                self.control_end_wc(error)
-                return self.ERROR_INVALID_INPUT_RESOURCES
             if 'calc_parameters' in inputs:
                 self.ctx.calcs_torun.append([inputs.get('structure'), inputs.get('calc_parameters')])
             else:
@@ -216,7 +206,7 @@ class FleurInitialCLSWorkChain(WorkChain):
             error = 'ERROR: No StructureData nor FleurinpData was provided'
             self.ctx.errors.append(error)
             self.control_end_wc(error)
-            return self.ERROR_INVALID_INPUT_RESOURCES
+            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         self.report(f'INFO: elements in structure: {self.ctx.elements}')
 
     def get_references(self):
@@ -371,7 +361,7 @@ class FleurInitialCLSWorkChain(WorkChain):
                      'what you want me to do. Please check the workchain report'
                      'for details.')
             self.control_end_wc(error)
-            return self.ERROR_REFERENCE_MISSING
+            return self.exit_codes.ERROR_REFERENCE_MISSING
 
         self.report(f'INFO ref_calcs_torun: {self.ctx.ref_calcs_torun} ')
 
@@ -422,7 +412,6 @@ class FleurInitialCLSWorkChain(WorkChain):
                     'wf_parameters': wf_parameters,
                     'structure': node,
                     'options': options,
-                    'inpgen': self.inputs.inpgen,
                     'fleur': self.inputs.fleur,
                     #'metadata' : {'label' : scf_label,
                     #             'description' : scf_description}
@@ -438,7 +427,6 @@ class FleurInitialCLSWorkChain(WorkChain):
                         'structure': node[0],
                         'calc_parameters': node[1],
                         'options': options,
-                        'inpgen': self.inputs.inpgen,
                         'fleur': self.inputs.fleur,
                         'metadata': {
                             'label': scf_label,
@@ -552,7 +540,6 @@ class FleurInitialCLSWorkChain(WorkChain):
                     'wf_parameters': wf_parameters,
                     'structure': node,
                     'options': options,
-                    'inpgen': self.inputs.inpgen,
                     'fleur': self.inputs.fleur,
                     'metadata': {
                         'label': scf_label,
@@ -570,7 +557,6 @@ class FleurInitialCLSWorkChain(WorkChain):
                     'structure': node[0],
                     'calc_parameters': node[1],
                     'options': options,
-                    'inpgen': self.inputs.inpgen,
                     'fleur': self.inputs.fleur,
                     'metadata': {
                         'label': scf_label,
@@ -792,7 +778,9 @@ class FleurInitialCLSWorkChain(WorkChain):
 
         outputnode_dict['workflow_name'] = self.__class__.__name__
         outputnode_dict['workflow_version'] = self._workflowversion
+        outputnode_dict['info'] = self.ctx.info
         outputnode_dict['warnings'] = self.ctx.warnings
+        outputnode_dict['errors'] = self.ctx.errors
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['material'] = material
         outputnode_dict['corelevel_energies'] = cl

@@ -1,0 +1,20 @@
+# Configuration for the aiida-test-cache plugin (mock codes + archive caches).
+#
+# The file used to be called .aiida-testing-config.yml; the plugin was renamed upstream and now
+# looks for this name. The schema is unchanged.
+#
+# `mock_code` maps a code label to the REAL executable. It is only needed when REGENERATING the
+# recorded outputs -- for a normal run the mock code replays what is stored under
+# tests/<suite>/calculations/ and no executable is involved. Leave the section empty for that:
+# a label listed here must point at a path that exists, or the fixture raises before any test runs.
+#
+# To regenerate, put the real binaries in tests/local_exe/ (gitignored), uncomment the two entries
+# below, run the suite, then use tests/update_workflow_caches.py to copy the results back in.
+mock_code: {}
+    # inpgen: ./local_exe/inpgen
+    # fleur: ./local_exe/fleur
+archive_cache:
+    ignore:
+        calcjob_attributes:
+            - environment_variables_double_quotes
+            - metadata_inputs

@@ -148,7 +148,7 @@ Other packages (in addition to all requirements of AiiDA):
 
 * lxml
 * ase
-* masci-tools
+* pyfleur
 
 AiiDA-package Layout:
 =====================
@@ -180,7 +180,7 @@ The package also contains workflows
 #. Scf :ref:`Spin Spiral Dispersion<ssdisp_conv_wc>`
 
 The package also contains AiiDA dependent tools around the workflows and plugins.
-All tools independent on aiida-core are moved to the masci-tools repository,
+All tools independent on aiida-core are moved to the pyfleur repository,
 to be available to other non AiiDA related projects and tools.
 
 

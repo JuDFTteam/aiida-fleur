@@ -24,8 +24,10 @@ from aiida.orm import Float, StructureData, Dict, List
 from aiida.engine import WorkChain, ToContext
 from aiida.engine import calcfunction as cf
 from aiida.common import AttributeDict
+from aiida.common.exceptions import NotExistent
 
-from masci_tools.util.constants import HTR_TO_EV
+from pyfleur.util.constants import HTR_TO_EV
+from aiida_fleur.workflows._base import merge_parameter_dicts, unknown_parameter_keys
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
 
@@ -52,11 +54,9 @@ class FleurEosWorkChain(WorkChain):
                                 about general succeed, fit results and so on.
     """
 
-    _workflowversion = '0.6.0'
+    _workflowversion = '0.7.0'
 
     _default_wf_para = {'points': 9, 'step': 0.005, 'guess': 1.00, 'enforce_same_para': True}
-    _default_options = FleurScfWorkChain._default_options
-
     @classmethod
     def define(cls, spec):
         super().define(spec)
@@ -72,12 +72,12 @@ class FleurEosWorkChain(WorkChain):
         spec.outline(cls.start, cls.structures, cls.run_first, cls.inspect_first, cls.converge_scf, cls.return_results)
 
         spec.output('output_eos_wc_para', valid_type=Dict)
-        spec.output('output_eos_wc_structure', valid_type=StructureData)
+        spec.output('output_eos_wc_structure', valid_type=StructureData, required=False)
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
-        spec.exit_code(400,
-                       'ERROR_SUB_PROCESS_FAILED',
+        spec.exit_code(345,
+                       'ERROR_SCF_FAILED',
                        message='At least one of the SCF sub processes did not finish successfully.')
 
     def start(self):
@@ -105,25 +105,13 @@ class FleurEosWorkChain(WorkChain):
         # TODO get all successful from convergence, if all True this
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = self._default_wf_para
-        if 'wf_parameters' in self.inputs:
-            wf_dict = self.inputs.wf_parameters.get_dict()
-        else:
-            wf_dict = wf_default
-
-        extra_keys = []
-        for key in wf_dict:
-            if key not in wf_default:
-                extra_keys.append(key)
+        wf_dict = self.inputs.wf_parameters.get_dict() if 'wf_parameters' in self.inputs else {}
+        extra_keys = unknown_parameter_keys(wf_dict, self._default_wf_para)
         if extra_keys:
-            error = f'ERROR: input wf_parameters for EOS contains extra keys: {extra_keys}'
-            self.report(error)
+            self.report(f'ERROR: input wf_parameters for EOS contains extra keys: {extra_keys}')
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
-
-        # extend wf parameters given by user using defaults
-        for key, val in wf_default.items():
-            wf_dict[key] = wf_dict.get(key, val)
-        self.ctx.wf_dict = wf_dict
+        self.ctx.wf_dict = merge_parameter_dicts(wf_dict, self._default_wf_para,
+                                                 nested=False)
 
         self.ctx.points = wf_dict.get('points', 9)
         self.ctx.step = wf_dict.get('step', 0.005)
@@ -197,8 +185,8 @@ class FleurEosWorkChain(WorkChain):
         first_scf = self.ctx[label]
         if not first_scf.is_finished_ok:
             self.report('Initial sub process did not finish successfully; aborting the workchain.')
-            # return self.exit_codes.ERROR_SUB_PROCESS_FAILED.format(cls=self.inputs.sub_process_class)  # pylint: disable=no-member
-            return self.exit_codes.ERROR_SUB_PROCESS_FAILED
+            # return self.exit_codes.ERROR_SCF_FAILED.format(cls=self.inputs.sub_process_class)  # pylint: disable=no-member
+            return self.exit_codes.ERROR_SCF_FAILED
 
         fleurinp = first_scf.outputs.fleurinp
         self.ctx.first_calc_parameters = fleurinp.get_parameterdata(write_ids=orm.Bool(False))
@@ -291,7 +279,7 @@ class FleurEosWorkChain(WorkChain):
 
             try:
                 outputnode_scf = calc.outputs.output_scf_wc_para
-            except KeyError:
+            except NotExistent:
                 message = f'One SCF workflow failed, no scf output node: {label}. I skip this one.'
                 self.ctx.errors.append(message)
                 self.ctx.successful = False
@@ -398,7 +386,8 @@ class FleurEosWorkChain(WorkChain):
             'bulk_modulus_units': 'GPa',
             'info': self.ctx.info,
             'warnings': self.ctx.warnings,
-            'errors': self.ctx.errors
+            'errors': self.ctx.errors,
+            'successful': self.ctx.successful
         }
 
         if self.ctx.successful:

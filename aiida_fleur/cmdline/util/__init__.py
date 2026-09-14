@@ -32,10 +32,7 @@ def cmd_defaults():
     
     import os
     HOME=os.getenv("HOME")
-    try:
-        os.mkdir(f"{HOME}/.aiida-fleur")
-    except:
-         pass #dir might exist already
+    os.makedirs(f"{HOME}/.aiida-fleur", exist_ok=True)
     with open(f"{HOME}/.aiida-fleur/cli.json","w") as f:
             json.dump(dict,f)
     

@@ -19,6 +19,41 @@ from aiida.orm import Node, load_node, Bool
 from aiida.plugins import DataFactory, CalculationFactory
 
 
+def validate_fleur_entry_points(inputs, port_namespace):  # pylint: disable=unused-argument
+    """
+    Validator for workchains that start either from a full SCF or from a previous calculation.
+
+    The rule is the same in FleurBandDos/Mae/SSDisp/DMI: give either the ``scf`` namespace,
+    or a ``remote_data`` to continue from (optionally overlaid with a ``fleurinp``), but not
+    both and not neither. Used as ``spec.inputs.validator`` so that an illegal combination is
+    rejected at submission time instead of creating a process node that aborts in its first
+    step.
+
+    Workchains with further entry points (Jij's ``greensf_*`` postprocessing mode,
+    OrbControl's ``relaxed_remotes``/``fixed_remotes``) have a wider rule and validate
+    themselves.
+
+    :param inputs: the inputs of the namespace being validated
+    :param port_namespace: the namespace, unused, required by the plumpy validator signature
+
+    :returns: None if the combination is legal, otherwise the error message
+    """
+    if not inputs:
+        #an optional namespace that was not given is not ours to complain about
+        return None
+
+    if 'scf' in inputs:
+        if 'remote_data' in inputs:
+            return "Provide either the 'scf' namespace or 'remote_data', not both."
+        if 'fleurinp' in inputs:
+            return "Provide either the 'scf' namespace or 'fleurinp', not both."
+    elif 'remote_data' not in inputs:
+        return "Provide either the 'scf' namespace to run a new SCF, or 'remote_data' to " \
+               'continue from a previous calculation.'
+
+    return None
+
+
 def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', settings=None, add_comp_para=None):
     '''
     Assembles the input dictionary for Fleur Calculation. Does not check if a user gave
@@ -107,7 +142,14 @@ def get_inputs_fleur(code, remote, fleurinp, options, label='', description='', 
 
 def get_inputs_inpgen(structure, inpgencode, options, label='', description='', settings=None, params=None, **kwargs):
     '''
-    Assembles the input dictionary for Fleur Calculation.
+    Assembles the input dictionary for an inpgen CalcJob.
+
+    .. note::
+        No workchain in this package uses this any more. They generate their input
+        in-process with
+        :py:func:`~aiida_fleur.calculation.inpgen_pyfleur.generate_fleurinp`, which needs
+        no code and no scheduler. This helper is kept for building the CalcJob's inputs by
+        hand, which is still the way to run the Fortran generator deliberately.
 
     :param structure: input structure of StructureData type
     :param inpgencode: inpgen code of Code type
@@ -608,14 +650,21 @@ def find_nested_process(wc_node, p_class):
     '''
     This function finds all nested child processes of p_class
     '''
+    from aiida.common.exceptions import EntryPointError
+    from aiida.orm import ProcessNode
+
     child_process = []
     lower = wc_node.get_outgoing().all()
     for i in lower:
+        #Data nodes hang off the same links and have no process_class
+        if not isinstance(i.node, ProcessNode):
+            continue
         try:
             if i.node.process_class is p_class:
                 child_process.append(i.node)
             else:
                 child_process.extend(find_nested_process(i.node, p_class))
-        except:  #pylint: disable=bare-except
+        except EntryPointError:
+            #a stored process whose plugin is not installed here
             pass
     return child_process

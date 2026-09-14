@@ -11,7 +11,6 @@
 """
     In this module you find the workflow 'FleurRelaxTorqueWorkChain' which relaxed a spin struture.
 """
-import copy
 
 from aiida.engine import WorkChain, ToContext, while_, if_
 from aiida.engine import calcfunction as cf
@@ -19,6 +18,7 @@ from aiida.orm import load_node, Dict
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
+from aiida_fleur.workflows._base import merge_parameter_dicts, unknown_parameter_keys
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.calculation.fleur import FleurCalculation as FleurCalc
 from aiida_fleur.tools.StructureData_util import break_symmetry_wf
@@ -30,7 +30,7 @@ class FleurRelaxTorqueWorkChain(WorkChain):
     This workflow performs spin structure optimization.
     """
 
-    _workflowversion = '0.0.1'
+    _workflowversion = '0.1.0'
 
     _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
@@ -42,8 +42,6 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         'maxstep': 0.1,
         'trajectory_workchains': []
     }
-
-    _default_options = FleurScfWorkChain._default_options
 
     @classmethod
     def define(cls, spec):
@@ -70,12 +68,22 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         )
 
         spec.output('output_relax_torque_wc_para', valid_type=Dict)
+        spec.expose_outputs(FleurScfWorkChain, namespace='last_scf',
+                            namespace_options={'required': False})
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
-        spec.exit_code(231, 'ERROR_INPGEN_MISSING', message='If you want to run a final scf inpgen has to be there.')
         spec.exit_code(350, 'ERROR_DID_NOT_RELAX', message='Optimization cycle did not lead to convergence.')
-        spec.exit_code(351, 'ERROR_SCF_FAILED', message='An SCF Workchain failed for some reason.')
+        spec.exit_code(345, 'ERROR_SCF_FAILED', message='An SCF Workchain failed for some reason.')
+        #the four below are returned by inspect_scf/get_results and must keep the numbers
+        #FleurRelaxWorkChain uses for the same conditions
+        spec.exit_code(352, 'ERROR_NO_RELAX_OUTPUT', message='Found no relaxed structure info in the output of SCF')
+        spec.exit_code(353, 'ERROR_NO_SCF_OUTPUT', message='Found no SCF output')
+        spec.exit_code(311,
+                       'ERROR_VACUUM_SPILL_RELAX',
+                       message='FLEUR calculation failed because an atom spilled to the'
+                       'vacuum during relaxation')
+        spec.exit_code(313, 'ERROR_MT_RADII_RELAX', message='Overlapping MT-spheres during relaxation.')
 
     def start(self):
         """
@@ -95,25 +103,13 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         self.ctx.old_scf = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._default_wf_para)
-        if 'wf_parameters' in self.inputs:
-            wf_dict = self.inputs.wf_parameters.get_dict()
-        else:
-            wf_dict = wf_default
-
-        extra_keys = []
-        for key in wf_dict.keys():
-            if key not in wf_default.keys():
-                extra_keys.append(key)
+        wf_dict = self.inputs.wf_parameters.get_dict() if 'wf_parameters' in self.inputs else {}
+        extra_keys = unknown_parameter_keys(wf_dict, self._default_wf_para)
         if extra_keys:
-            error = f'ERROR: input wf_parameters for Relax contains extra keys: {extra_keys}'
-            self.report(error)
+            self.report(f'ERROR: input wf_parameters for Relax contains extra keys: {extra_keys}')
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
-
-        # extend wf parameters given by user using defaults
-        for key, val in wf_default.items():
-            wf_dict[key] = wf_dict.get(key, val)
-        self.ctx.wf_dict = wf_dict
+        self.ctx.wf_dict = merge_parameter_dicts(wf_dict, self._default_wf_para,
+                                                 nested=False)
 
         # Check if final scf can be run
         run_final = wf_dict.get('run_final_scf', False)
@@ -139,9 +135,6 @@ class FleurRelaxTorqueWorkChain(WorkChain):
                     input_final_scf[key] = val
 
             self.ctx.input_final_scf = input_final_scf
-            if 'inpgen' not in input_scf and 'inpgen' not in input_final_scf:
-                self.report('Error: Wrong input: inpgen missing for final scf.')
-                return self.exit_codes.ERROR_INPGEN_MISSING
 
         # initialize contents to avoid access failures
         self.ctx.total_energy_last = None  #total_energy
@@ -227,8 +220,11 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         input_scf = AttributeDict(self.exposed_inputs(FleurScfWorkChain, namespace='scf'))
         if 'structure' in input_scf:
             del input_scf.structure
-            del input_scf.inpgen
-            del input_scf.calc_parameters
+            #guarded: both are optional, and `inpgen` need not have been given at all
+            if 'inpgen' in input_scf:
+                del input_scf.inpgen
+            if 'calc_parameters' in input_scf:
+                del input_scf.calc_parameters
 
         if 'wf_parameters' not in input_scf:
             scf_wf_dict = {}
@@ -517,6 +513,11 @@ class FleurRelaxTorqueWorkChain(WorkChain):
         # TODO: for a trajectory output node all corresponding nodes have to go into
         # con_nodes
         outdict = create_relax_result_node(output_relax_torque_wc_para=outnode, **con_nodes)
+
+        #expose the outputs of the last scf, as FleurRelaxWorkChain does, so the two are
+        #interchangeable for a downstream consumer
+        if self.ctx.scf_res is not None:
+            self.out_many(self.exposed_outputs(self.ctx.scf_res, FleurScfWorkChain, namespace='last_scf'))
 
         # return output nodes
         for link_name, node in outdict.items():

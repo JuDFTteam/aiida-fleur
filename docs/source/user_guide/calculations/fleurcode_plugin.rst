@@ -93,7 +93,7 @@ All the outputs can be found in ``calculation.outputs``.
 ..           The 'simple' output node will evolve. A draft of a second complex output node which
 ..           contains informations of all iterations and atomtypes exists, but a dictionary is not
 ..           the optimal structure for this. For now this is postponed. In any case if you want to
-..           parse something from the out.xml checkout the methods in the `masci-tools` libary.
+..           parse something from the out.xml checkout the methods in the `pyfleur` libary.
 
 Errors
 ''''''
@@ -234,11 +234,10 @@ scheduler::
 
 'mpirun' '-np' 'XX' 'path_to_fleur_executable' '-wtime' 'XXX' < 'inp.xml' > 'shell.out' 2> 'out.error'
 
-If the code node description contains 'hdf5' in some form, the plugin will use per default hdf5,
-it will only copy the last hdf5 density back, not the full cdn.hdf file.
-The Fleur execution line becomes in this case::
+FLEUR must be compiled with HDF5 support. The plugin always copies back only the last HDF5
+density, not the full ``cdn.hdf`` file, so the Fleur execution line is::
 
-'mpirun' '-np' 'XX' 'path_to_fleur_executable' '-last_extra' '-wtime' 'XXX' < 'inp.xml' > 'shell.out' 2> 'out.error'
+'mpirun' '-np' 'XX' 'path_to_fleur_executable' '-minimalOutput' '-last_extra' '-no_send' '-wtime' 'XXX' < 'inp.xml' > 'shell.out' 2> 'out.error'
 
 
 Retrieving more files

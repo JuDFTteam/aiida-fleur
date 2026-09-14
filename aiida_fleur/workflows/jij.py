@@ -17,7 +17,6 @@ import copy
 import io
 import json
 
-from lxml import etree
 import numpy as np
 import pandas as pd
 
@@ -30,11 +29,12 @@ from aiida.engine import calcfunction as cf
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.workflows._base import validate_and_freeze
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, test_and_get_codenode
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
-from masci_tools.tools.greensf_calculations import calculate_heisenberg_tensor, decompose_jij_tensor
+from pyfleur.tools.greensf_calculations import calculate_heisenberg_tensor, decompose_jij_tensor
 
 
 class FleurJijWorkChain(WorkChain):
@@ -43,7 +43,7 @@ class FleurJijWorkChain(WorkChain):
     with the magnetization along z, x and y.
     """
 
-    _workflowversion = '0.1.0'
+    _workflowversion = '0.2.0'
     _directions = ('z', 'x', 'y')
 
     _default_options = {
@@ -113,7 +113,7 @@ class FleurJijWorkChain(WorkChain):
                            namespace='scf')
         spec.input('wf_parameters', valid_type=orm.Dict, required=False)
         spec.input('fleur', valid_type=orm.Code, required=False)
-        spec.input('remote', valid_type=orm.RemoteData, required=False)
+        spec.input('remote_data', valid_type=orm.RemoteData, required=False)
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
         spec.input('options', valid_type=orm.Dict, required=False)
         spec.input('greensf_z', valid_type=orm.SinglefileData, required=False)
@@ -126,12 +126,12 @@ class FleurJijWorkChain(WorkChain):
                              cls.submit_greens_calculations), cls.collect_tensors), cls.return_results)
 
         spec.output('output_jij_wc_para', valid_type=orm.Dict)
-        spec.output('jij_tensor_z', valid_type=orm.Dict)
-        spec.output('jij_tensor_x', valid_type=orm.Dict)
-        spec.output('jij_tensor_y', valid_type=orm.Dict)
-        spec.output('jij_tensor_z_file', valid_type=orm.SinglefileData)
-        spec.output('jij_tensor_x_file', valid_type=orm.SinglefileData)
-        spec.output('jij_tensor_y_file', valid_type=orm.SinglefileData)
+        spec.output('jij_tensor_z', valid_type=orm.Dict, required=False)
+        spec.output('jij_tensor_x', valid_type=orm.Dict, required=False)
+        spec.output('jij_tensor_y', valid_type=orm.Dict, required=False)
+        spec.output('jij_tensor_z_file', valid_type=orm.SinglefileData, required=False)
+        spec.output('jij_tensor_x_file', valid_type=orm.SinglefileData, required=False)
+        spec.output('jij_tensor_y_file', valid_type=orm.SinglefileData, required=False)
         spec.output('full_jij_tensor', valid_type=orm.Dict)
         spec.output('full_jij_tensor_file', valid_type=orm.SinglefileData)
         spec.output('jij_interactions', valid_type=orm.Dict)
@@ -148,7 +148,7 @@ class FleurJijWorkChain(WorkChain):
         spec.exit_code(335,
                        'ERROR_REFERENCE_CALCULATION_NOREMOTE',
                        message='Found no reference calculation remote repository.')
-        spec.exit_code(336, 'ERROR_GREENSF_CALCULATION_FAILED', message='Green function calculation failed.')
+        spec.exit_code(338, 'ERROR_GREENSF_CALCULATION_FAILED', message='Green function calculation failed.')
         spec.exit_code(337, 'ERROR_POSTPROCESSING_FAILED', message='Postprocessing of greensf.hdf failed.')
 
     def start(self):
@@ -217,7 +217,7 @@ class FleurJijWorkChain(WorkChain):
 
             self.ctx.postprocess_only = True
 
-            for invalid in ('scf', 'remote', 'fleurinp'):
+            for invalid in ('scf', 'remote_data', 'fleurinp'):
                 if invalid in self.inputs:
                     error = f'ERROR: you gave {invalid} together with explicit greensf files for postprocessing only'
                     self.control_end_wc(error)
@@ -239,16 +239,16 @@ class FleurJijWorkChain(WorkChain):
             self.ctx.scf_needed = False
         elif 'scf' in self.inputs:
             self.ctx.scf_needed = True
-            if 'remote' in self.inputs:
-                error = 'ERROR: you gave SCF input + remote for the Jij workflow'
+            if 'remote_data' in self.inputs:
+                error = 'ERROR: you gave SCF input + remote_data for the Jij workflow'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'fleurinp' in self.inputs:
                 error = 'ERROR: you gave SCF input + fleurinp for the Jij workflow'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        elif 'remote' not in self.inputs:
-            error = 'ERROR: you gave neither SCF input nor remote for the Jij workflow'
+        elif 'remote_data' not in self.inputs:
+            error = 'ERROR: you gave neither SCF input nor remote_data for the Jij workflow'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
@@ -379,7 +379,7 @@ class FleurJijWorkChain(WorkChain):
             return self.ctx.reference.outputs.fleurinp
         if 'fleurinp' in self.inputs:
             return self.inputs.fleurinp
-        return get_fleurinp_from_remote_data(self.inputs.remote)
+        return get_fleurinp_from_remote_data(self.inputs.remote_data)
 
     def get_reference_remote(self):
         """
@@ -387,7 +387,7 @@ class FleurJijWorkChain(WorkChain):
         """
         if self.ctx.scf_needed:
             return self.ctx.reference.outputs.last_calc.remote_folder
-        return self.inputs.remote
+        return self.inputs.remote_data
 
     def change_fleurinp(self, fleurin, direction):
         """
@@ -466,19 +466,14 @@ class FleurJijWorkChain(WorkChain):
             self.control_end_wc(error)
             return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-        try:
-            fleurmode.show(display=False, validate=True)
-        except etree.DocumentInvalid:
-            error = 'ERROR: input, user wanted inp.xml changes did not validate'
-            self.report(error)
+        modified, failure = validate_and_freeze(fleurmode, self.report)
+        if failure == 'invalid':
             return self.exit_codes.ERROR_INVALID_INPUT_FILE
-        except ValueError as exc:
-            error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
-                     f'The following error was raised {exc}')
-            self.control_end_wc(error)
+        if failure is not None:
+            self.control_end_wc('Applying the requested inp.xml changes failed.')
             return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-        return fleurmode.freeze()
+        return modified
 
     def collect_tensors(self):
         """

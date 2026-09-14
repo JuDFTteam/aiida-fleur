@@ -14,10 +14,55 @@ TEST_INP_XML_PATH = os.path.join(aiida_path, '../tests/files/inpxml/Si/inp.xml')
 TEST_INP_XML_PATH1 = os.path.join(aiida_path, '../tests/parsers/fixtures/fleur/relax/inp.xml')
 
 
+@pytest.mark.parametrize(
+    'flags, expected',
+    [
+        ('CPP_MPI  CPP_HDF', True),
+        ('CPP_HDF', True),
+        ('CPP_MPI', False),
+        ('', False),
+        (None, True),  #element absent entirely: older FLEUR, give it the benefit of the doubt
+    ])
+def test_fleur_was_built_with_hdf5(flags, expected):
+    """HDF5 support is read off FLEUR's own report of its compiler macros."""
+    from aiida_fleur.parsers.fleur import fleur_was_built_with_hdf5
+
+    element = '' if flags is None else f'<additionalCompilerFlags>{flags}</additionalCompilerFlags>'
+    outxml = f'<fleurOutput><programVersion version="fleur 35">{element}</programVersion></fleurOutput>'
+
+    assert fleur_was_built_with_hdf5(outxml) is expected
+
+
+def test_fleur_parser_no_hdf5(fixture_localhost, generate_parser, generate_calc_job_node, create_fleurinp):
+    """
+    A FLEUR that reports a build without CPP_HDF is rejected with a dedicated exit code.
+
+    aiida-fleur relies on the HDF5 output files, so there is nothing to parse further.
+    """
+    name = 'no_hdf5'
+    entry_point_calc_job = 'fleur.fleur'
+    entry_point_parser = 'fleur.fleurparser'
+
+    inputs = AttributeDict({'fleurinp': create_fleurinp(TEST_INP_XML_PATH), 'metadata': {}})
+
+    node = generate_calc_job_node(entry_point_calc_job,
+                                  fixture_localhost,
+                                  name,
+                                  inputs,
+                                  store=True,
+                                  retrieve_list=['out.xml'])
+    parser = generate_parser(entry_point_parser)
+    _, calcfunction = parser.parse_from_node(node, store_provenance=False)
+
+    assert calcfunction.is_finished, calcfunction.exception
+    assert calcfunction.is_failed, calcfunction.exit_status
+    assert calcfunction.exit_status == node.process_class.exit_codes.ERROR_FLEUR_WITHOUT_HDF5.status
+
+
 def test_fleurparse_relax_file(test_file):
     """Test if parsing of a given relax.xml file is successfull"""
     from aiida_fleur.parsers.fleur import parse_relax_file
-    from masci_tools.io.parsers.fleur_schema import InputSchemaDict
+    from pyfleur.io.parsers.fleur_schema import InputSchemaDict
     from aiida.orm import Dict
 
     schema_dict = InputSchemaDict.fromVersion('0.34')
@@ -49,7 +94,7 @@ def test_fleur_parser_default_full(fixture_localhost, generate_parser, generate_
 
     #change retrieve list to save space
     retrieve_list = [
-        'out.xml', 'inp.xml', 'shell.out', 'out.error', 'cdn1', '_scheduler-stdout.txt', '_scheduler-stderr.txt'
+        'out.xml', 'inp.xml', 'shell.out', 'out.error', 'cdn_last.hdf', '_scheduler-stdout.txt', '_scheduler-stderr.txt'
     ]
     node = generate_calc_job_node(entry_point_calc_job,
                                   fixture_localhost,
@@ -88,7 +133,7 @@ def test_fleur_parser_band_dos(fixture_localhost, generate_parser, generate_calc
                              'metadata' : {}})
 
     #change retrieve list to save space
-    retrieve_list = ['out.xml', 'inp.xml', 'shell.out', 'out.error','cdn1','_scheduler-stdout.txt','_scheduler-stderr.txt']
+    retrieve_list = ['out.xml', 'inp.xml', 'shell.out', 'out.error','cdn_last.hdf','_scheduler-stdout.txt','_scheduler-stderr.txt']
     node = generate_calc_job_node(entry_point_calc_job, fixture_localhost, name, inputs, store=True, retrieve_list=retrieve_list)
     parser = generate_parser(entry_point_parser)
     results, calcfunction = parser.parse_from_node(node, store_provenance=False)

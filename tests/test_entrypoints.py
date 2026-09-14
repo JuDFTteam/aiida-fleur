@@ -67,13 +67,6 @@ class TestFleurEntrypoints:
         workflow = WorkflowFactory('fleur.scf')
         assert workflow == FleurScfWorkChain
 
-    def test_fleur_dos_wc_entry_point(self):
-        from aiida.plugins import WorkflowFactory
-        from aiida_fleur.workflows.dos import fleur_dos_wc
-
-        workflow = WorkflowFactory('fleur.dos')
-        assert workflow == fleur_dos_wc
-
     def test_fleur_banddos_wc_entry_point(self):
         from aiida.plugins import WorkflowFactory
         from aiida_fleur.workflows.banddos import FleurBandDosWorkChain

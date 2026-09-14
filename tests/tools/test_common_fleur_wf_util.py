@@ -77,13 +77,20 @@ def test_determine_formation_energy():
 
 def test_determine_convex_hull():
     from aiida_fleur.tools.common_fleur_wf_util import determine_convex_hull
-    from pyhull.convex_hull import ConvexHull
+    from scipy.spatial import ConvexHull
 
     formation_en_grid = [[0.5, -1.0], [0.5, -0.5]]
 
     hull = determine_convex_hull(formation_en_grid)
 
     assert isinstance(hull, ConvexHull)
+    #the endpoints [1.0, 0.0] and [0.0, 0.0] are added, and [0.5, -0.5] lies strictly
+    #inside the triangle they span with [0.5, -1.0], so it is not a hull vertex
+    assert len(hull.vertices) == 3
+    assert sorted(hull.points[hull.vertices].tolist()) == [[0.0, 0.0], [0.5, -1.0], [1.0, 0.0]]
+
+    #the caller's list must not be modified
+    assert formation_en_grid == [[0.5, -1.0], [0.5, -0.5]]
 
 
 def test_inpgen_dict_set_mesh(generate_kpoints_mesh):

@@ -49,7 +49,6 @@ class FleurCalculation(CalcJob):
     _INP_FILE_NAME = 'inp'
     _ENPARA_FILE_NAME = 'enpara'
     _SYMOUT_FILE_NAME = 'sym.out'
-    _CDN1_FILE_NAME = 'cdn1'
     _SHELLOUTPUT_FILE_NAME = 'shell.out'
     _ERROR_FILE_NAME = 'out.error'
     _LOG_FILE_NAME = 'runlog.json'
@@ -145,45 +144,20 @@ class FleurCalculation(CalcJob):
 
     # Policy
     # we store everything needed for a further run in the local repository
-    # (inp.xml, cdn1), also all important results files.
+    # (inp.xml, cdn.hdf), also all important results files.
     # these will ALWAYS be copied from the local repository to the maschine
     # If a parent calculation exists, other files will be copied remotely
     #######
-
-    # all possible files first chargedensity
-    _copy_filelist1 = [
-        _INP_FILE_NAME, _ENPARA_FILE_NAME, _SYMOUT_FILE_NAME, _CDN1_FILE_NAME, _KPTS_FILE_NAME, _STARS_FILE_NAME,
-        _WKF2_FILE_NAME
-    ]
 
     # after inpgen, before first chargedensity
     _copy_filelist_inpgen = [_INPXML_FILE_NAME]
 
     # for after fleur SCF [name, destination_name]
-    _copy_scf_noinp = [[_CDN1_FILE_NAME, _CDN1_FILE_NAME]]
-
     _copy_scf_noinp_hdf = [[_CDN_LAST_HDF5_FILE_NAME, _CDN_HDF5_FILE_NAME]]
-
-    _copy_scf = [[_CDN1_FILE_NAME, _CDN1_FILE_NAME], [_INPXML_FILE_NAME, _INPXML_FILE_NAME]]
 
     _copy_scf_hdf = [[_CDN_LAST_HDF5_FILE_NAME, _CDN_HDF5_FILE_NAME], [_INPXML_FILE_NAME, _INPXML_FILE_NAME]]
 
     _copy_filelist_scf_remote = [_MIX_HISTORY_FILE_NAME]
-
-    _copy_filelist3 = [
-        _INP_FILE_NAME, _ENPARA_FILE_NAME, _SYMOUT_FILE_NAME, _CDN1_FILE_NAME, _KPTS_FILE_NAME, _STARS_FILE_NAME,
-        _WKF2_FILE_NAME, _MIX_HISTORY_FILE_NAME, _OUT_FILE_NAME, _POT_FILE_NAME
-    ]
-
-    _copy_scf_ldau_nohdf = [[_CDN1_FILE_NAME, _CDN1_FILE_NAME], [_INPXML_FILE_NAME, _INPXML_FILE_NAME],
-                            [_NMMPMAT_FILE_NAME, _NMMPMAT_FILE_NAME]]
-
-    _copy_scf_ldau_noinp_nohdf = [[_CDN1_FILE_NAME, _CDN1_FILE_NAME], [_NMMPMAT_FILE_NAME, _NMMPMAT_FILE_NAME]]
-
-    # files need for rerun
-    _copy_filelist_dos = [_INPXML_FILE_NAME, _CDN1_FILE_NAME]
-
-    _copy_filelist_band = [_INPXML_FILE_NAME, _POT_FILE_NAME, _CDN1_FILE_NAME]
 
     _copy_filelist_spex = ['basis.hdf', 'pot.hdf', 'ecore']
 
@@ -258,6 +232,12 @@ class FleurCalculation(CalcJob):
         spec.exit_code(318,
                        'ERROR_MISSING_DEPENDENCY',
                        message='Calculation failed due to missing dependency ({name}) for given calculation.')
+        #317 is not reused on purpose: it was FILM_AND_PRECONDITIONER_FAILED for a while before
+        #being reverted, so it may still appear in existing provenance
+        spec.exit_code(319,
+                       'ERROR_FLEUR_WITHOUT_HDF5',
+                       message='The FLEUR executable was compiled without HDF5 support. '
+                       'aiida-fleur requires a FLEUR built with HDF5.')
 
     @classproperty
     def _get_output_folder(self):
@@ -284,24 +264,9 @@ class FleurCalculation(CalcJob):
         has_parent = False
         fleurinpgen = False
         copy_remotely = True
-        with_hdf5 = False
 
         code = self.inputs.code
 
-        codesdesc = code.description
-        # TODO: ggf also check settings
-        # In code description we write with what libs the code was compiled
-        # we look for certain keywords in the description
-        # also ggf, to be back comportable, the plugin should know the version number
-        if codesdesc is not None:
-            if 'hdf5' in codesdesc:
-                with_hdf5 = True
-            elif 'Hdf5' in codesdesc:
-                with_hdf5 = True
-            elif 'HDF5' in codesdesc:
-                with_hdf5 = True
-            else:
-                with_hdf5 = False
         # a Fleur calc can be created from a FleurinpData alone
         # (then no parent is needed) all files are in the repo, but usually it is
         # a child of a inpgen calc or an other fleur calc (some or all files are
@@ -372,9 +337,11 @@ class FleurCalculation(CalcJob):
             modes = fleurinp.get_fleur_modes()
 
             # add files to mode_retrieved_filelist
-            if with_hdf5 and (modes['band'] or modes['dos']):
+            if modes['band'] or modes['dos']:
                 mode_retrieved_filelist.append(self._BANDDOS_FILE_NAME)
 
+            #a HDF5 build still writes the text bands/DOS files next to banddos.hdf,
+            #so these are retrieved as well
             if modes['band']:
                 mode_retrieved_filelist.append(self._BAND_FILE_NAME)
                 mode_retrieved_filelist.append(self._BAND_GNU_FILE_NAME)  #Should this be removed
@@ -385,22 +352,15 @@ class FleurCalculation(CalcJob):
                 # if l_f="T" retrieve relax.xml
                 mode_retrieved_filelist.append(self._RELAX_FILE_NAME)
             if modes['ldau']:
-                if with_hdf5:
-                    mode_retrieved_filelist.append(self._NMMPMAT_HDF5_FILE_NAME)
-                else:
-                    mode_retrieved_filelist.append(self._NMMPMAT_FILE_NAME)
-            if with_hdf5 and modes['greensf']:
+                mode_retrieved_filelist.append(self._NMMPMAT_HDF5_FILE_NAME)
+            if modes['greensf']:
                 mode_retrieved_filelist.append(self._GREENSF_HDF5_FILE_NAME)
             if modes['cf_coeff']:
-                if with_hdf5:
-                    mode_retrieved_filelist.append(self._CFDATA_HDF5_FILE_NAME)
-                else:
-                    self.logger.warning('CF calculation without HDF5 not supported for automatic file retrieval.')
+                mode_retrieved_filelist.append(self._CFDATA_HDF5_FILE_NAME)
             if modes['force_theorem'] or modes['cf_coeff']:
-                cdn_file = self._CDN_LAST_HDF5_FILE_NAME if with_hdf5 else self._CDN1_FILE_NAME
-                settings_dict.setdefault('remove_from_retrieve_list', []).append(cdn_file)
+                settings_dict.setdefault('remove_from_retrieve_list', []).append(self._CDN_LAST_HDF5_FILE_NAME)
 
-            #This construct is to avoid problems with masci-tools versions where the mode is still called gw
+            #This construct is to avoid problems with older masci-tools versions where the mode is still called gw
             if modes.get('spex', modes.get('gw', False)):
                 mode_retrieved_filelist.extend(self._copy_filelist_spex)
                 settings_dict.setdefault('additional_remotecopy_list', []).extend(self._copy_filelist_spex)
@@ -416,7 +376,6 @@ class FleurCalculation(CalcJob):
             self.logger.info('out folder path %s', outfolder_uuid)
 
             outfolder_filenames = parent_calc.outputs.retrieved.list_object_names()
-            has_nmmpmat_file = self._NMMPMAT_FILE_NAME in outfolder_filenames
             if (self._NMMPMAT_FILE_NAME in outfolder_filenames or \
                 self._NMMPMAT_HDF5_FILE_NAME in outfolder_filenames):
                 if has_fleurinp:
@@ -425,7 +384,6 @@ class FleurCalculation(CalcJob):
                             self.logger.warning('Ignoring {filename} from remote. '
                                                 'There is already an {filename} file '
                                                 'for the fleurinp node'.format(filename=self._NMMPMAT_FILE_NAME))
-                            has_nmmpmat_file = False
                         else:
                             self.logger.warning('Ignoring {filename} from fleurinp. '
                                                 'There is already an {filename} file '
@@ -440,33 +398,21 @@ class FleurCalculation(CalcJob):
                     local_copy_list.append((outfolder_uuid, file1, file1))
             elif not fleurinpgen and (not has_fleurinp):  # fleurCalc
                 # need to copy inp.xml from the parent calc
-                if with_hdf5:
-                    copylist = self._copy_scf_hdf
-                elif has_nmmpmat_file:
-                    copylist = self._copy_scf_ldau_nohdf
-                else:
-                    copylist = self._copy_scf
-                for file_orig, file_dest in copylist:
+                for file_orig, file_dest in self._copy_scf_hdf:
                     if file_orig not in outfolder_filenames:
                         message = f'File {file_orig} not found in parent folder but needed to start calculation.\n'
-                        if file_orig in (self._CDN1_FILE_NAME, self._CDN_LAST_HDF5_FILE_NAME):
-                            message += 'Make sure that the given Fleur code is correctly labelled with/without HDF5'
+                        if file_orig == self._CDN_LAST_HDF5_FILE_NAME:
+                            message += 'aiida-fleur requires a FLEUR executable compiled with HDF5.'
                         raise InputValidationError(message)
                     local_copy_list.append((outfolder_uuid, file_orig, file_dest))
                 # TODO: get inp.xml from parent FleurinpData; otherwise it will be doubled in rep
             elif not fleurinpgen and has_fleurinp:
                 # inp.xml will be copied from fleurinp
-                if with_hdf5:
-                    copylist = self._copy_scf_noinp_hdf
-                elif has_nmmpmat_file:
-                    copylist = self._copy_scf_ldau_noinp_nohdf
-                else:
-                    copylist = self._copy_scf_noinp
-                for file_orig, file_dest in copylist:
+                for file_orig, file_dest in self._copy_scf_noinp_hdf:
                     if file_orig not in outfolder_filenames:
                         message = f'File {file_orig} not found in parent folder but needed to start calculation.\n'
-                        if file_orig in (self._CDN1_FILE_NAME, self._CDN_LAST_HDF5_FILE_NAME):
-                            message += 'Make sure that the given Fleur code is correctly labelled with/without HDF5'
+                        if file_orig == self._CDN_LAST_HDF5_FILE_NAME:
+                            message += 'aiida-fleur requires a FLEUR executable compiled with HDF5.'
                         raise InputValidationError(message)
                     local_copy_list.append((outfolder_uuid, file_orig, file_dest))
 
@@ -526,10 +472,7 @@ class FleurCalculation(CalcJob):
         retrieve_list.append(self._USAGE_FILE_NAME)
         # retrieve_list.append(self._TIME_INFO_FILE_NAME)
         # retrieve_list.append(self._OUT_FILE_NAME)
-        if with_hdf5:
-            retrieve_list.append(self._CDN_LAST_HDF5_FILE_NAME)
-        else:
-            retrieve_list.append(self._CDN1_FILE_NAME)
+        retrieve_list.append(self._CDN_LAST_HDF5_FILE_NAME)
 
         for mode_file in mode_retrieved_filelist:
             if mode_file not in retrieve_list:
@@ -558,9 +501,9 @@ class FleurCalculation(CalcJob):
 
         cmdline_params.append('-minimalOutput')
 
-        if with_hdf5:
-            cmdline_params.append('-last_extra')
-            cmdline_params.append('-no_send')
+        #only the last density is copied back, not the full cdn.hdf
+        cmdline_params.append('-last_extra')
+        cmdline_params.append('-no_send')
 
         if walltime_sec:
             walltime_min = int(max(1, walltime_sec / 60))

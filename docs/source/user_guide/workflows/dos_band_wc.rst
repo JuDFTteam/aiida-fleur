@@ -50,7 +50,7 @@ The FleurBandDosWorkChain employs
 +-----------------+----------------------------------------------------+-----------------------------------------+----------+
 | fleurinp        | :py:class:`~aiida_fleur.data.fleurinp.FleurinpData`| :ref:`FLEUR input<fleurinp_data>`       | no       |
 +-----------------+----------------------------------------------------+-----------------------------------------+----------+
-| remote          | :py:class:`~aiida.orm.RemoteData`                  | Remote folder of another calculation    | no       |
+| remote_data     | :py:class:`~aiida.orm.RemoteData`                  | Remote folder of another calculation    | no       |
 +-----------------+----------------------------------------------------+-----------------------------------------+----------+
 | kpoints         | :py:class:`~aiida.orm.KpointsData`                 | Kpoint-set to use                       | no       |
 +-----------------+----------------------------------------------------+-----------------------------------------+----------+
@@ -131,7 +131,7 @@ Supported input configurations
 
 The FleurBandDosWorkChain workchain has several
 input combinations that implicitly define the workchain layout. Only **scf**, **fleurinp** and
-**remote** nodes control the behaviour, other input nodes are truly optional.
+**remote_data** nodes control the behaviour, other input nodes are truly optional.
 Depending on the setup of the given inputs, one of three supported scenarios will happen:
 
 1. **scf**:
@@ -141,25 +141,25 @@ Depending on the setup of the given inputs, one of three supported scenarios wil
       namespace, SCF will start from the structure or FleurinpData or will continue
       converging from the given remote_data (see details in :ref:`SCF WorkChain<scf_wc>`).
 
-2. **remote**:
+2. **remote_data**:
 
-      Files which belong to the **remote** will be used for the direct submission of the band/DOS
+      Files which belong to the **remote_data** will be used for the direct submission of the band/DOS
       calculation. ``inp.xml`` file will be converted to FleurinpData and the charge density
       will be used as the charge density used in this calculation.
 
-3. **remote** + **fleurinp**:
+3. **remote_data** + **fleurinp**:
 
-      Charge density which belongs to **remote** will be used as the charge density used in the
-      band/DOS calculation, however the ``inp.xml`` from the **remote** will be ignored. Instead, the given **fleurinp** will be used.
+      Charge density which belongs to **remote_data** will be used as the charge density used in the
+      band/DOS calculation, however the ``inp.xml`` from the **remote_data** will be ignored. Instead, the given **fleurinp** will be used.
       The aforementioned input files will be used for direct submission of the band/DOS
       calculation.
 
-Other combinations of the input nodes **scf**, **fleurinp** and **remote** are forbidden.
+Other combinations of the input nodes **scf**, **fleurinp** and **remote_data** are forbidden.
 
 .. warning::
 
   One *must* follow one of the supported input configurations. To protect a user from the
-  workchain misbehaviour, an error will be thrown if one specifies e.g. both **scf** and **remote**
+  workchain misbehaviour, an error will be thrown if one specifies e.g. both **scf** and **remote_data**
   inputs because in this case the intention of the user is not clear either he/she wants to
   converge a new charge density or use the given one.
 

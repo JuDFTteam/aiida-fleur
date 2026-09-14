@@ -36,19 +36,6 @@ def test_fleur_cfcoeff_structure_no_analogue(enable_archive_cache, fleur_local_c
     }
 
     FleurCode = fleur_local_code
-    desc = FleurCode.description
-    with_hdf5 = False
-    if desc is not None:
-        if 'hdf5' in desc:
-            with_hdf5 = True
-        elif 'Hdf5' in desc:
-            with_hdf5 = True
-        elif 'HDF5' in desc:
-            with_hdf5 = True
-        else:
-            with_hdf5 = False
-    if not with_hdf5:
-        pytest.skip('CFCoeff workchain only works with HDF5')
 
     # create process builder to set parameters
     builder = FleurCFCoeffWorkChain.get_builder()
@@ -130,19 +117,6 @@ def test_fleur_cfcoeff_structure_analogue(enable_archive_cache, fleur_local_code
     }
 
     FleurCode = fleur_local_code
-    desc = FleurCode.description
-    with_hdf5 = False
-    if desc is not None:
-        if 'hdf5' in desc:
-            with_hdf5 = True
-        elif 'Hdf5' in desc:
-            with_hdf5 = True
-        elif 'HDF5' in desc:
-            with_hdf5 = True
-        else:
-            with_hdf5 = False
-    if not with_hdf5:
-        pytest.skip('CFCoeff workchain only works with HDF5')
 
     # create process builder to set parameters
     builder = FleurCFCoeffWorkChain.get_builder()

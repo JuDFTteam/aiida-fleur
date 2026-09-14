@@ -46,14 +46,6 @@ class TestFleurWorkchainInterfaces:
 
         builder = FleurEosWorkChain.get_builder()
 
-    def test_fleur_dos_wc_init(self):
-        """
-        Test the interface of the dos workchain
-        """
-        from aiida_fleur.workflows.dos import fleur_dos_wc
-
-        builder = fleur_dos_wc.get_builder()
-
     def test_fleur_corehole_wc_init(self):
         """
         Test the interface of the corehole workchain

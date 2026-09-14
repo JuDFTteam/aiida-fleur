@@ -42,18 +42,6 @@ def test_fleur_band_fleurinp_Si(enable_archive_cache, fleur_local_code, create_f
     }
 
     FleurCode = fleur_local_code
-    desc = FleurCode.description
-    with_hdf5 = False
-    if desc is not None:
-        if 'hdf5' in desc:
-            with_hdf5 = True
-        elif 'Hdf5' in desc:
-            with_hdf5 = True
-        elif 'HDF5' in desc:
-            with_hdf5 = True
-        else:
-            with_hdf5 = False
-
     # create process builder to set parameters
     builder = FleurBandDosWorkChain.get_builder()
     builder.metadata.description = 'Simple Fleur Banddos test for Si bulk with fleurinp data given'
@@ -83,12 +71,10 @@ def test_fleur_band_fleurinp_Si(enable_archive_cache, fleur_local_code, create_f
     assert abs(n.get('fermi_energy_scf') - efermi) < 2.0e-6
     assert abs(n.get('bandgap_scf') - bandgap) < 2.0e-6
     assert n.get('mode') == 'band'
-    if with_hdf5:
-        assert 'output_banddos_wc_bands' in out
+    assert 'output_banddos_wc_bands' in out
     assert 'banddos_calc' in out
     res_files = out['banddos_calc']['retrieved'].list_object_names()
-    assert any(
-        file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
+    assert 'banddos.hdf' in res_files, f'No banddos.hdf retrieved: {res_files}'
 
 
 @pytest.mark.regression_test
@@ -112,18 +98,6 @@ def test_fleur_dos_fleurinp_Si(enable_archive_cache, fleur_local_code, create_fl
     wf_parameters = {'mode': 'dos'}
 
     FleurCode = fleur_local_code
-    desc = FleurCode.description
-    with_hdf5 = False
-    if desc is not None:
-        if 'hdf5' in desc:
-            with_hdf5 = True
-        elif 'Hdf5' in desc:
-            with_hdf5 = True
-        elif 'HDF5' in desc:
-            with_hdf5 = True
-        else:
-            with_hdf5 = False
-
     # create process builder to set parameters
     builder = FleurBandDosWorkChain.get_builder()
     builder.metadata.description = 'Simple Fleur Banddos test for DOS of  Si bulk with fleurinp data given'
@@ -155,12 +129,10 @@ def test_fleur_dos_fleurinp_Si(enable_archive_cache, fleur_local_code, create_fl
     assert abs(n.get('fermi_energy_scf') - efermi) < 2.0e-6
     assert abs(n.get('bandgap_scf') - bandgap) < 2.0e-6
     assert n.get('mode') == 'dos'
-    if with_hdf5:
-        assert 'output_banddos_wc_dos' in out
+    assert 'output_banddos_wc_dos' in out
     assert 'banddos_calc' in out
     res_files = out['banddos_calc']['retrieved'].list_object_names()
-    assert any(
-        file in res_files for file in ('banddos.hdf', 'Local.1', 'DOS.1')), f'No bands file retrieved: {res_files}'
+    assert 'banddos.hdf' in res_files, f'No banddos.hdf retrieved: {res_files}'
 
 
 @pytest.mark.regression_test
@@ -185,18 +157,6 @@ def test_fleur_band_fleurinp_Si_seekpath(enable_archive_cache, fleur_local_code,
     wf_parameters = {'kpath': 'seek'}
 
     FleurCode = fleur_local_code
-    desc = FleurCode.description
-    with_hdf5 = False
-    if desc is not None:
-        if 'hdf5' in desc:
-            with_hdf5 = True
-        elif 'Hdf5' in desc:
-            with_hdf5 = True
-        elif 'HDF5' in desc:
-            with_hdf5 = True
-        else:
-            with_hdf5 = False
-
     # create process builder to set parameters
     builder = FleurBandDosWorkChain.get_builder()
     builder.metadata.description = 'Simple Fleur Banddos test for Si bulk with fleurinp data given and kpoint path from seekpath'
@@ -227,12 +187,10 @@ def test_fleur_band_fleurinp_Si_seekpath(enable_archive_cache, fleur_local_code,
     assert abs(n.get('fermi_energy_scf') - efermi) < 2.0e-6
     assert abs(n.get('bandgap_scf') - bandgap) < 2.0e-6
     assert n.get('mode') == 'band'
-    if with_hdf5:
-        assert 'output_banddos_wc_bands' in out
+    assert 'output_banddos_wc_bands' in out
     assert 'banddos_calc' in out
     res_files = out['banddos_calc']['retrieved'].list_object_names()
-    assert any(
-        file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
+    assert 'banddos.hdf' in res_files, f'No banddos.hdf retrieved: {res_files}'
 
 
 @pytest.mark.regression_test
@@ -257,18 +215,6 @@ def test_fleur_band_fleurinp_Si_ase(enable_archive_cache, fleur_local_code, crea
     wf_parameters = {'kpath': 'XKGLWWXG', 'kpoints_number': 200}
 
     FleurCode = fleur_local_code
-    desc = FleurCode.description
-    with_hdf5 = False
-    if desc is not None:
-        if 'hdf5' in desc:
-            with_hdf5 = True
-        elif 'Hdf5' in desc:
-            with_hdf5 = True
-        elif 'HDF5' in desc:
-            with_hdf5 = True
-        else:
-            with_hdf5 = False
-
     # create process builder to set parameters
     builder = FleurBandDosWorkChain.get_builder()
     builder.metadata.description = 'Simple Fleur Banddos test for Si bulk with fleurinp data given and kpoint path from ase'
@@ -299,12 +245,10 @@ def test_fleur_band_fleurinp_Si_ase(enable_archive_cache, fleur_local_code, crea
     assert abs(n.get('fermi_energy_scf') - efermi) < 2.0e-6
     assert abs(n.get('bandgap_scf') - bandgap) < 2.0e-6
     assert n.get('mode') == 'band'
-    if with_hdf5:
-        assert 'output_banddos_wc_bands' in out
+    assert 'output_banddos_wc_bands' in out
     assert 'banddos_calc' in out
     res_files = out['banddos_calc']['retrieved'].list_object_names()
-    assert any(
-        file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
+    assert 'banddos.hdf' in res_files, f'No banddos.hdf retrieved: {res_files}'
 
 
 @pytest.mark.regression_test
@@ -326,25 +270,13 @@ def test_fleur_band_remote_Si(enable_archive_cache, fleur_local_code, create_fle
     }
 
     FleurCode = fleur_local_code
-    desc = FleurCode.description
-    with_hdf5 = False
-    if desc is not None:
-        if 'hdf5' in desc:
-            with_hdf5 = True
-        elif 'Hdf5' in desc:
-            with_hdf5 = True
-        elif 'HDF5' in desc:
-            with_hdf5 = True
-        else:
-            with_hdf5 = False
-
     # create process builder to set parameters
     builder = FleurBandDosWorkChain.get_builder()
     builder.metadata.description = 'Simple Fleur Banddos test for Si bulk with fleurinp data given'
     builder.metadata.label = 'FleurBanddos_test_Si_bulk'
     builder.options = orm.Dict(dict=options).store()
     builder.fleur = FleurCode
-    builder.remote = get_remote_data_si()
+    builder.remote_data = get_remote_data_si()
     #print(builder)
 
     with enable_archive_cache('fleur_band_remote_Si.tar.gz'):
@@ -365,12 +297,10 @@ def test_fleur_band_remote_Si(enable_archive_cache, fleur_local_code, create_fle
     assert abs(n.get('fermi_energy_scf') - efermi) < 2.0e-6
     assert abs(n.get('bandgap_scf') - bandgap) < 2.0e-6
     assert n.get('mode') == 'band'
-    if with_hdf5:
-        assert 'output_banddos_wc_bands' in out
+    assert 'output_banddos_wc_bands' in out
     assert 'banddos_calc' in out
     res_files = out['banddos_calc']['retrieved'].list_object_names()
-    assert any(
-        file in res_files for file in ('banddos.hdf', 'bands.1', 'bands.2')), f'No bands file retrieved: {res_files}'
+    assert 'banddos.hdf' in res_files, f'No banddos.hdf retrieved: {res_files}'
 
 
 @pytest.mark.regression_test
@@ -394,18 +324,6 @@ def test_fleur_dos_remote_Si(enable_archive_cache, fleur_local_code, create_fleu
     wf_parameters = {'mode': 'dos'}
 
     FleurCode = fleur_local_code
-    desc = FleurCode.description
-    with_hdf5 = False
-    if desc is not None:
-        if 'hdf5' in desc:
-            with_hdf5 = True
-        elif 'Hdf5' in desc:
-            with_hdf5 = True
-        elif 'HDF5' in desc:
-            with_hdf5 = True
-        else:
-            with_hdf5 = False
-
     # create process builder to set parameters
     builder = FleurBandDosWorkChain.get_builder()
     builder.metadata.description = 'Simple Fleur Banddos test for DOS of  Si bulk with fleurinp data given'
@@ -413,7 +331,7 @@ def test_fleur_dos_remote_Si(enable_archive_cache, fleur_local_code, create_fleu
     builder.options = orm.Dict(dict=options).store()
     builder.fleur = FleurCode
     builder.wf_parameters = orm.Dict(dict=wf_parameters).store()
-    builder.remote = get_remote_data_si()
+    builder.remote_data = get_remote_data_si()
     #print(builder)
 
     # now run calculation
@@ -435,12 +353,10 @@ def test_fleur_dos_remote_Si(enable_archive_cache, fleur_local_code, create_fleu
     assert abs(n.get('fermi_energy_scf') - efermi) < 2.0e-6
     assert abs(n.get('bandgap_scf') - bandgap) < 2.0e-6
     assert n.get('mode') == 'dos'
-    if with_hdf5:
-        assert 'output_banddos_wc_dos' in out
+    assert 'output_banddos_wc_dos' in out
     assert 'banddos_calc' in out
     res_files = out['banddos_calc']['retrieved'].list_object_names()
-    assert any(
-        file in res_files for file in ('banddos.hdf', 'Local.1', 'DOS.1')), f'No bands file retrieved: {res_files}'
+    assert 'banddos.hdf' in res_files, f'No banddos.hdf retrieved: {res_files}'
 
 
 @pytest.mark.regression_test
@@ -485,7 +401,7 @@ def test_fleur_banddos_validation_wrong_inputs(fleur_local_code, inpgen_local_co
     builder.scf.options = options
     builder.fleur = FleurCode
     builder.options = options
-    builder.remote = remote
+    builder.remote_data = remote
 
     out, node = run_get_node(builder)
     assert out == {}
@@ -510,7 +426,7 @@ def test_fleur_banddos_validation_wrong_inputs(fleur_local_code, inpgen_local_co
     builder = FleurBandDosWorkChain.get_builder()
 
     builder.fleurinp = fleurinp
-    builder.remote = remote
+    builder.remote_data = remote
     builder.fleur = InpgenCode
     builder.options = options
 
@@ -524,7 +440,7 @@ def test_fleur_banddos_validation_wrong_inputs(fleur_local_code, inpgen_local_co
     builder = FleurBandDosWorkChain.get_builder()
 
     builder.fleurinp = fleurinp
-    builder.remote = remote
+    builder.remote_data = remote
     builder.options = options
 
     # caught by aiida during creation
@@ -536,7 +452,7 @@ def test_fleur_banddos_validation_wrong_inputs(fleur_local_code, inpgen_local_co
     builder = FleurBandDosWorkChain.get_builder()
 
     builder.fleurinp = fleurinp
-    builder.remote = remote
+    builder.remote_data = remote
     builder.options = options
     builder.fleur = FleurCode
     builder.wf_parameters = wf_parameters
@@ -552,7 +468,7 @@ def test_fleur_banddos_validation_wrong_inputs(fleur_local_code, inpgen_local_co
     builder = FleurBandDosWorkChain.get_builder()
 
     builder.fleurinp = fleurinp
-    builder.remote = remote
+    builder.remote_data = remote
     builder.options = options
     builder.fleur = FleurCode
     builder.wf_parameters = wf_parameters
@@ -568,7 +484,7 @@ def test_fleur_banddos_validation_wrong_inputs(fleur_local_code, inpgen_local_co
     builder = FleurBandDosWorkChain.get_builder()
 
     builder.fleurinp = fleurinp
-    builder.remote = remote
+    builder.remote_data = remote
     builder.options = options
     builder.fleur = FleurCode
     builder.wf_parameters = wf_parameters

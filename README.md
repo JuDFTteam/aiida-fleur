@@ -20,6 +20,7 @@ Developed at [Forschungszentrum Jülich GmbH](http://www.fz-juelich.de/pgi/pgi-1
 
 | FLEUR Plugin | AiiDA CORE | Python | FLEUR/XML file version | 
 |-|-|-|-|
+| `>= v3.0.0` | ![Compatibility for v3.0][AiiDA v3.0] |  [![PyPI pyversions](https://img.shields.io/badge/python-3.10_\|_3.11_\|_3.12_\|_3.13-blue)](https://github.com/JuDFTteam/aiida-fleur) |![Fleur Compatibility][Fleur v2.0]/`<=0.39` |
 | `v2.0.0 < v3.0.0` | ![Compatibility for v2.0][AiiDA v2.0] |  [![PyPI pyversions](https://img.shields.io/pypi/pyversions/aiida-fleur.svg)](https://pypi.org/project/aiida-fleur.svg) |![Fleur Compatibility][Fleur v2.0]/`<=0.37` |
 | `v1.2.0 < v2.0.0` | ![Compatibility for v1.2][AiiDA v1.2] |  [![PyPI pyversions](https://img.shields.io/badge/python-3.7_\|_3.8_\|_3.9_\|_3.10-blue)](https://pypi.org/project/aiida-fleur/1.3.1) | ![Fleur Compatibility][Fleur v1.2]/`<=0.35` |
 | `v1.0.0 < v1.2.0` | ![Compatibility for v1.0][AiiDA v1.0] |  [![PyPI pyversions](https://img.shields.io/badge/python-3.6_\|_3.7_\|_3.8_\|_3.9-blue)](https://pypi.org/project/aiida-fleur/1.2.0) | ![Fleur Compatibility][Fleur v1.0]/`<=0.33` |
@@ -104,7 +105,7 @@ Structure_util.py | Constains some methods to handle AiiDA structures (some of t
 merge_parameter.py | Methods to handle parameterData nodes, i.e merge them. Which is very useful for all-electron codes, because instead of pseudo potentialsfamilies you can create now families of parameter nodes for the periodic table.
 read_cif.py | This can be used as stand-alone to create StructureData nodes from .cif files from an directory tree.
 
-Utility and tools, which are independend of AiiDA are moved to the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository,
+Utility and tools, which are independend of AiiDA are moved to the [pyfleur](https://iffgit.fz-juelich.de/fleur/pyfleur) (Python tools for FLEUR) repository,
 which is a dependency of aiida-fleur.
 
 
@@ -197,10 +198,12 @@ Requirements are listed in `pyproject.toml`
 
 most important are:
 
-* aiida_core >= 2.0
+* aiida_core >= 2.8.0
 * lxml
 * ase
-* masci-tools
+* numpy
+* scipy
+* pyfleur
 
 Mainly AiiDA:
 
@@ -208,9 +211,9 @@ Mainly AiiDA:
 2. install and setup -> [aiida's documentation](http://aiida-core.readthedocs.org/en/stable)
 
 Easy plotting and other useful routines that do not depend on aiida_core are part of
-the [masci-tools](https://github.com/JuDFTteam/masci-tools) (material science tools) repository.
+the [pyfleur](https://iffgit.fz-juelich.de/fleur/pyfleur) (Python tools for FLEUR) repository.
 
-For easy plotting we recommend using 'plot_methods' from masci-tools, which are also deployed by the 'plot_fleur(<node(s)>)' function.
+For easy plotting we recommend using 'plot_methods' from pyfleur, which are also deployed by the 'plot_fleur(<node(s)>)' function.
 
 ## Further Information <a name="FurtherInfo"></a>
 
@@ -237,6 +240,7 @@ For this work essential is AiiDA, which itself is supported by the [MARVEL Natio
 
 [Fleur v0.6.3]: https://img.shields.io/badge/->=MaX--1,<=MaX--3-darkblue?logoWidth=30&labelColor=white&logo=data:image/png;base64,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
 
+[AiiDA v3.0]: https://img.shields.io/badge/AiiDA->=2.8.0,<3.0.0-007ec6.svg
 [AiiDA v2.0]: https://img.shields.io/badge/AiiDA->=2.0.0,<3.0.0-007ec6.svg?logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAACMAAAAhCAYAAABTERJSAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAFhgAABYYBG6Yz4AAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAUbSURBVFiFzZhrbFRVEMd%2Fc%2B5uu6UUbIFC%2FUAUVEQCLbQJBIiBDyiImJiIhmohYNCkqJAQxASLF8tDgYRHBLXRhIcKNtFEhVDgAxBJqgmVh4JEKg3EIn2QYqBlt917xg%2BFss%2ByaDHOtzsz5z%2B%2FuZl7ztmF%2F5HJvxVQN6cPYX8%2FPLnOmsvNAvqfwuib%2FbNIk9cQeQnLcKRL5xLIV%2Fic9eJeunjPYbRs4FjQSpTB3aS1IpRKeeOOewajy%2FKKEO8Q0DuVdKy8IqsbPulxGHUfCBBu%2BwUYGuFuBTK7wQnht6PEbf4tlRomVRjCbXNjQEB0AyrFQOL5ENIJm7dTLZE6DPJCnEtFZVXDLny%2B4Sjv0PmmYu1ZdUek9RiMgoDmJ8V0L7XJqsZ3UW8YsBOwEeHeeFce7jEYXBy0m9m4BbXqSj2%2Bxnkg26MCVrN6DEZcwggtd8pTFx%2Fh3B9B50YLaFOPwXQKUt0tBLegtSomfBlfY13PwijbEnhztGzgJsK5h9W9qeWwBqjvyhB2iBs1Qz0AU974DciRGO8CVN8AJhAeMAdA3KbrKEtvxhsI%2B9emWiJlGBEU680Cfk%2BSsVqXZvcFYGXjF8ABVJ%2BTNfVXehyms1zzn1gmIOxLEB6E31%2FWBe5rnCarmo7elf7dJEeaLh80GasliI5F6Q9cAz1GY1OJVNDxTzQTw7iY%2FHEZRQY7xqJ9RU2LFe%2FYqakdP911ha0XhjjiTVAkDwgatWfCGeYocx8M3glG8g8EXhSrLrHnEFJ5Ymow%2FkhIYv6ttYUW1iFmEqqxdVoUs9FmsDYSqmtmJh3Cl1%2BVtl2s7owDUdocR5bceiyoSivGTT5vzpbzL1uoBpmcAAQgW7ArnKD9ng9rc%2BNgrobSNwpSkkhcRN%2BvmXLjIsDovYHHEfmsYFygPAnIDEQrQPzJYCOaLHLUfIt7Oq0LJn9fxkSgNCb1qEIQ5UKgT%2Fs6gJmVOOroJhQBXVqw118QtWLdyUxEP45sUpSzqP7RDdFYMyB9UReMiF1MzPwoUqHt8hjGFFeP5wZAbZ%2F0%2BcAtAAcji6LeSq%2FMYiAvSsdw3GtrfVSVFUBbIhwRWYR7yOcr%2FBi%2FB1MSJZ16JlgH1AGM3EO2QnmMyrSbTSiACgFBv4yCUapZkt9qwWVL7aeOyHvArJjm8%2Fz9BhdI4XcZgz2%2FvRALosjsk1ODOyMcJn9%2FYI6IrkS5vxMGdUwou2YKfyVqJpn5t9aNs3gbQMbdbkxnGdsr4bTHm2AxWo9yNZK4PXR3uzhAh%2BM0AZejnCrGdy0UvJxl0oMKgWSLR%2B1LH2aE9ViejiFs%2BXn6bTjng3MlIhJ1I1TkuLdg6OcAbD7Xx%2Bc3y9TrWAiSHqVkbZ2v9ilCo6s4AjwZCzFyD9mOL305nV9aonvsQeT2L0gVk4OwOJqXXVRW7naaxswDKVdlYLyMXAnntteYmws2xcVVZzq%2BtHPAooQggmJkc6TLSusOiL4RKgwzzYU1iFQgiUBA1H7E8yPau%2BZl9P7AblVNebtHqTgxLfRqrNvZWjsHZFuqMqKcDWdlFjF7UGvX8Jn24DyEAykJwNcdg0OvJ4p5pQ9tV6SMlP4A0PNh8aYze1ArROyUNTNouy8tNF3Rt0CSXb6bRFl4%2FIfQzNMjaE9WwpYOWQnOdEF%2BTdJNO0iFh7%2BI0kfORzQZb6P2kymS9oTxzBiM9rUqLWr1WE5G6ODhycQd%2FUnNVeMbcH68hYkGycNoUNWc8fxaxfwhDbHpfwM5oeTY7rUX8QAAAABJRU5ErkJggg%3D%3D
 
 [AiiDA v1.2]: https://img.shields.io/badge/AiiDA->=1.3.0,<2.0.0-007ec6.svg?logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAACMAAAAhCAYAAABTERJSAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAFhgAABYYBG6Yz4AAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAUbSURBVFiFzZhrbFRVEMd%2Fc%2B5uu6UUbIFC%2FUAUVEQCLbQJBIiBDyiImJiIhmohYNCkqJAQxASLF8tDgYRHBLXRhIcKNtFEhVDgAxBJqgmVh4JEKg3EIn2QYqBlt917xg%2BFss%2ByaDHOtzsz5z%2B%2FuZl7ztmF%2F5HJvxVQN6cPYX8%2FPLnOmsvNAvqfwuib%2FbNIk9cQeQnLcKRL5xLIV%2Fic9eJeunjPYbRs4FjQSpTB3aS1IpRKeeOOewajy%2FKKEO8Q0DuVdKy8IqsbPulxGHUfCBBu%2BwUYGuFuBTK7wQnht6PEbf4tlRomVRjCbXNjQEB0AyrFQOL5ENIJm7dTLZE6DPJCnEtFZVXDLny%2B4Sjv0PmmYu1ZdUek9RiMgoDmJ8V0L7XJqsZ3UW8YsBOwEeHeeFce7jEYXBy0m9m4BbXqSj2%2Bxnkg26MCVrN6DEZcwggtd8pTFx%2Fh3B9B50YLaFOPwXQKUt0tBLegtSomfBlfY13PwijbEnhztGzgJsK5h9W9qeWwBqjvyhB2iBs1Qz0AU974DciRGO8CVN8AJhAeMAdA3KbrKEtvxhsI%2B9emWiJlGBEU680Cfk%2BSsVqXZvcFYGXjF8ABVJ%2BTNfVXehyms1zzn1gmIOxLEB6E31%2FWBe5rnCarmo7elf7dJEeaLh80GasliI5F6Q9cAz1GY1OJVNDxTzQTw7iY%2FHEZRQY7xqJ9RU2LFe%2FYqakdP911ha0XhjjiTVAkDwgatWfCGeYocx8M3glG8g8EXhSrLrHnEFJ5Ymow%2FkhIYv6ttYUW1iFmEqqxdVoUs9FmsDYSqmtmJh3Cl1%2BVtl2s7owDUdocR5bceiyoSivGTT5vzpbzL1uoBpmcAAQgW7ArnKD9ng9rc%2BNgrobSNwpSkkhcRN%2BvmXLjIsDovYHHEfmsYFygPAnIDEQrQPzJYCOaLHLUfIt7Oq0LJn9fxkSgNCb1qEIQ5UKgT%2Fs6gJmVOOroJhQBXVqw118QtWLdyUxEP45sUpSzqP7RDdFYMyB9UReMiF1MzPwoUqHt8hjGFFeP5wZAbZ%2F0%2BcAtAAcji6LeSq%2FMYiAvSsdw3GtrfVSVFUBbIhwRWYR7yOcr%2FBi%2FB1MSJZ16JlgH1AGM3EO2QnmMyrSbTSiACgFBv4yCUapZkt9qwWVL7aeOyHvArJjm8%2Fz9BhdI4XcZgz2%2FvRALosjsk1ODOyMcJn9%2FYI6IrkS5vxMGdUwou2YKfyVqJpn5t9aNs3gbQMbdbkxnGdsr4bTHm2AxWo9yNZK4PXR3uzhAh%2BM0AZejnCrGdy0UvJxl0oMKgWSLR%2B1LH2aE9ViejiFs%2BXn6bTjng3MlIhJ1I1TkuLdg6OcAbD7Xx%2Bc3y9TrWAiSHqVkbZ2v9ilCo6s4AjwZCzFyD9mOL305nV9aonvsQeT2L0gVk4OwOJqXXVRW7naaxswDKVdlYLyMXAnntteYmws2xcVVZzq%2BtHPAooQggmJkc6TLSusOiL4RKgwzzYU1iFQgiUBA1H7E8yPau%2BZl9P7AblVNebtHqTgxLfRqrNvZWjsHZFuqMqKcDWdlFjF7UGvX8Jn24DyEAykJwNcdg0OvJ4p5pQ9tV6SMlP4A0PNh8aYze1ArROyUNTNouy8tNF3Rt0CSXb6bRFl4%2FIfQzNMjaE9WwpYOWQnOdEF%2BTdJNO0iFh7%2BI0kfORzQZb6P2kymS9oTxzBiM9rUqLWr1WE5G6ODhycQd%2FUnNVeMbcH68hYkGycNoUNWc8fxaxfwhDbHpfwM5oeTY7rUX8QAAAABJRU5ErkJggg%3D%3D

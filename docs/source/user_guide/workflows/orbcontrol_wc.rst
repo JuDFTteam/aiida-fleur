@@ -44,7 +44,7 @@ The table below shows all the possible input nodes of the OrbControl workchain.
 +==================+=====================================================+================================================+==========+
 | scf_no_ldau      | namespace                                           | Inputs for SCF calculation before adding LDA+U | no       |
 +------------------+-----------------------------------------------------+------------------------------------------------+----------+
-| remote           | :py:class:`~aiida.orm.RemoteData`                   | Remote folder to start the calculations from   | no       |
+| remote_data      | :py:class:`~aiida.orm.RemoteData`                   | Remote folder to start the calculations from   | no       |
 +------------------+-----------------------------------------------------+------------------------------------------------+----------+
 | fleurinp         | :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` | :ref:`FLEUR input<fleurinp_data>`              | no       |
 +------------------+-----------------------------------------------------+------------------------------------------------+----------+

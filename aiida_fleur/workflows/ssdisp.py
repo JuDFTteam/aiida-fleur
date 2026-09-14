@@ -14,34 +14,39 @@
 """
 
 import copy
-from typing import Type
 
-from lxml import etree
 from ase.dft.kpoints import monkhorst_pack
 
-from aiida.engine import WorkChain, ToContext, if_
+from aiida.engine import ToContext
 from aiida.engine import calcfunction as cf
-from aiida.orm import Code, load_node
-from aiida.orm import RemoteData, Dict, KpointsData
+from aiida.orm import load_node
+from aiida.orm import Dict, KpointsData
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
-from masci_tools.util.constants import HTR_TO_EV
+from pyfleur.util.constants import HTR_TO_EV
 
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.workflows.scf import FleurScfWorkChain
-from aiida_fleur.data.fleurinpmodifier import FleurinpModifier, inpxml_changes
+from aiida_fleur.workflows._force_theorem import FleurForceTheoremWorkChain
+from aiida_fleur.data.fleurinpmodifier import inpxml_changes
+from aiida_fleur.workflows._base import merge_parameter_dicts, unknown_parameter_keys
+from aiida_fleur.workflows._base import apply_inpxml_changes
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
-from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
+from aiida_fleur.data.fleurinp import get_fleurinp_from_remote_data
 
 
-class FleurSSDispWorkChain(WorkChain):
+class FleurSSDispWorkChain(FleurForceTheoremWorkChain):
     """
     This workflow calculates spin spiral dispersion of a structure.
     """
 
-    _workflowversion = '0.3.0'
+    _workflowversion = '0.4.0'
+
+    _OUTPUT_NAME = 'output_ssdisp_wc_para'
+    _FT_LABEL = 'SSDisp_force_theorem'
+    _FT_DESCRIPTION = ('This is the force theorem calculation for Spin Spiral Dispersion.')
 
     _default_options = {
         'resources': {
@@ -71,44 +76,6 @@ class FleurSSDispWorkChain(WorkChain):
         'inpxml_changes': []
     }
 
-    @classmethod
-    def define(cls, spec):
-        super().define(spec)
-        spec.expose_inputs(FleurScfWorkChain,
-                           namespace_options={
-                               'required': False,
-                               'populate_defaults': False
-                           },
-                           namespace='scf')
-        spec.input('wf_parameters', valid_type=Dict, required=False)
-        spec.input('fleur', valid_type=Code, required=True)
-        spec.input('remote', valid_type=RemoteData, required=False)
-        spec.input('fleurinp', valid_type=FleurinpData, required=False)
-        spec.input('options', valid_type=Dict, required=False)
-
-        spec.outline(cls.start,
-                     if_(cls.scf_needed)(
-                         cls.converge_scf,
-                         cls.force_after_scf,
-                     ).else_(
-                         cls.force_wo_scf,
-                     ), cls.get_results, cls.return_results)
-
-        spec.output('output_ssdisp_wc_para', valid_type=Dict)
-
-        # exit codes
-        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
-        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
-        spec.exit_code(233,
-                       'ERROR_INVALID_CODE_PROVIDED',
-                       message='Invalid code node specified, check inpgen and fleur code nodes.')
-        spec.exit_code(235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message='Input file modification failed.')
-        spec.exit_code(236, 'ERROR_INVALID_INPUT_FILE', message="Input file was corrupted after user's modifications.")
-        spec.exit_code(334, 'ERROR_REFERENCE_CALCULATION_FAILED', message='Reference calculation failed.')
-        spec.exit_code(335,
-                       'ERROR_REFERENCE_CALCULATION_NOREMOTE',
-                       message='Found no reference calculation remote repository.')
-        spec.exit_code(336, 'ERROR_FORCE_THEOREM_FAILED', message='Force theorem calculation failed.')
 
     def start(self):
         """
@@ -121,27 +88,15 @@ class FleurSSDispWorkChain(WorkChain):
         self.ctx.energy_dict = []
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._default_wf_para)
-        if 'wf_parameters' in self.inputs:
-            wf_dict = self.inputs.wf_parameters.get_dict()
-        else:
-            wf_dict = wf_default
-
-        extra_keys = []
-        for key in wf_dict.keys():
-            if key not in wf_default.keys():
-                extra_keys.append(key)
+        wf_dict = self.inputs.wf_parameters.get_dict() if 'wf_parameters' in self.inputs else {}
+        extra_keys = unknown_parameter_keys(wf_dict, self._default_wf_para)
         if extra_keys:
-            error = f'ERROR: input wf_parameters for SSDisp contains extra keys: {extra_keys}'
-            self.report(error)
+            self.report(f'ERROR: input wf_parameters for SSDisp contains extra keys: {extra_keys}')
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+        self.ctx.wf_dict = merge_parameter_dicts(wf_dict, self._default_wf_para,
+                                                 nested=False)
 
-        # extend wf parameters given by user using defaults
-        for key, val in wf_default.items():
-            wf_dict[key] = wf_dict.get(key, val)
-        self.ctx.wf_dict = wf_dict
-
-        if wf_dict['ref_qss'] != wf_dict['q_vectors'][0]:
+        if self.ctx.wf_dict['ref_qss'] != self.ctx.wf_dict['q_vectors'][0]:
             error = ('The first q_vector of the forceTheorem step has to be equal to'
                      'the q vector of the reference calculation.')
             self.control_end_wc(error)
@@ -172,26 +127,21 @@ class FleurSSDispWorkChain(WorkChain):
         # Check if user gave an input setup making any sense
         if 'scf' in inputs:
             self.ctx.scf_needed = True
-            if 'remote' in inputs:
-                error = 'ERROR: you gave SCF input + remote for the FT'
+            if 'remote_data' in inputs:
+                error = 'ERROR: you gave SCF input + remote_data for the FT'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'fleurinp' in inputs:
                 error = 'ERROR: you gave SCF input + fleurinp for the FT'
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        elif 'remote' not in inputs:
-            error = 'ERROR: you gave neither SCF input nor remote for the FT'
+        elif 'remote_data' not in inputs:
+            error = 'ERROR: you gave neither SCF input nor remote_data for the FT'
             self.control_end_wc(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
             self.ctx.scf_needed = False
 
-    def scf_needed(self):
-        """
-        Returns True if SCF WC is needed.
-        """
-        return self.ctx.scf_needed
 
     def converge_scf(self):
         """
@@ -261,7 +211,7 @@ class FleurSSDispWorkChain(WorkChain):
             if 'fleurinp' in self.inputs:  # use the given fleurinp
                 fleurin = self.inputs.fleurinp
             else:  # or generate a new one from inp.xml located in the remote folder
-                fleurin = get_fleurinp_from_remote_data(self.inputs.remote)
+                fleurin = get_fleurinp_from_remote_data(self.inputs.remote_data)
 
         # copy inpchanges from wf parameters
         with inpxml_changes(self.ctx.wf_dict) as fm:
@@ -272,37 +222,20 @@ class FleurSSDispWorkChain(WorkChain):
                 kmesh = KpointsData()
                 kmesh.set_kpoints(monkhorst_pack(self.ctx.wf_dict['kmesh_force_theorem']))
                 kmesh.store()
-                fm.set_kpointsdata(kmesh.uuis, switch=True, kpoint_type='mesh')
+                fm.set_kpointsdata(kmesh.uuid, switch=True, kpoint_type='mesh')
 
             # change beta parameter
             for label, beta in self.ctx.wf_dict['beta'].items():
                 fm.set_atomgroup_label(label, {'nocoParams': {'beta': beta}})
 
-        fleurmode = FleurinpModifier(fleurin)
-        try:
-            fleurmode.add_task_list(self.ctx.wf_dict['inpxml_changes'])
-        except (ValueError, TypeError) as exc:
-            error = ('ERROR: Changing the inp.xml file failed. Tried to apply inpxml_changes'
-                     f', which failed with {exc}. I abort, good luck next time!')
-            self.control_end_wc(error)
-            return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
-
-        # validate?
-        try:
-            fleurmode.show(display=False, validate=True)
-        except etree.DocumentInvalid:
-            error = ('ERROR: input, user wanted inp.xml changes did not validate')
-            self.report(error)
+        modified, failure = apply_inpxml_changes(fleurin, self.ctx.wf_dict['inpxml_changes'], self.report)
+        if failure == 'invalid':
             return self.exit_codes.ERROR_INVALID_INPUT_FILE
-        except (ValueError, TypeError) as exc:
-            error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
-                     f'The following error was raised {exc}')
-            self.control_end_wc(error)
+        if failure is not None:
+            self.control_end_wc('Applying the requested inp.xml changes failed.')
             return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-        # apply
-        out = fleurmode.freeze()
-        self.ctx.fleurinp = out
+        self.ctx.fleurinp = modified
 
     def force_after_scf(self):
         '''
@@ -375,40 +308,6 @@ class FleurSSDispWorkChain(WorkChain):
         future = self.submit(FleurBaseWorkChain, **inputs_builder)
         return ToContext(f_t=future)
 
-    def force_wo_scf(self):
-        """
-        Submit FLEUR force theorem calculation using input remote
-        """
-        self.report('INFO: run Force theorem calculations')
-
-        status = self.change_fleurinp()
-        if status:
-            return status
-
-        fleurin = self.ctx.fleurinp
-
-        # Do not copy mixing_history* files from the parent
-        settings = {'remove_from_remotecopy_list': ['mixing_history*']}
-
-        # Retrieve remote folder from the inputs
-        remote = self.inputs.remote
-
-        label = 'SSDisp_force_theorem'
-        description = 'This is the force theorem calculation for Spin Spiral Dispersion.'
-
-        code = self.inputs.fleur
-        options = self.ctx.options.copy()
-
-        inputs_builder = get_inputs_fleur(code,
-                                          remote,
-                                          fleurin,
-                                          options,
-                                          label,
-                                          description,
-                                          settings,
-                                          add_comp_para=self.ctx.wf_dict['add_comp_para'])
-        future = self.submit(FleurBaseWorkChain, **inputs_builder)
-        return ToContext(f_t=future)
 
     def get_results(self):
         """
@@ -466,14 +365,6 @@ class FleurSSDispWorkChain(WorkChain):
         out = save_output_node(Dict(dict=out))
         self.out('output_ssdisp_wc_para', out)
 
-    def control_end_wc(self, errormsg):
-        """
-        Controlled way to shutdown the workchain. It will initialize the output nodes
-        The shutdown of the workchain will has to be done afterwards
-        """
-        self.report(errormsg)  # because return_results still fails sometimes
-        self.ctx.errors.append(errormsg)
-        self.return_results()
 
 
 @cf

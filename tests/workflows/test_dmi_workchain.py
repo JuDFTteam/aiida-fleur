@@ -23,7 +23,6 @@ def test_fleur_dmi_FePt_film(clear_database, enable_archive_cache, fleur_local_c
     """
     full example using mae workflow with FePt film structure as input.
     """
-    pytest.importorskip('masci_tools', minversion='0.7.3')
     from aiida.orm import Dict, StructureData
 
     options = Dict({

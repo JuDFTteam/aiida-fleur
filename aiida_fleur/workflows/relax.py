@@ -11,7 +11,6 @@
 """
     In this module you find the workflow 'FleurRelaxWorkChain' for geometry optimization.
 """
-import copy
 import numpy as np
 
 from aiida.engine import WorkChain, ToContext, while_, if_
@@ -20,6 +19,7 @@ from aiida.orm import StructureData, Dict
 from aiida.common import AttributeDict
 from aiida.common.exceptions import NotExistent
 
+from aiida_fleur.workflows._base import merge_parameter_dicts, unknown_parameter_keys
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinp import FleurinpData
@@ -32,7 +32,7 @@ class FleurRelaxWorkChain(WorkChain):
     This workflow performs structure optimization.
     """
 
-    _workflowversion = '0.5.0'
+    _workflowversion = '0.6.0'
 
     _default_wf_para = {
         'relax_iter': 5,  # Stop if not converged after so many relaxation steps
@@ -45,8 +45,6 @@ class FleurRelaxWorkChain(WorkChain):
         'relaxation_type': 'atoms'  # others include None and maybe in the future volume
         # None would run an scf only
     }
-
-    _default_options = FleurScfWorkChain._default_options
 
     @classmethod
     def define(cls, spec):
@@ -73,14 +71,13 @@ class FleurRelaxWorkChain(WorkChain):
         )
 
         spec.output('output_relax_wc_para', valid_type=Dict)
-        spec.output('optimized_structure', valid_type=StructureData)
+        spec.output('optimized_structure', valid_type=StructureData, required=False)
         spec.expose_outputs(FleurScfWorkChain, namespace='last_scf')
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
-        spec.exit_code(231, 'ERROR_INPGEN_MISSING', message='If you want to run a final scf inpgen has to be there.')
         spec.exit_code(350, 'ERROR_DID_NOT_RELAX', message='Optimization cycle did not lead to convergence of forces.')
-        spec.exit_code(351, 'ERROR_SCF_FAILED', message='SCF Workchains failed for some reason.')
+        spec.exit_code(345, 'ERROR_SCF_FAILED', message='SCF Workchains failed for some reason.')
         spec.exit_code(352, 'ERROR_NO_RELAX_OUTPUT', message='Found no relaxed structure info in the output of SCF')
         spec.exit_code(353, 'ERROR_NO_SCF_OUTPUT', message='Found no SCF output')
         spec.exit_code(354, 'ERROR_SWITCH_BFGS', message='Force is small, switch to BFGS')
@@ -114,27 +111,15 @@ class FleurRelaxWorkChain(WorkChain):
         self.ctx.total_magnetic_moment = None
 
         # initialize the dictionary using defaults if no wf paramters are given
-        wf_default = copy.deepcopy(self._default_wf_para)
-        if 'wf_parameters' in self.inputs:
-            wf_dict = self.inputs.wf_parameters.get_dict()
-        else:
-            wf_dict = wf_default
-
-        extra_keys = []
-        for key in wf_dict.keys():
-            if key not in wf_default.keys():
-                extra_keys.append(key)
+        wf_dict = self.inputs.wf_parameters.get_dict() if 'wf_parameters' in self.inputs else {}
+        extra_keys = unknown_parameter_keys(wf_dict, self._default_wf_para)
         if extra_keys:
-            error = f'ERROR: input wf_parameters for Relax contains extra keys: {extra_keys}'
-            self.report(error)
+            self.report(f'ERROR: input wf_parameters for Relax contains extra keys: {extra_keys}')
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
+        self.ctx.wf_dict = merge_parameter_dicts(wf_dict, self._default_wf_para,
+                                                 nested=False)
 
-        # extend wf parameters given by user using defaults
-        for key, val in wf_default.items():
-            wf_dict[key] = wf_dict.get(key, val)
-        self.ctx.wf_dict = wf_dict
-
-        if '49999' in wf_dict['atoms_off']:
+        if '49999' in self.ctx.wf_dict['atoms_off']:
             error = '"49999" label for atoms_off is reserved for internal use'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_PARAM
@@ -163,9 +148,6 @@ class FleurRelaxWorkChain(WorkChain):
                     input_final_scf[key] = val
 
             self.ctx.input_final_scf = input_final_scf
-            if 'inpgen' not in input_scf and 'inpgen' not in input_final_scf:
-                self.report('Error: Wrong input: inpgen missing for final scf.')
-                return self.exit_codes.ERROR_INPGEN_MISSING
 
         # initialize contents to avoid access failures
         self.ctx.total_energy_last = None

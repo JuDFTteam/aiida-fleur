@@ -78,7 +78,58 @@ AiiDA-FLEUR specific:
 classes which are nodes, link labels, or the provenance of node classes.
 
 Link naming convention:
+-----------------------
+
+Output links:
+
+  output_<wcname>_wc_para       the one result Dict (see point 2 above)
+  output_<wcname>_wc_<what>     any further output of that workflow
+
+i.e. 'output_scf_wc_para', 'output_banddos_wc_bands', 'output_banddos_wc_dos',
+'output_cfcoeff_wc_charge_densities', 'output_eos_wc_structure'.
+
+Outputs of a sub-process that you re-expose go into a namespace named after the ROLE the
+sub-process played, not after its class:
+
+  spec.expose_outputs(FleurBaseWorkChain, namespace='last_calc')      # scf
+  spec.expose_outputs(FleurScfWorkChain, namespace='last_scf')        # relax
+  spec.expose_outputs(FleurBaseWorkChain, namespace='banddos_calc')   # banddos
+  spec.expose_outputs(FleurScfWorkChain, namespace='groundstate_scf') # orbcontrol
+
+Do re-expose them. A caller that cannot reach the underlying calculation has to go hunting
+through the provenance graph by pk, which several workflows still do and none should.
+
+Call links: set metadata.call_link_label on every sub-process you submit, again naming the
+role, so the graph is readable without opening each node:
+
+  'scf_no_ldau', 'rare_earth_scf', 'analogue_scf_0', 'inpgen'
+
+Note some pre-3.0 outputs do not follow this ('output_convergence_wc_para',
+'magnetic_structure', 'optimized_structure', 'jij_tensor_z'). They are kept for now because
+renaming a link label breaks stored provenance (point 5 above); do not copy them.
+
 
 Node label convention:
+----------------------
+
+The result node carries the same string as its output link:
+
+  outputnode.label = 'output_scf_wc_para'
+
+Sub-processes you submit get a short human-readable metadata.label saying which step of the
+parent this is, so that 'verdi process list' is readable:
+
+  'scf: fleur run 3', 'MAE_force_theorem', 'Force_theorem_calculation', 'supercell_wf'
+
+get_inputs_fleur(..., label=..., description=...) exists to pass these through; use it.
+
 
 Descriptions convention:
+------------------------
+
+The result node gets one sentence saying what it contains and which workflow produced it:
+
+  outputnode.description = 'Contains self-consistency results and information of an fleur_scf_wc run.'
+
+A sub-process description says what that particular run is FOR inside the parent, not what
+the sub-workflow does in general - the latter is already in its docstring.

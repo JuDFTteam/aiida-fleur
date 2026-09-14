@@ -24,7 +24,7 @@ from aiida.plugins import WorkflowFactory, DataFactory
 from aiida.engine.processes.workchains import BaseRestartWorkChain
 from aiida.engine.processes.workchains.utils import process_handler, ProcessHandlerReport
 
-from masci_tools.util.schema_dict_util import evaluate_attribute
+from pyfleur.util.schema_dict_util import evaluate_attribute
 
 # pylint: disable=invalid-name
 RelaxProcess = WorkflowFactory('fleur.relax')
@@ -185,9 +185,9 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
         if 'structure' in self.ctx.inputs.scf:
             del self.ctx.inputs.scf.structure
+        #an `inpgen` code, if one was given at all, is not carried over to the final scf:
+        #nothing acts on it any more
         if 'inpgen' in self.ctx.inputs.scf:
-            if run_final:
-                self.ctx.inputs.final_scf.inpgen = self.ctx.inputs.scf.inpgen
             del self.ctx.inputs.scf.inpgen
         if 'calc_parameters' in self.ctx.inputs.scf:
             if run_final and 'calc_parameters' not in self.ctx.inputs.final_scf:
@@ -228,9 +228,8 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
                 self.ctx.inputs.scf.fleurinp = inputs
             else:
                 self.ctx.inputs.scf.structure = inputs[0]
-                self.ctx.inputs.scf.inpgen = inputs[1]
-                if len(inputs) == 3:
-                    self.ctx.inputs.scf.calc_parameters = inputs[2]
+                if len(inputs) == 2:
+                    self.ctx.inputs.scf.calc_parameters = inputs[1]
 
         self.ctx.is_finished = False
         self.report('Relax WC failed because atom was spilled to the vacuum, I change the vacuum parameter')
@@ -258,9 +257,8 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
                 self.ctx.inputs.scf.fleurinp = inputs
             else:
                 self.ctx.inputs.scf.structure = inputs[0]
-                self.ctx.inputs.scf.inpgen = inputs[1]
-                if len(inputs) == 3:
-                    self.ctx.inputs.scf.calc_parameters = inputs[2]
+                if len(inputs) == 2:
+                    self.ctx.inputs.scf.calc_parameters = inputs[1]
 
         error_params = calculation.outputs.last_scf.last_calc.error_params.get_dict()
         label1 = int(error_params['overlapped_indices'][0])
@@ -315,8 +313,12 @@ class FleurBaseRelaxWorkChain(BaseRestartWorkChain):
 
 def find_inputs_relax(remote_node):
     """
-    Finds the original inputs of the relaxation workchain which can be either
-    FleurinpData or structure+inpgen+calc_param.
+    Finds the original inputs of the relaxation workchain, which are either a FleurinpData
+    or a structure with optional calc_parameters.
+
+    No inpgen code is recovered even from an older node that recorded one: no workchain
+    submits that calculation any more, so re-injecting it would set an input nothing acts
+    on.
     """
     inc_nodes = remote_node.get_incoming().all()
     for link in inc_nodes:
@@ -331,8 +333,8 @@ def find_inputs_relax(remote_node):
 
     if 'structure' in scf_wc_node.inputs:
         if 'calc_parameters' in scf_wc_node.inputs:
-            return scf_wc_node.inputs.structure, scf_wc_node.inputs.inpgen, scf_wc_node.inputs.calc_parameters
-        return scf_wc_node.inputs.structure, scf_wc_node.inputs.inpgen
+            return scf_wc_node.inputs.structure, scf_wc_node.inputs.calc_parameters
+        return (scf_wc_node.inputs.structure,)
 
     if 'fleurinp' in scf_wc_node.inputs:
         return scf_wc_node.inputs.fleurinp

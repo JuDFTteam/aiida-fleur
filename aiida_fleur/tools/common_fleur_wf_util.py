@@ -253,29 +253,25 @@ def determine_formation_energy(struc_te_dict, ref_struc_te_dict):
 
 def determine_convex_hull(formation_en_grid):
     """
-    Wraps the pyhull packge implementing the qhull algo for our purposes.
+    Wraps scipy's qhull wrapper for our purposes.
     For now only for 2D phase diagrams
-    Adds the points [1.0, 0.0] and [0.0, 1.0], because in material science these
+    Adds the points [1.0, 0.0] and [0.0, 0.0], because in material science these
     are always there.
 
     :params: formation_en_grid: list of points in phase space [[x, formation_energy]]
-    :returns: a hul datatype
+    :returns: a :py:class:`scipy.spatial.ConvexHull`
     """
     import numpy as np
-    #from scipy.spatial import ConvexHull # Buggy in python 3... some ugly segfault
-    from pyhull.convex_hull import ConvexHull
+    from scipy.spatial import ConvexHull
 
     # TODO multi d
     # check if endpoints are in
-    if [1.0, 0.0] not in formation_en_grid:
-        formation_en_grid.append([1.0, 0.0])
-    if [0.0, 0.0] not in formation_en_grid:
-        formation_en_grid.append([0.0, 0.0])
+    points = list(formation_en_grid)
+    for endpoint in ([1.0, 0.0], [0.0, 0.0]):
+        if endpoint not in points:
+            points.append(endpoint)
 
-    points = np.array(formation_en_grid)
-    hull = ConvexHull(points)
-
-    return hull
+    return ConvexHull(np.array(points))
 
 
 def inpgen_dict_set_mesh(inpgendict, mesh):

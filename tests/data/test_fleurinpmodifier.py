@@ -25,7 +25,7 @@ inpxmlfilefolder = os.path.abspath(os.path.join(inpxmlfilefolder, file_path1))
 
 def test_fleurinp_modifier1(create_fleurinp):
     """Tests if fleurinp_modifier with various modifations on species"""
-    from masci_tools.io.fleurxmlmodifier import ModifierTask
+    from pyfleur.io.fleurxmlmodifier import ModifierTask
     fleurinp_tmp = create_fleurinp(inpxmlfilefolder)
 
     fm = FleurinpModifier(fleurinp_tmp)

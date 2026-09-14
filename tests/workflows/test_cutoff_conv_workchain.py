@@ -35,7 +35,7 @@ def test_cutoff_conv_create_result_node():
 
     outnode = create_result_node(result_data)
     assert outnode.get_dict()['workflow_name'] == 'FleurCutoffConvWorkChain'
-    assert outnode.label == 'output_convergence_wc_para'
+    assert outnode.label == 'output_cutoff_conv_wc_para'
 
 
 def test_cutoff_conv_create_plot_nodes():

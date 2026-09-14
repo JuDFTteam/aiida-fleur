@@ -20,8 +20,6 @@ from aiida_fleur.tools.plot import plot_fleur
 import aiida_fleur
 import matplotlib.pyplot as plt
 import matplotlib
-import aiida
-from packaging import version
 
 matplotlib.use('Agg')
 
@@ -200,8 +198,6 @@ thisfilefolder = os.path.dirname(os.path.abspath(__file__))
 EXPORTFILE_FILE = os.path.abspath(os.path.join(thisfilefolder, file_path))
 
 
-@pytest.mark.skipif(version.parse(aiida.__version__) < version.parse('1.5.0'),
-                    reason='archive import and migration works only with aiida-core > 1.5.0')
 @pytest.mark.skipif(not os.path.isfile(EXPORTFILE_FILE),
                     reason='Workflow regression files are being regenerated. Skipping plot test'
                     '(Based on results of workflow test)')

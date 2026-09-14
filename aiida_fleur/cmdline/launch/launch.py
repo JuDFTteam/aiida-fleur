@@ -180,7 +180,6 @@ def launch_scf(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
     
     workchain_class = WorkflowFactory('fleur.scf')
     inputs = {
-        'inpgen': inpgen,
         'fleur': fleur,
         'structure': structure,
         'fleurinp': fleurinp,
@@ -212,7 +211,7 @@ def launch_scf(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
         plot_fleur(wf,save=True,show=False)
 
         #store files
-        for file in ["out.xml","cdn1","cdn_last.hdf"]:
+        for file in ["out.xml","cdn_last.hdf"]:
             if file in wf.outputs.last_calc.retrieved.list_object_names():
                 with open(file,"wb") as f:
                     f.write(wf.outputs.last_calc.retrieved.get_object_content(file,"rb"))
@@ -256,7 +255,6 @@ def launch_relax(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_p
             'structure': structure,
             'calc_parameters': calc_parameters,
             'options': option_node,
-            'inpgen': inpgen,
             'fleur': fleur
         },
         'wf_parameters': wf_parameters
@@ -286,7 +284,7 @@ def launch_relax(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_p
         plot_fleur([wf],save=True,show=False)
 
         #store files
-        for file in ["relax.xml","out.xml","cdn1","cdn_last.hdf"]:
+        for file in ["relax.xml","out.xml","cdn_last.hdf"]:
             if file in wf.outputs.last_scf.last_calc.retrieved.list_object_names():
                 with open(file,"wb") as f:
                     f.write(wf.outputs.last_scf.last_calc.retrieved.get_object_content(file,"rb"))
@@ -319,7 +317,6 @@ def launch_eos(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_par
             'wf_parameters': scf_parameters,
             'calc_parameters': calc_parameters,
             'options': option_node,
-            'inpgen': inpgen,
             'fleur': fleur
         },
         'wf_parameters': wf_parameters,
@@ -404,7 +401,7 @@ def launch_banddos(fleurinp, fleur, wf_parameters, parent_folder, daemon, settin
     inputs = {
         'wf_parameters': wf_parameters,
         'fleur': fleur,
-        'remote': parent_folder,
+        'remote_data': parent_folder,
         'fleurinp': fleurinp,
         'options': option_node
     }
@@ -448,7 +445,6 @@ def launch_init_cls(structure, inpgen, calc_parameters, fleurinp, fleur, wf_para
     inputs = {
         'calc_parameters': calc_parameters,
         'options': option_node,
-        'inpgen': inpgen,
         'fleur': fleur,
         'wf_parameters': wf_parameters,
         'structure': structure
@@ -477,7 +473,6 @@ def launch_corehole(structure, inpgen, calc_parameters, fleurinp, fleur, wf_para
     inputs = {
         'calc_parameters': calc_parameters,
         'options': option_node,
-        'inpgen': inpgen,
         'fleur': fleur,
         'wf_parameters': wf_parameters,
         'structure': structure
@@ -512,12 +507,11 @@ def launch_mae(structure, inpgen, calc_parameters, fleurinp, fleur, wf_parameter
             'structure': structure,
             'calc_parameters': calc_parameters,
             'settings': settings,
-            'inpgen': inpgen,
             'fleur': fleur
         },
         'wf_parameters': wf_parameters,
         'fleurinp': fleurinp,
-        'remote': parent_folder,
+        'remote_data': parent_folder,
         'fleur': fleur,
         'options': option_node
     }
@@ -550,7 +544,6 @@ def launch_create_magnetic(inpgen, calc_parameters, fleur, wf_parameters, eos_pa
                 'wf_parameters': scf_parameters,
                 'calc_parameters': calc_parameters,
                 'options': option_node,
-                'inpgen': inpgen,
                 'fleur': fleur
             },
             'wf_parameters': eos_parameters
@@ -560,7 +553,6 @@ def launch_create_magnetic(inpgen, calc_parameters, fleur, wf_parameters, eos_pa
                 'wf_parameters': scf_parameters,
                 'calc_parameters': calc_parameters,
                 'options': option_node,
-                'inpgen': inpgen,
                 'fleur': fleur
             },
             'wf_parameters': relax_parameters,
@@ -595,7 +587,6 @@ def launch_ssdisp(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_
             'structure': structure,
             'calc_parameters': calc_parameters,
             'options': option_node,
-            'inpgen': inpgen,
             'fleur': fleur
         },
         'wf_parameters': wf_parameters,
@@ -634,7 +625,6 @@ def launch_ssdisp(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_
             'wf_parameters': scf_parameters,
             'calc_parameters': calc_parameters,
             'options': option_node,
-            'inpgen': inpgen,
             'structure': structure,
             'fleurinp': fleurinp,
             'fleur': fleur
@@ -677,7 +667,6 @@ def launch_dmi(structure, inpgen, calc_parameters, fleur, wf_parameters, scf_par
             'structure': structure,
             'calc_parameters': calc_parameters,
             'options': option_node,
-            'inpgen': inpgen,
             'fleur': fleur
         },
         'wf_parameters': wf_parameters,

@@ -116,7 +116,7 @@ Database Node graph
 Plot_fleur visualization
 ^^^^^^^^^^^^^^^^^^^^^^^^
   Currently there is no visualization directly implemented for plot fleur.
-  Through there in masci-tools there are methods to visualize spectra and binding energies
+  Through there in pyfleur there are methods to visualize spectra and binding energies
 
 Example usage
 ^^^^^^^^^^^^^

@@ -348,10 +348,7 @@ def _is_remote_reusable(inputs, calculation):
     #If no charge density file is available to restart from the calculation will except
     #with a not nice error message. So we can only reuse the charge density if these files are available
     retrieved_filenames = calculation.base.links.get_outgoing().get_node_by_label('retrieved').list_object_names()
-    if any(file in retrieved_filenames for file in (
-            'cdn_last.hdf',
-            'cdn1',
-    )):
+    if 'cdn_last.hdf' in retrieved_filenames:
         can_use_remote = True
 
     if 'fleurinp' in inputs:

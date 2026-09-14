@@ -450,26 +450,19 @@ def test_fleur_scf_validation_wrong_inputs(fleur_local_code, inpgen_local_code, 
     builder_struc_fleurinp.fleur = fleur_local_code
     builder_struc_fleurinp.inpgen = inpgen_local_code
 
-    # 2. create builder structure no inpgen given
-    builder_no_inpgen = FleurScfWorkChain.get_builder()
-    builder_no_inpgen.structure = structure
-    builder_no_inpgen.options = options
-    builder_no_inpgen.fleur = fleur_local_code
-
-    # 3. create builder no fleur code given
+    # 2. create builder no fleur code given
     builder_no_fleur = FleurScfWorkChain.get_builder()
     builder_no_fleur.structure = structure
     builder_no_fleur.options = options
     builder_no_fleur.inpgen = inpgen_local_code
 
-    # 4. wrong code given (here we swap)
+    # 3. wrong code type given for fleur
     builder_wrong_code = FleurScfWorkChain.get_builder()
     builder_wrong_code.structure = structure
     builder_wrong_code.options = options
-    builder_wrong_code.inpgen = fleur_local_code
     builder_wrong_code.fleur = inpgen_local_code
 
-    # 5. create builder fleurinp and calc_parameter given
+    # 4. create builder fleurinp and calc_parameter given
 
     builder_calc_para_fleurinp = FleurScfWorkChain.get_builder()
     builder_calc_para_fleurinp.calc_parameters = calc_parameters
@@ -488,26 +481,19 @@ def test_fleur_scf_validation_wrong_inputs(fleur_local_code, inpgen_local_code, 
     assert not node.is_finished_ok
     assert node.exit_status == 231
 
-    # 2. structure and no inpgen given
-    out, node = run_get_node(builder_no_inpgen)
-    assert out == {}
-    assert node.is_finished
-    assert not node.is_finished_ok
-    assert node.exit_status == 231
-
-    # 3. no fleur code given, since not optional input,
+    # 2. no fleur code given, since not optional input,
     # caught by aiida during creation
     with pytest.raises(ValueError) as e_info:
         out, node = run_get_node(builder_no_fleur)
 
-    # 4. wrong code type given
+    # 3. wrong code type given
     out, node = run_get_node(builder_wrong_code)
     assert out == {}
     assert node.is_finished
     assert not node.is_finished_ok
     assert node.exit_status == 233
 
-    # 5. calc_parameter and fleurinp given
+    # 4. calc_parameter and fleurinp given
     out, node = run_get_node(builder_calc_para_fleurinp)
     assert out == {}
     assert node.is_finished

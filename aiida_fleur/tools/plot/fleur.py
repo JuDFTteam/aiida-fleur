@@ -11,7 +11,7 @@
 """
 In this module is the plot_fleur method and its logic. The methods allows for the visualization on
 every database node specifc to aiida-fleur. It depends on plot more general plot routines from
-masci-tools which use matplotlib or bokeh as backend.
+pyfleur which use matplotlib or bokeh as backend.
 """
 # TODO but allow to optional parse information for saving and title,
 #  (that user can put pks or structure formulas in there)
@@ -26,8 +26,8 @@ import re
 from aiida.common.links import LinkType
 from aiida.orm import load_node, Node, WorkChainNode, Dict
 
-from masci_tools.util.constants import HTR_TO_EV
-from masci_tools.vis.common import set_defaults, set_default_backend, show_defaults, save_defaults, load_defaults, reset_defaults
+from pyfleur.util.constants import HTR_TO_EV
+from pyfleur.vis.common import set_defaults, set_default_backend, show_defaults, save_defaults, load_defaults, reset_defaults
 
 __all__ = ('plot_fleur', 'set_defaults', 'set_default_backend', 'show_defaults', 'save_defaults', 'load_defaults',
            'reset_defaults')
@@ -50,7 +50,7 @@ def plot_fleur(*args, save=False, show_dict=False, show=True, backend=None, **kw
     :param save: bool if True the produced plots are saved to file
     :param show: bool if True the produced plots are immediately shown
     :param show_dict: bool if True the parameter/Dict node of the WorkChain is printed 9for single visualizations)
-    :param backend: str, 'bokeh' or else 'matplotlib'/'mpl' (default None uses default in masci-tools routines)
+    :param backend: str, 'bokeh' or else 'matplotlib'/'mpl' (default None uses default in pyfleur routines)
 
     Kwargs are passed on to the plotting functions for each WorkChainNode
 
@@ -218,7 +218,7 @@ def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
     This methods takes an AiiDA output parameter node or a list from a scf workchain and
     plots number of iteration over distance and total energy
     """
-    from masci_tools.vis.common import convergence_plot
+    from pyfleur.vis.common import convergence_plot
 
     if not isinstance(nodes, list):
         nodes = [nodes]
@@ -278,45 +278,12 @@ def plot_fleur_scf_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
     return plot_res
 
 
-def plot_fleur_dos_wc(node, labels=None, save=False, show=True, **kwargs):
-    """
-    This methods takes an AiiDA output parameter node from a density of states
-    workchain and plots a simple density of states
-    """
-    from masci_tools.vis.plot_methods import plot_dos
-
-    if labels is None:
-        labels = []
-
-    if isinstance(node, list):
-        if len(node) > 2:
-            return  # TODO
-        else:
-            node = node[0]
-
-    output_d = node.get_dict()
-    path_to_dosfile = output_d.get('dosfile', None)
-    print(path_to_dosfile)
-    if path_to_dosfile:
-        data = np.loadtxt(path_to_dosfile, skiprows=0)
-
-        energy = data[..., 0]
-        dos_labels = ['Total', 'Interstitial', 'MT-Total']
-        dos_data = [data[:, 1], data[:, 2], data[:, 1] - data[:, 2]]
-
-        p1 = plot_dos(energy, dos_data, show=show, plot_labels=dos_labels)
-    else:
-        print('Could not retrieve dos file path from output node')
-
-    return p1
-
-
 def plot_fleur_eos_wc(nodes, labels=None, save=False, show=True, backend='bokeh', **kwargs):
     """
     This methods takes an AiiDA output parameter node from a equation of states
     workchain and plots a simple scaling vs volume plot
     """
-    from masci_tools.vis.common import eos_plot
+    from pyfleur.vis.common import eos_plot
 
     if not isinstance(nodes, list):
         nodes = [nodes]
@@ -351,38 +318,6 @@ def plot_fleur_eos_wc(nodes, labels=None, save=False, show=True, backend='bokeh'
     return plot_res
 
 
-def plot_fleur_band_wc(node, labels=None, save=False, show=True, **kwargs):
-    """
-    This methods takes an AiiDA output parameter node from a band structure
-    workchain and plots a simple band structure
-    """
-    from masci_tools.vis.plot_methods import plot_bands
-
-    if labels is None:
-        labels = []
-
-    if isinstance(node, list):
-        if len(node) > 2:
-            return  # TODO
-        else:
-            node = node[0]
-
-    output_d = node.get_dict()
-    path_to_bands_file = output_d.get('bandfile', None)
-    print(path_to_bands_file)
-    kpath = output_d.get('kpath', {})  #r"$\Gamma$": 0.00000, r"$H$" : 1.04590,
-    #    r"$N$" : 1.78546, r"$P$": 2.30841, r"$\Gamma1$" : 3.21419, r"$N1$" : 3.95375} )
-    if path_to_bands_file:
-        data = np.loadtxt(path_to_bands_file, skiprows=0)
-        kdata = data[..., 0]
-        evdata = data[..., 1]
-        p1 = plot_bands(kdata, evdata, special_kpoints=kpath)
-    else:
-        print('Could not retrieve dos file path from output node')
-
-    return p1
-
-
 def plot_fleur_banddos_wc(param_node,
                           file_node,
                           labels=None,
@@ -395,9 +330,9 @@ def plot_fleur_banddos_wc(param_node,
     This methods takes an AiiDA output parameter node and retrieved files from a banddos
     workchain and plots the bandstructure/DOS
     """
-    from masci_tools.io.parsers.hdf5 import HDF5Reader
-    from masci_tools.io.parsers.hdf5.recipes import FleurDOS, FleurBands
-    from masci_tools.vis.fleur import plot_fleur_bands, plot_fleur_dos
+    from pyfleur.io.parsers.hdf5 import HDF5Reader
+    from pyfleur.io.parsers.hdf5.recipes import FleurDOS, FleurBands
+    from pyfleur.vis.fleur import plot_fleur_bands, plot_fleur_dos
 
     if isinstance(param_node, list):
         if len(param_node) > 2:
@@ -438,7 +373,7 @@ def plot_fleur_relax_wc(node, labels=None, save=False, show=True, backend='bokeh
     This methods takes an AiiDA output parameter node from a relaxation
     workchain and plots some information about atom movements and forces
     """
-    from masci_tools.vis.common import convergence_plot
+    from pyfleur.vis.common import convergence_plot
 
     if labels is None:
         labels = [n.pk for n in node]
@@ -508,7 +443,7 @@ def plot_fleur_orbcontrol_wc(nodes,
     This methods takes AiiDA output parameter nodes from a orbcontrol
     workchain and plots the energy of the individual configurations.
     """
-    from masci_tools.vis.common import scatter, PlotBackend
+    from pyfleur.vis.common import scatter, PlotBackend
     from itertools import chain
 
     if labels is None:
@@ -605,7 +540,7 @@ def plot_fleur_cfcoeff_wc(param_node,
     Plot the CFCoeff workchain. Either plot the used potentials/charge densities or the angular dependence
     of the resulting potential
     """
-    from masci_tools.tools.cf_calculation import plot_crystal_field_calculation, plot_crystal_field_potential
+    from pyfleur.tools.cf_calculation import plot_crystal_field_calculation, plot_crystal_field_potential
     from aiida_fleur.workflows.cfcoeff import reconstruct_cfcalculation, reconstruct_cfcoeffcients
 
     if isinstance(param_node, list):
@@ -761,9 +696,6 @@ FUNCTIONS_DICT = {
     'fleur_eos_wc': plot_fleur_eos_wc,  #support of < 1.0 release
     'FleurScfWorkChain': plot_fleur_scf_wc,
     'FleurEosWorkChain': plot_fleur_eos_wc,
-    'fleur_dos_wc': plot_fleur_dos_wc,
-    'fleur_band_wc': plot_fleur_band_wc,
-    'FleurBandWorkChain': plot_fleur_band_wc,
     'FleurBandDosWorkChain': plot_fleur_banddos_wc,
     'FleurCFCoeffWorkChain': plot_fleur_cfcoeff_wc,
     'FleurRelaxWorkChain': plot_fleur_relax_wc,

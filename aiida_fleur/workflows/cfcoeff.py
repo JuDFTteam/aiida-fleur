@@ -28,8 +28,8 @@ from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.workflows.orbcontrol import FleurOrbControlWorkChain
 
-from masci_tools.tools.cf_calculation import CFCalculation, CFCoefficient
-from masci_tools.util.schema_dict_util import eval_simple_xpath, tag_exists
+from pyfleur.tools.cf_calculation import CFCalculation, CFCoefficient
+from pyfleur.util.schema_dict_util import eval_simple_xpath, tag_exists
 
 import h5py
 from lxml import etree
@@ -120,9 +120,9 @@ class FleurCFCoeffWorkChain(WorkChain):
     """
     Workflow for calculating rare-earth crystal field coefficients
     """
-    _workflowversion = '0.2.0'
+    _workflowversion = '0.3.0'
 
-    _wf_default = {
+    _default_wf_para = {
         'element': '',
         'rare_earth_analogue': False,
         'analogue_element': 'Y',
@@ -185,7 +185,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         self.ctx.warnings = []
         self.ctx.errors = []
         self.ctx.num_analogues = None
-        wf_default = self._wf_default
+        wf_default = self._default_wf_para
         if 'wf_parameters' in self.inputs:
             wf_dict = self.inputs.wf_parameters.get_dict()
         else:
@@ -199,7 +199,7 @@ class FleurCFCoeffWorkChain(WorkChain):
         """
         validate input
         """
-        extra_keys = {key for key in self.ctx.wf_dict if key not in self._wf_default}
+        extra_keys = {key for key in self.ctx.wf_dict if key not in self._default_wf_para}
         if extra_keys:
             error = f'ERROR: input wf_parameters for CFCoeff contains extra keys: {extra_keys}'
             self.report(error)
@@ -269,7 +269,6 @@ class FleurCFCoeffWorkChain(WorkChain):
             if input_scf_tmp is None:
                 input_scf_tmp = {}
                 input_scf_tmp['structure'] = input_scf['structure']
-                input_scf_tmp['inpgen'] = input_scf['inpgen']
                 input_scf_tmp['fleur'] = input_scf['fleur']
                 input_scf_tmp['options'] = input_scf['options']
                 if 'calc_parameters' in input_scf:
@@ -325,7 +324,8 @@ class FleurCFCoeffWorkChain(WorkChain):
                 with inpxml_changes(scf_wf_dict) as fm:
                     fm.set_species(f"all-{self.ctx.wf_dict['analogue_element']}", {'special': {'socscale': 0}})
 
-            inputs_analogue.wf_parameters = orm.Dict(dict=scf_wf_dict)
+                inputs_analogue.wf_parameters = orm.Dict(dict=scf_wf_dict)
+
             inputs_analogue.metadata.call_link_label = f'analogue_scf_{index}'
             inputs[f'analogue_scf_{index}'] = inputs_analogue
 
@@ -738,7 +738,8 @@ class FleurCFCoeffWorkChain(WorkChain):
             'cf_coefficients_site_symmetries': rare_earth_site_symmetries,
             'info': self.ctx.info,
             'warnings': self.ctx.warnings,
-            'errors': self.ctx.errors
+            'errors': self.ctx.errors,
+            'successful': self.ctx.successful
         }
 
         if cf_calc_out:
@@ -846,7 +847,7 @@ def calculate_cf_coefficients(cf_cdn_folder: orm.FolderData,
                               atomTypes: orm.List = None) -> orm.Dict:
     """
     Calculate the crystal filed coefficients using the tool from the
-    masci-tools package
+    pyfleur package
 
     :param cf_cdn_folder: FolderData for the retrieved files for the charge density data
     :param cf_pot_folder: FolderData for the retrieved files for the potential data

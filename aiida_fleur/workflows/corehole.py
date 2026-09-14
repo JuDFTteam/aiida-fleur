@@ -112,7 +112,7 @@ class FleurCoreholeWorkChain(WorkChain):
     # Hints:
     # 1. This workflow does not work with local codes!
 
-    _workflowversion = '0.5.1'
+    _workflowversion = '0.6.0'
     _default_options = {
         'resources': {
             'num_machines': 1,
@@ -153,7 +153,8 @@ class FleurCoreholeWorkChain(WorkChain):
         spec.input('wf_parameters', valid_type=Dict, required=False, default=lambda: Dict(dict=cls._default_wf_para))
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
         spec.input('fleur', valid_type=Code, required=True)
-        spec.input('inpgen', valid_type=Code, required=True)
+        #optional: without a code the input is generated in-process by pyfleur
+        spec.input('inpgen', valid_type=Code, required=False)
         spec.input('structure', valid_type=StructureData, required=False)
         spec.input('calc_parameters', valid_type=Dict, required=False)
         spec.input('options', valid_type=Dict, required=False)  #, default=lambda: Dict(dict=cls._default_options))
@@ -172,26 +173,26 @@ class FleurCoreholeWorkChain(WorkChain):
             cls.return_results)
         spec.output('output_corehole_wc_para', valid_type=Dict)
 
-        spec.exit_code(1, 'ERROR_INVALID_INPUT_RESOURCES', message='The input resources are invalid.')
-        spec.exit_code(2, 'ERROR_INVALID_INPUT_RESOURCES_UNDERSPECIFIED', message='Input resources are missing.')
-        spec.exit_code(3,
+        spec.exit_code(231, 'ERROR_INVALID_INPUT_CONFIG', message='Invalid input configuration.')
+        spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
+        spec.exit_code(233,
                        'ERROR_INVALID_CODE_PROVIDED',
                        message='The code provided is invalid, or not of the right kind.')
-        spec.exit_code(4, 'ERROR_INPGEN_CALCULATION_FAILED', message='Inpgen calculation FAILED, check output')
-        spec.exit_code(5,
+        spec.exit_code(360, 'ERROR_INPGEN_CALCULATION_FAILED', message='Inpgen calculation FAILED, check output')
+        spec.exit_code(235,
                        'ERROR_CHANGING_FLEURINPUT_FAILED',
                        message='Changing of the FLEURINP data went wrong, check log.')
-        spec.exit_code(6,
-                       'ERROR_CALCULATION_INVALID_INPUT_FILE',
+        spec.exit_code(236,
+                       'ERROR_INVALID_INPUT_FILE',
                        message='The FLEUR input file for the calculation did not validate.')
-        spec.exit_code(7,
-                       'ERROR_FLEUR_CALCULATION_FAiLED',
+        spec.exit_code(361,
+                       'ERROR_FLEUR_CALCULATION_FAILED',
                        message='At least one FLEUR calculation FAILED, check the output and log.')
-        spec.exit_code(8,
-                       'ERROR_CONVERGENCE_NOT_ARCHIVED',
+        spec.exit_code(362,
+                       'ERROR_DID_NOT_CONVERGE',
                        message=('At least one FLEUR calculation did not/could not reach the'
                                 'desired convergece Criteria, with the current parameters.'))
-        spec.exit_code(9,
+        spec.exit_code(346,
                        'ERROR_IN_REFERENCE_CREATION',
                        message=('Something went wrong in the determiation what coreholes to '
                                 'calculate, probably the input format was not correct. Check log.'))
@@ -262,6 +263,7 @@ class FleurCoreholeWorkChain(WorkChain):
         # return variables initalized here, that at any time an output node can be written.
         self.ctx.successful = True
         self.ctx.bindingenergies = []
+        self.ctx.info = []
         self.ctx.warnings = []
         self.ctx.errors = []
         self.ctx.hints = []
@@ -712,7 +714,6 @@ class FleurCoreholeWorkChain(WorkChain):
                 res = self.submit(FleurScfWorkChain,
                                   wf_parameters=wf_parameters,
                                   structure=node,
-                                  inpgen=self.inputs.inpgen,
                                   fleur=self.inputs.fleur,
                                   options=options,
                                   metadata={
@@ -723,7 +724,6 @@ class FleurCoreholeWorkChain(WorkChain):
                 res = self.submit(FleurScfWorkChain,
                                   wf_parameters=wf_parameters,
                                   structure=node,
-                                  inpgen=self.inputs.inpgen,
                                   fleur=self.inputs.fleur,
                                   options=options,
                                   metadata={
@@ -737,7 +737,6 @@ class FleurCoreholeWorkChain(WorkChain):
                                       options=options,
                                       calc_parameters=node[1],
                                       structure=node[0],
-                                      inpgen=self.inputs.inpgen,
                                       fleur=self.inputs.fleur,
                                       metadata={
                                           'label': scf_label,
@@ -828,7 +827,6 @@ class FleurCoreholeWorkChain(WorkChain):
                 res = self.submit(FleurScfWorkChain,
                                   wf_parameters=wf_parameters,
                                   structure=node,
-                                  inpgen=self.inputs.inpgen,
                                   fleur=self.inputs.fleur,
                                   options=options,
                                   metadata={
@@ -839,7 +837,6 @@ class FleurCoreholeWorkChain(WorkChain):
                 res = self.submit(FleurScfWorkChain,
                                   wf_parameters=wf_parameters,
                                   structure=node,
-                                  inpgen=self.inputs.inpgen,
                                   fleur=self.inputs.fleur,
                                   options=options,
                                   metadata={
@@ -854,7 +851,6 @@ class FleurCoreholeWorkChain(WorkChain):
                                           calc_parameters=node[1],
                                           structure=node[0],
                                           options=options,
-                                          inpgen=self.inputs.inpgen,
                                           fleur=self.inputs.fleur,
                                           metadata={
                                               'label': scf_label,
@@ -990,6 +986,7 @@ class FleurCoreholeWorkChain(WorkChain):
         outputnode_dict['reference_bandgaps'] = self.ctx.ref_bandgaps
         outputnode_dict['atomtypes'] = self.ctx.atomtypes
         outputnode_dict['warnings'] = self.ctx.warnings
+        outputnode_dict['info'] = self.ctx.info
         outputnode_dict['errors'] = self.ctx.errors
         outputnode_dict['hints'] = self.ctx.hints
 

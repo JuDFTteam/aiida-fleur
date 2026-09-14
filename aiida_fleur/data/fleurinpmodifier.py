@@ -28,8 +28,8 @@ from aiida import orm
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.tools.xml_aiida_modifiers import set_kpointsdata_f
 
-from masci_tools.io.fleurxmlmodifier import ModifierTask, FleurXMLModifier
-from masci_tools.util.xml.common_functions import serialize_xml_objects
+from pyfleur.io.fleurxmlmodifier import ModifierTask, FleurXMLModifier
+from pyfleur.util.xml.common_functions import serialize_xml_objects
 from typing import Any, Generator, Callable
 
 __all__ = ('FleurinpModifier', 'inpxml_changes', 'modify_fleurinpdata')
@@ -249,7 +249,7 @@ class FleurinpModifier(FleurXMLModifier):
     #Modification functions that accept XML elements, which have to be serialized beforehand
     def xml_create_tag(self, *args: Any, **kwargs: Any) -> None:
         """
-        Appends a :py:func:`~masci_tools.util.xml.xml_setters_basic.xml_create_tag()` to
+        Appends a ``pyfleur.util.xml.xml_setters_basic.xml_create_tag()`` to
         the list of tasks that will be done on the xmltree.
 
         :param xpath: a path where to place a new tag
@@ -265,7 +265,7 @@ class FleurinpModifier(FleurXMLModifier):
 
     def create_tag(self, *args: Any, **kwargs: Any) -> None:
         """
-        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.create_tag()` to
+        Appends a ``pyfleur.util.xml.xml_setters_names.create_tag()`` to
         the list of tasks that will be done on the xmltree.
 
         :param tag: str of the tag to create
@@ -285,7 +285,7 @@ class FleurinpModifier(FleurXMLModifier):
 
     def xml_replace_tag(self, *args: Any, **kwargs: Any) -> None:
         """
-        Appends a :py:func:`~masci_tools.util.xml.xml_setters_basic.xml_replace_tag()` to
+        Appends a ``pyfleur.util.xml.xml_setters_basic.xml_replace_tag()`` to
         the list of tasks that will be done on the xmltree.
 
         :param xpath: a path to the tag to be replaced
@@ -302,7 +302,7 @@ class FleurinpModifier(FleurXMLModifier):
         Deprecation layer for replace_tag if there are slashes in the first positional argument or xpath is is in kwargs.
         We know that it is the old usage.
 
-        Appends a :py:func:`~masci_tools.util.xml.xml_setters_names.replace_tag()` to
+        Appends a ``pyfleur.util.xml.xml_setters_names.replace_tag()`` to
         the list of tasks that will be done on the xmltree.
 
         :param tag: str of the tag to replace
@@ -481,7 +481,7 @@ def modify_fleurinpdata(original: FleurinpData, modifications: orm.Dict, **kwarg
     # save inp.xml
     # store new fleurinp (copy)
     import tempfile
-    from masci_tools.util.schema_dict_util import reverse_xinclude
+    from pyfleur.util.schema_dict_util import reverse_xinclude
 
     new_fleurinp = original.clone()
 

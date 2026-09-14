@@ -32,7 +32,7 @@ from aiida.common.exceptions import InputValidationError, ValidationError
 from typing import Any, cast, Iterator, BinaryIO, TextIO, ContextManager, Dict, List
 
 from lxml import etree
-from masci_tools.io.parsers.fleur_schema import InputSchemaDict
+from pyfleur.io.parsers.fleur_schema import InputSchemaDict
 
 __all__ = ('FleurinpData', 'get_fleurinp_from_folder_data', 'get_fleurinp_from_remote_data', 'get_structuredata',
            'get_kpointsdata', 'get_parameterdata', 'convert_inpxml', 'get_fleurinp_from_folder_data_cf',
@@ -54,7 +54,7 @@ class FleurinpData(orm.Data):
     ``inp.xml`` file of FLEUR in the database as a python dictionary (as internal attributes).
     When an ``inp.xml`` (name important!) file is added to files, parsed into a XML tree
     and validated against the XML schema file for the given file version. These XML schemas
-    are provided by the `masci-tools` library
+    are provided by the `pyfleur` library
 
 
     FleurinpData also provides the user with
@@ -67,7 +67,7 @@ class FleurinpData(orm.Data):
     FleurinpData that way and start a new calculation from it.
     """
 
-    __version__ = '0.6.1'
+    __version__ = '0.7.0'
 
     def __init__(self, files: list[str] | None = None, node: orm.Node | str | int | None = None, **kwargs: Any) -> None:
         """
@@ -282,10 +282,10 @@ class FleurinpData(orm.Data):
 
         1. load ``inp.xml`` file
         2. insert all files to include into the etree
-        3. call masci-tools input file parser (Validation happens inside here)
+        3. call pyfleur input file parser (Validation happens inside here)
         4. set inputxml_dict
         """
-        from masci_tools.io.parsers.fleur import inpxml_parser
+        from pyfleur.io.parsers.fleur import inpxml_parser
 
         #The schema_dict is not needed outside the inpxml_parser so we ignore it with the underscore
         xmltree, _ = self.load_inpxml()  #type: ignore[misc]
@@ -314,7 +314,7 @@ class FleurinpData(orm.Data):
 
         Keyword arguments are passed on to the parser
         """
-        from masci_tools.io.fleur_xml import load_inpxml
+        from pyfleur.io.fleur_xml import load_inpxml
 
         self._validate()
 
@@ -340,9 +340,9 @@ class FleurinpData(orm.Data):
                 raise InputValidationError(err) from err
         elif develop_version and self.logger is not None:
             self.logger.warning(f'You are using a Fleur input file with file version {self.inp_version}.\n'
-                                'This version has no corresponding XML Schema stored in masci-tools.\n'
+                                'This version has no corresponding XML Schema stored in pyfleur.\n'
                                 'Unexpected Errors can occur. If that is the case you can try to add the '
-                                'XML Schema for this file version to masci-tools')
+                                'XML Schema for this file version to pyfleur')
 
         if return_included_tags:
             return xmltree, schema_dict, included_tags
@@ -357,7 +357,7 @@ class FleurinpData(orm.Data):
         and replaces the name in the `href` attributes of the `xi:include` tags.
         Then these are expanded with `xmltree.xinclude()`
         """
-        from masci_tools.util.xml.common_functions import clear_xml, eval_xpath
+        from pyfleur.util.xml.common_functions import clear_xml, eval_xpath
         import tempfile
 
         temp_files = []
@@ -429,7 +429,7 @@ class FleurinpData(orm.Data):
 
         :return: a dictionary containing all possible modes.
         """
-        from masci_tools.util.xml.xml_getters import get_fleur_modes
+        from pyfleur.util.xml.xml_getters import get_fleur_modes
 
         xmltree, schema_dict = self.load_inpxml()  #type: ignore[misc]
 
@@ -442,7 +442,7 @@ class FleurinpData(orm.Data):
 
         :returns: int with the number of kPoints
         """
-        from masci_tools.util.xml.xml_getters import get_nkpts
+        from pyfleur.util.xml.xml_getters import get_nkpts
 
         xmltree, schema_dict = self.load_inpxml()  #type: ignore[misc]
 
@@ -456,7 +456,7 @@ class FleurinpData(orm.Data):
         :param self: a FleurinpData instance to be parsed into a StructureData
         :returns: StructureData node, or None
         """
-        from masci_tools.util.xml.xml_getters import get_structuredata as get_structuredata_xml
+        from pyfleur.util.xml.xml_getters import get_structuredata as get_structuredata_xml
 
         xmltree, schema_dict = self.load_inpxml()  #type: ignore[misc]
 
@@ -500,7 +500,7 @@ class FleurinpData(orm.Data):
 
         :returns: :class:`~aiida.orm.KpointsData` node
         """
-        from masci_tools.util.xml.xml_getters import get_kpointsdata as get_kpointsdata_xml
+        from pyfleur.util.xml.xml_getters import get_kpointsdata as get_kpointsdata_xml
 
         # HINT, TODO:? in this routine, the 'cell' you might get in an other way
         # exp: StructureData.cell, but for this you have to make a structureData Node,
@@ -567,7 +567,7 @@ class FleurinpData(orm.Data):
 
         :returns: :class:`~aiida.orm.Dict` node
         """
-        from masci_tools.util.xml.xml_getters import get_parameterdata as get_parameterdata_xml
+        from pyfleur.util.xml.xml_getters import get_parameterdata as get_parameterdata_xml
 
         xmltree, schema_dict = self.load_inpxml()  #type: ignore[misc]
 
@@ -605,7 +605,7 @@ class FleurinpData(orm.Data):
             If the Fleurinp contains included xml trees the resulting
             FleurinpData will contain only the combined inp.xml
         """
-        from masci_tools.tools.fleur_inpxml_converter import convert_inpxml as convert_inpxml_actual
+        from pyfleur.tools.fleur_inpxml_converter import convert_inpxml as convert_inpxml_actual
         import tempfile
         clone = self.clone()
 
@@ -616,7 +616,7 @@ class FleurinpData(orm.Data):
             raise ValueError(
                 f"No conversion available from version {schema_dict['inp_version']} to {to_version}\n"
                 'Please create the conversion by running\n'
-                f"     masci-tools generate-conversion {schema_dict['inp_version']}  {to_version}\n") from exc
+                f"     pyfleur generate-conversion {schema_dict['inp_version']}  {to_version}\n") from exc
 
         clone.del_file('inp.xml')
         with tempfile.TemporaryDirectory() as td:

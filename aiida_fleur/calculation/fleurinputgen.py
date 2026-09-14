@@ -259,8 +259,8 @@ def _lowercase_dict(dic, dict_name):
 
 
 def write_inpgen_file_aiida_struct(structure, file, input_params=None, settings=None):
-    """Wraps around masci_tools write inpgen_file, unpacks aiida structure"""
-    from masci_tools.io.fleur_inpgen import write_inpgen_file
+    """Wraps around pyfleur write inpgen_file, unpacks aiida structure"""
+    from pyfleur.io.fleur_inpgen import write_inpgen_file
 
     atoms_dict_list = []
     kind_list = []

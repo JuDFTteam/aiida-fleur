@@ -11,6 +11,8 @@
 '''
 This module contains click option types specific to aiida-fleur
 '''
+import json
+
 import click
 from aiida.cmdline.params import types
 from aiida.cmdline.utils import echo
@@ -78,7 +80,7 @@ class OptionsType(click.ParamType):
         try:
             #Perhaps a pk or uuid was given?
             return types.DataParamType(sub_classes=('aiida.data:core.dict',)).convert(value, param, ctx)
-        except:
+        except click.BadParameter:
             pass #Ok this failed, then we examine the argument as a filename
 
         if value=="template.json":
@@ -115,7 +117,7 @@ class FleurinpType(click.ParamType):
     def convert(self,value,param,ctx):
         try:
             return types.DataParamType(sub_classes=('aiida.data:fleur.fleurinp',)).convert(value, param, ctx)
-        except:
+        except click.BadParameter:
             pass #Ok this failed, so we try to read the file
 
         if value in ["inp.xml",".",'./']:
@@ -139,21 +141,28 @@ class RemoteType(click.ParamType):
         #Try to interpret value as uuid
         try:
             return types.DataParamType(sub_classes=('aiida.data:core.remote',)).convert(value, param, ctx)
-        except:
+        except click.BadParameter:
             pass #Ok this failed, so we try to read the file
            
         try:
-            from aiida.orm import load_node
             with open(value,"r") as f:
-                import json
                 dict_from_file=json.load(f)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            return None
+
+        if not isinstance(dict_from_file, dict):
+            return None
+
+        from aiida.orm import load_node
+        try:
             if 'SCF-uuid' in dict_from_file:
                 scf_wf=load_node(dict_from_file["SCF-uuid"])
                 return scf_wf.outputs.last_calc.remote_folder
             if 'retrieved-uuid' in dict_from_file:
                 return dict_from_file["retrieved-uuid"]
-        except:
+        except (NotExistent, AttributeError):
             return None
+        return None
 
 class WFParameterType(click.ParamType):
     """

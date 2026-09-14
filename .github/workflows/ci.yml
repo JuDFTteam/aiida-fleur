@@ -23,10 +23,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python 3.8
+    - name: Set up Python 3.10
       uses: actions/setup-python@v5
       with:
-        python-version: 3.8
+        python-version: "3.10"
 
     - name: Cache python dependencies
       id: cache-pip
@@ -40,7 +40,6 @@ jobs:
     - name: Install python dependencies
       run: |
         pip install -e .[docs]
-        reentry scan || true
 
     - name: Build documentation
       env:
@@ -66,10 +65,10 @@ jobs:
         restore-keys: |
           pip-pre-commit-
 
-    - name: Set up Python 3.8
+    - name: Set up Python 3.10
       uses: actions/setup-python@v5
       with:
-        python-version: 3.8
+        python-version: "3.10"
 
     - name: Install python dependencies
       run: |
@@ -87,46 +86,70 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
-        aiida: [{version: 'aiida-core==2.0.1', name: '2.0.1'},{version: 'aiida-core==2.3.0', name: '2.3.0'}]
-        masci-tools: [{version: 'masci-tools', name: 'stable'}]
-        bokeh-version: ['bokeh==3.0.3']
-        mpl-version: ['matplotlib==3.6.3']
-        add-name: ['']
-        allowed-to-fail: [false]
+        # aiida-fleur and pyfleur both require Python >=3.10; aiida-core 2.8 supports
+        # 3.9-3.13. Every leg is spelled out, because the supported space is no longer a
+        # clean cross product: the stored matplotlib/bokeh plot baselines only hold for
+        # the pinned versions, and those cannot be installed next to NumPy 2 (matplotlib
+        # gained NumPy 2 support in 3.9, well after the pinned 3.6.3).
         include:
-          - python-version: "3.11"
-            aiida: {version: 'aiida-core==2.3.0', name: '2.3.0'}
-            masci-tools: {version: 'masci-tools', name: 'stable'}
+          # -- required: the declared floor, and the combination the plot baselines were
+          #    generated with
+          - python-version: "3.10"
+            aiida: {version: 'aiida-core==2.8.0', name: '2.8.0'}
+            pyfleur: {version: 'git+https://iffgit.fz-juelich.de/fleur/pyfleur.git@07553a5c31547133c12bb5aec652e2abcd47daaa', name: 'pinned'}
+            numpy-version: 'numpy<2'
             bokeh-version: 'bokeh==3.0.3'
             mpl-version: 'matplotlib==3.6.3'
             add-name: ''
             allowed-to-fail: false
-          - python-version: 3.9
-            aiida: {version: 'git+https://github.com/aiidateam/aiida-core.git@main', name: 'latest'}
-            masci-tools: {version: 'masci-tools', name: 'stable'}
+          - python-version: "3.11"
+            aiida: {version: 'aiida-core', name: 'latest'}
+            pyfleur: {version: 'git+https://iffgit.fz-juelich.de/fleur/pyfleur.git@07553a5c31547133c12bb5aec652e2abcd47daaa', name: 'pinned'}
+            numpy-version: 'numpy<2'
             bokeh-version: 'bokeh==3.0.3'
             mpl-version: 'matplotlib==3.6.3'
             add-name: ''
-            allowed-to-fail: true
-          - python-version: 3.9
-            aiida: {version: 'aiida-core==2.0.1', name: '2.0.1'}
-            masci-tools: {version: 'git+https://github.com/JuDFTteam/masci-tools.git@develop', name: 'develop'}
-            bokeh-version: 'bokeh==3.0.3'
-            mpl-version: 'matplotlib==3.6.3'
-            add-name: ''
-            allowed-to-fail: true
-          - python-version: 3.9
-            aiida: {version: 'aiida-core==2.0.1', name: '2.0.1'}
-            masci-tools: {version: 'masci-tools', name: 'stable'}
+            allowed-to-fail: false
+          # -- NumPy 2. Allowed to fail only because the plot regressions under
+          #    tests/tools/test_plot_fleur still hold matplotlib 3.6.3 images and a
+          #    bokeh-3.0.2 baseline; regenerate those and promote these two to required.
+          - python-version: "3.12"
+            aiida: {version: 'aiida-core', name: 'latest'}
+            pyfleur: {version: 'git+https://iffgit.fz-juelich.de/fleur/pyfleur.git@07553a5c31547133c12bb5aec652e2abcd47daaa', name: 'pinned'}
+            numpy-version: 'numpy>=2'
             bokeh-version: 'bokeh'
             mpl-version: 'matplotlib'
-            add-name: '-latest-bokeh/mpl'
+            add-name: '-numpy2'
+            allowed-to-fail: true
+          - python-version: "3.13"
+            aiida: {version: 'aiida-core', name: 'latest'}
+            pyfleur: {version: 'git+https://iffgit.fz-juelich.de/fleur/pyfleur.git@07553a5c31547133c12bb5aec652e2abcd47daaa', name: 'pinned'}
+            numpy-version: 'numpy>=2'
+            bokeh-version: 'bokeh'
+            mpl-version: 'matplotlib'
+            add-name: '-numpy2'
+            allowed-to-fail: true
+          # -- early warning against the development tips
+          - python-version: "3.11"
+            aiida: {version: 'git+https://github.com/aiidateam/aiida-core.git@main', name: 'main'}
+            pyfleur: {version: 'git+https://iffgit.fz-juelich.de/fleur/pyfleur.git@07553a5c31547133c12bb5aec652e2abcd47daaa', name: 'pinned'}
+            numpy-version: 'numpy<2'
+            bokeh-version: 'bokeh==3.0.3'
+            mpl-version: 'matplotlib==3.6.3'
+            add-name: ''
+            allowed-to-fail: true
+          - python-version: "3.11"
+            aiida: {version: 'aiida-core', name: 'latest'}
+            pyfleur: {version: 'git+https://iffgit.fz-juelich.de/fleur/pyfleur.git@main', name: 'main'}
+            numpy-version: 'numpy<2'
+            bokeh-version: 'bokeh==3.0.3'
+            mpl-version: 'matplotlib==3.6.3'
+            add-name: ''
             allowed-to-fail: true
 
       fail-fast: false
 
-    name: ${{ matrix.python-version }}-aiida-${{ matrix.aiida.name }}-masci-${{ matrix.masci-tools.name }}${{ matrix.add-name }}
+    name: ${{ matrix.python-version }}-aiida-${{ matrix.aiida.name }}-pyfleur-${{ matrix.pyfleur.name }}${{ matrix.add-name }}
     continue-on-error: ${{ matrix.allowed-to-fail }}
 
     services:
@@ -171,9 +194,10 @@ jobs:
         pip install git+https://github.com/aiidateam/aiida-testing.git@main
         pip install --no-deps git+https://github.com/aiidateam/aiida-common-workflows.git@master
         pip install .[testing,graphs]
-        pip install ${{ matrix.aiida.version }} ${{ matrix.masci-tools.version }}
-        pip install ${{ matrix.bokeh-version }} ${{ matrix.mpl-version }}
-        reentry scan || true
+        pip install ${{ matrix.aiida.version }} ${{ matrix.pyfleur.version }}
+        # one call so the resolver picks a matplotlib built against the requested numpy
+        pip install '${{ matrix.numpy-version }}' ${{ matrix.bokeh-version }} ${{ matrix.mpl-version }}
+        python -c "import numpy; print('numpy', numpy.__version__)"
 
     - name: Run pytest
       run: |
@@ -181,7 +205,7 @@ jobs:
        # create fake codes for tests to work on ci
        touch local_exe/inpgen && chmod +x local_exe/inpgen
        touch local_exe/fleur && chmod +x local_exe/fleur
-       ./run_all_cov.sh --local-exe-hdf5
+       ./run_all_cov.sh
 
     - name: Upload report to Codecov
       uses: codecov/codecov-action@v5

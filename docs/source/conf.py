@@ -52,9 +52,12 @@ extensions = ['myst_parser',
 
 todo_include_todos = True
 
+#pyfleur has no published Sphinx build, so it has no objects.inv and cannot be added
+#here. Every ``pyfleur.*`` cross-reference is therefore unresolvable and is silenced by
+#nitpick_ignore_regex below rather than being listed one by one -- pyfleur's own
+#docstrings, pulled in by autodoc through inherited members, contribute hundreds.
 intersphinx_mapping = {
     'aiida': ('https://aiida-core.readthedocs.io/en/v1.6.8/', None),
-    'masci-tools': ('https://masci-tools.readthedocs.io/en/latest/', None),
     'ase': ('https://wiki.fysik.dtu.dk/ase/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
     'python': ('https://docs.python.org/3', None),
@@ -436,10 +439,16 @@ epub_copyright = copyright
 
 # Warnings to ignore when using the -n (nitpicky) option
 # We should ignore any python built-in exception, for instance
+#NOTE this used to assign nitpick_ignore, silently discarding the entry set further up;
+#extend it instead so both survive
 with open('nitpick-exceptions', 'r') as handle:
-    nitpick_ignore = [
+    nitpick_ignore += [
         tuple(line.strip().split(None, 1)) for line in handle.readlines() if line.strip() and not line.startswith('#')
     ]
+
+#pyfleur publishes no intersphinx inventory, so no reference into it can resolve. There
+#are far too many to enumerate in nitpick-exceptions, and they would churn with pyfleur.
+nitpick_ignore_regex = [(r'py:.*', r'pyfleur\..*')]
 
 # These folders are copied to the documentation's HTML output
 html_static_path = ['_static']

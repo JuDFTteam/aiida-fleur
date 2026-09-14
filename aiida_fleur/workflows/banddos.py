@@ -14,7 +14,6 @@ electron bandstructure.
 """
 # TODO alow certain kpoint path, or kpoint node, so far auto
 import copy
-from lxml import etree
 from ase.dft.kpoints import bandpath
 import numpy as np
 
@@ -29,8 +28,10 @@ from aiida.tools.data.array.kpoints import get_explicit_kpoints_path
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
+from aiida_fleur.workflows._base import validate_and_freeze
 from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
+from aiida_fleur.tools.common_fleur_wf import validate_fleur_entry_points
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data
 
 
@@ -44,7 +45,7 @@ class FleurBandDosWorkChain(WorkChain):
     # wf_parameters: {  'tria', 'nkpts', 'sigma', 'emin', 'emax'}
     # defaults : tria = True, nkpts = 800, sigma=0.005, emin= , emax =
 
-    _workflowversion = '0.7.0'
+    _workflowversion = '0.8.0'
 
     _default_options = {
         'resources': {
@@ -87,10 +88,13 @@ class FleurBandDosWorkChain(WorkChain):
                            namespace='scf')
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('fleur', valid_type=Code, required=True)
-        spec.input('remote', valid_type=RemoteData, required=False)
+        spec.input('remote_data', valid_type=RemoteData, required=False)
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
         spec.input('kpoints', valid_type=KpointsData, required=False)
         spec.input('options', valid_type=Dict, required=False)
+        #reject an illegal combination of starting points at submission instead of
+        #creating a node that aborts in its first step
+        spec.inputs.validator = validate_fleur_entry_points
 
         spec.outline(cls.start,
                      if_(cls.scf_needed)(
@@ -112,8 +116,8 @@ class FleurBandDosWorkChain(WorkChain):
                        message='Invalid code node specified, check inpgen and fleur code nodes.')
         spec.exit_code(235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message='Input file modification failed.')
         spec.exit_code(236, 'ERROR_INVALID_INPUT_FILE', message="Input file was corrupted after user's modifications.")
-        spec.exit_code(334, 'ERROR_SCF_CALCULATION_FAILED', message='SCF calculation failed.')
-        spec.exit_code(335, 'ERROR_SCF_CALCULATION_NOREMOTE', message='Found no SCF calculation remote repository.')
+        spec.exit_code(334, 'ERROR_REFERENCE_CALCULATION_FAILED', message='SCF calculation failed.')
+        spec.exit_code(335, 'ERROR_REFERENCE_CALCULATION_NOREMOTE', message='Found no SCF calculation remote repository.')
 
     def start(self):
         '''
@@ -177,16 +181,16 @@ class FleurBandDosWorkChain(WorkChain):
 
         if 'scf' in inputs:
             self.ctx.scf_needed = True
-            if 'remote' in inputs:
-                error = 'ERROR: you gave SCF input + remote for the BandDOS calculation'
+            if 'remote_data' in inputs:
+                error = 'ERROR: you gave SCF input + remote_data for the BandDOS calculation'
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'fleurinp' in inputs:
                 error = 'ERROR: you gave SCF input + fleurinp for the BandDOS calculation'
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-        elif 'remote' not in inputs:
-            error = 'ERROR: you gave neither SCF input nor remote'
+        elif 'remote_data' not in inputs:
+            error = 'ERROR: you gave neither SCF input nor remote_data'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         else:
@@ -215,10 +219,10 @@ class FleurBandDosWorkChain(WorkChain):
             except NotExistent:
                 error = 'Fleurinp generated in the SCF calculation is not found.'
                 self.control_end_wc(error)
-                return self.exit_codes.ERROR_SCF_CALCULATION_FAILED
+                return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
         else:
             if 'fleurinp' not in self.inputs:
-                fleurin = get_fleurinp_from_remote_data(self.inputs.remote)
+                fleurin = get_fleurinp_from_remote_data(self.inputs.remote_data)
             else:
                 fleurin = self.inputs.fleurinp
 
@@ -332,19 +336,14 @@ class FleurBandDosWorkChain(WorkChain):
             change_dict = {'band': True, 'minEnergy': emin, 'maxEnergy': emax, 'sigma': sigma}
         fleurmode.set_inpchanges(change_dict)
 
-        try:
-            fleurmode.show(display=False, validate=True)
-        except etree.DocumentInvalid:
-            error = ('ERROR: input, user wanted inp.xml changes did not validate')
-            self.control_end_wc(error)
+        modified, failure = validate_and_freeze(fleurmode, self.report)
+        if failure == 'invalid':
             return self.exit_codes.ERROR_INVALID_INPUT_FILE
-        except ValueError as exc:
-            error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
-                     f'The following error was raised {exc}')
-            self.control_end_wc(error)
+        if failure is not None:
+            self.control_end_wc('Applying the requested inp.xml changes failed.')
             return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-        fleurinp_new = fleurmode.freeze()
+        fleurinp_new = modified
         self.ctx.fleurinp_banddos = fleurinp_new
 
     def scf_needed(self):
@@ -370,21 +369,21 @@ class FleurBandDosWorkChain(WorkChain):
         if not calc.is_finished_ok:
             message = ('The SCF calculation was not successful.')
             self.control_end_wc(message)
-            return self.exit_codes.ERROR_SCF_CALCULATION_FAILED
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
         try:
             outpara_node = calc.outputs.output_scf_wc_para
         except NotExistent:
             message = ('The SCF calculation failed, no scf output node.')
             self.control_end_wc(message)
-            return self.exit_codes.ERROR_SCF_CALCULATION_FAILED
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
         outpara = outpara_node.get_dict()
 
         if 'total_energy' not in outpara:
             message = ('Did not manage to extract float total energy from the SCF calculation.')
             self.control_end_wc(message)
-            return self.exit_codes.ERROR_SCF_CALCULATION_FAILED
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_FAILED
 
         self.report('INFO: run BandDOS calculation')
 
@@ -414,7 +413,7 @@ class FleurBandDosWorkChain(WorkChain):
         except AttributeError:
             message = ('Found no remote folder of the reference scf calculation.')
             self.control_end_wc(message)
-            return self.exit_codes.ERROR_SCF_CALCULATION_NOREMOTE
+            return self.exit_codes.ERROR_REFERENCE_CALCULATION_NOREMOTE
 
         label = 'bansddos_calculation'
         description = 'Bandstructure or DOS is calculated for the given structure'
@@ -453,7 +452,7 @@ class FleurBandDosWorkChain(WorkChain):
         settings = {'remove_from_remotecopy_list': ['mixing_history*']}
 
         # Retrieve remote folder from the inputs
-        remote = self.inputs.remote
+        remote = self.inputs.remote_data
 
         label = 'bansddos_calculation'
         description = 'Bandstructure or DOS is calculated for the given structure'
@@ -523,8 +522,8 @@ class FleurBandDosWorkChain(WorkChain):
         scf_results = None
         efermi_scf = 0
         bandgap_scf = 0
-        if 'remote' in self.inputs:
-            scf_results = self.inputs.remote.creator.res
+        if 'remote_data' in self.inputs:
+            scf_results = self.inputs.remote_data.creator.res
         elif 'scf' in self.inputs:
             if self.ctx.scf and self.ctx.scf.is_finished_ok:
                 scf_results = self.ctx.scf.outputs.last_calc.output_parameters.dict
@@ -547,7 +546,10 @@ class FleurBandDosWorkChain(WorkChain):
         outputnode_dict = {}
 
         outputnode_dict['workflow_name'] = self.__class__.__name__
-        outputnode_dict['Warnings'] = self.ctx.warnings
+        outputnode_dict['workflow_version'] = self._workflowversion
+        outputnode_dict['info'] = self.ctx.info
+        outputnode_dict['warnings'] = self.ctx.warnings
+        outputnode_dict['errors'] = self.ctx.errors
         outputnode_dict['successful'] = self.ctx.successful
         outputnode_dict['mode'] = self.ctx.wf_dict.get('mode')
         outputnode_dict['fermi_energy_band'] = efermi_band
@@ -631,8 +633,8 @@ def create_aiida_bands_data(fleurinp, retrieved):
     :raises: ExitCode 310, banddos.hdf reading failed
     :raises: ExitCode 320, reading kpointsdata from Fleurinp failed
     """
-    from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
-    from masci_tools.io.parsers.hdf5.recipes import FleurSimpleBands  #no projections only eigenvalues for now
+    from pyfleur.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
+    from pyfleur.io.parsers.hdf5.recipes import FleurSimpleBands  #no projections only eigenvalues for now
     from aiida.engine import ExitCode
 
     try:
@@ -680,8 +682,8 @@ def create_aiida_dos_data(retrieved):
     :raises: ExitCode 300, banddos.hdf file is missing
     :raises: ExitCode 310, banddos.hdf reading failed
     """
-    from masci_tools.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
-    from masci_tools.io.parsers.hdf5.recipes import FleurDOS  #only standard DOS for now
+    from pyfleur.io.parsers.hdf5 import HDF5Reader, HDF5TransformationError
+    from pyfleur.io.parsers.hdf5.recipes import FleurDOS  #only standard DOS for now
     from aiida.engine import ExitCode
 
     if 'banddos.hdf' in retrieved.list_object_names():

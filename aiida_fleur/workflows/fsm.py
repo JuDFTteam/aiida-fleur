@@ -27,13 +27,42 @@ from aiida.engine import WorkChain, ToContext, calcfunction as cf
 from aiida_fleur.calculation.fleur import FleurCalculation
 from aiida_fleur.data.fleurinp import FleurinpData
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida_fleur.tools.common_fleur_wf import get_inputs_inpgen, test_and_get_codenode
+from aiida_fleur.calculation.inpgen_pyfleur import (InpgenGenerationFailed,
+                                                    generate_fleurinp_in_workchain,
+                                                    warn_if_inpgen_code_given)
+from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.workflows.scf import FleurScfWorkChain
 
 
 # d-block and f-block atomic number ranges used to decide which l-channel gets LDA+U
 _D_BLOCK_Z = set(range(21, 31)) | set(range(39, 49)) | set(range(72, 81)) | set(range(104, 113))
 _F_BLOCK_Z = set(range(57, 72)) | set(range(89, 104))
+
+#: how FLEUR and ASE each spell an empty sphere; both legitimately have z == 0
+_EMPTY_SPHERE_SYMBOLS = ('x', 'va')
+
+
+def _atomic_number(element):
+    """
+    Atomic number for an element symbol, falling back to ``0`` if it is not one.
+
+    Reproduces the ``ATOMIC_NUMBERS.get(element, 0)`` lookup this workchain previously did
+    against masci-tools. pyfleur's table is transcribed from FLEUR's own ``namat_const``;
+    it agrees with the old one on all 119 symbols and additionally answers for ``va``,
+    FLEUR's spelling of the empty sphere. The tolerant fallback is kept deliberately:
+    ``pyfleur.inpgen.atoms.atomic_number`` raises on an unknown symbol, but ``z = 0`` is
+    what this workchain has always written for one, and changing that is a separate
+    decision from swapping the dependency.
+
+    :param element: element symbol, or anything that is not one
+    :returns: the atomic number, or 0
+    """
+    from pyfleur.inpgen.atoms import atomic_number
+
+    try:
+        return atomic_number(element)
+    except ValueError:
+        return 0
 
 
 class FleurFsmWorkChain(WorkChain):
@@ -53,7 +82,7 @@ class FleurFsmWorkChain(WorkChain):
     Inputs
     ------
     scf.*         : exposed inputs of FleurScfWorkChain
-                    Required: scf.structure, scf.inpgen, scf.fleur
+                    Required: scf.structure, scf.fleur
                     Optional: scf.calc_parameters (kpt grid etc.), scf.wf_parameters,
                               scf.settings, scf.options
     wf_parameters : Dict, optional
@@ -62,24 +91,15 @@ class FleurFsmWorkChain(WorkChain):
                                  Final FSM = magOffset + value.
                       magOffset – float added to every fsmList entry (default 0.0).
     inpgenCompRes : Dict, optional
-                    Compute resources for the inpgen step (overrides scf.options).
+                    Accepted and ignored. It described compute resources for the inpgen
+                    step, which no longer runs as a job.
     """
 
-    _workflowversion = '0.3.0'
+    _workflowversion = '0.4.0'
 
     _default_wf_para = {
         'fsmList': [-0.1, 0.0, 0.1],
         'magOffset': 0.0,
-    }
-
-    _default_options = {
-        'resources': {
-            'num_machines': 1,
-            'num_mpiprocs_per_machine': 1
-        },
-        'max_wallclock_seconds': 2 * 60 * 60,
-        'queue_name': '',
-        'withmpi': False,
     }
 
     @classmethod
@@ -92,7 +112,9 @@ class FleurFsmWorkChain(WorkChain):
                                'populate_defaults': False
                            })
         spec.input('wf_parameters', valid_type=orm.Dict, required=False)
-        spec.input('inpgenCompRes', valid_type=orm.Dict, required=False)
+        #accepted and ignored: input generation no longer runs as a job, so there are no
+        #compute resources to give it. non_db so it is not recorded as an input
+        spec.input('inpgenCompRes', valid_type=orm.Dict, required=False, non_db=True)
 
         spec.outline(
             cls.start,
@@ -113,7 +135,7 @@ class FleurFsmWorkChain(WorkChain):
         spec.exit_code(235, 'ERROR_CHANGING_FLEURINPUT_FAILED', message='Input file modification failed.')
         spec.exit_code(236, 'ERROR_INVALID_INPUT_FILE', message='Input file was corrupted after modifications.')
         spec.exit_code(360, 'ERROR_INPGEN_CALCULATION_FAILED', message='Inpgen calculation failed.')
-        spec.exit_code(370, 'ERROR_ALL_FSM_CALCS_FAILED', message='All FSM SCF calculations failed.')
+        spec.exit_code(343, 'ERROR_ALL_FSM_CALCS_FAILED', message='All FSM SCF calculations failed.')
 
     # -------------------------------------------------------------------------
     # Workchain steps
@@ -149,10 +171,6 @@ class FleurFsmWorkChain(WorkChain):
 
         # Validate codes
         scf_inputs = self.inputs.scf
-        if 'inpgen' not in scf_inputs:
-            error = 'ERROR: scf.inpgen code is required for the FSM workchain'
-            self.report(error)
-            return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
         if 'structure' not in scf_inputs:
             error = 'ERROR: scf.structure is required for the FSM workchain'
             self.report(error)
@@ -162,33 +180,14 @@ class FleurFsmWorkChain(WorkChain):
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
-        try:
-            test_and_get_codenode(scf_inputs.inpgen, 'fleur.inpgen')
-        except ValueError:
-            error = 'The code provided for inpgen does not use the plugin fleur.inpgen'
-            self.report(error)
-            return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+        warn_if_inpgen_code_given(scf_inputs, self.report, label='scf.inpgen')
+
         try:
             test_and_get_codenode(scf_inputs.fleur, 'fleur.fleur')
         except ValueError:
             error = 'The code provided for FLEUR does not use the plugin fleur.fleur'
             self.report(error)
             return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
-
-        # Inpgen compute resources: explicit inpgenCompRes beats scf.options
-        if 'inpgenCompRes' in self.inputs:
-            self.ctx.inpgen_options = self.inputs.inpgenCompRes.get_dict()
-        elif 'options' in scf_inputs:
-            base_options = scf_inputs.options.get_dict()
-            self.ctx.inpgen_options = {
-                'resources': base_options.get('resources', self._default_options['resources']),
-                'max_wallclock_seconds': base_options.get('max_wallclock_seconds',
-                                                          self._default_options['max_wallclock_seconds']),
-                'queue_name': base_options.get('queue_name', ''),
-                'withmpi': False,
-            }
-        else:
-            self.ctx.inpgen_options = copy.deepcopy(self._default_options)
 
     def run_inpgen(self):
         """
@@ -202,11 +201,8 @@ class FleurFsmWorkChain(WorkChain):
         the key is 'atom', for multi-species 'atom0', 'atom1', …
         Keeps any kpt specification already present in calc_parameters.
         """
-        from masci_tools.util.constants import ATOMIC_NUMBERS
-
         scf_inputs = self.inputs.scf
         structure = scf_inputs.structure
-        inpgen_code = scf_inputs.inpgen
 
         # Build calc_parameters for inpgen
         if 'calc_parameters' in scf_inputs:
@@ -229,7 +225,10 @@ class FleurFsmWorkChain(WorkChain):
             del params_dict['atom']
         for i, kind in enumerate(kinds):
             element = kind.symbols[0]
-            z = ATOMIC_NUMBERS.get(element, 0)
+            z = _atomic_number(element)
+            if z == 0 and element.lower() not in _EMPTY_SPHERE_SYMBOLS:
+                self.report(f'WARNING: unrecognised element {element!r} for kind {kind.name!r}; '
+                            'writing z=0 to the inpgen &atom namelist, which is almost certainly wrong')
             atom_key = 'atom' if n_kinds == 1 else f'atom{i}'
             atom_entry = params_dict.setdefault(atom_key, {})
             atom_entry['z'] = z
@@ -239,20 +238,16 @@ class FleurFsmWorkChain(WorkChain):
 
         settings = scf_inputs.get('settings', None)
 
-        label = 'fsm: inpgen'
-        description = f'Inpgen for FSM workflow on {structure.get_formula()}'
+        self.report('INFO: generating the FLEUR input')
+        try:
+            self.ctx.fleurinp_from_inpgen = generate_fleurinp_in_workchain(
+                structure, self.report, calc_parameters=params, settings=settings)
+        except InpgenGenerationFailed as exc:
+            self.report(f'ERROR: {exc}')
+            self.ctx.errors.append(str(exc))
+            return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
 
-        inputs_build = get_inputs_inpgen(structure,
-                                         inpgen_code,
-                                         self.ctx.inpgen_options,
-                                         label,
-                                         description,
-                                         settings=settings,
-                                         params=params)
-
-        self.report('INFO: submitting inpgen')
-        future = self.submit(inputs_build)
-        return ToContext(inpgen=future)
+        return None
 
     def adapt_inputs(self):
         """
@@ -266,13 +261,8 @@ class FleurFsmWorkChain(WorkChain):
         The list of species that received LDA+U is stored in
         self.ctx.ldau_species_info for later use in get_results.
         """
-        if not self.ctx.inpgen.is_finished_ok:
-            error = 'ERROR: inpgen calculation failed'
-            self.report(error)
-            self.ctx.errors.append(error)
-            return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
-
-        base_fleurinp = self.ctx.inpgen.outputs.fleurinp
+        #run_inpgen returned an exit code if generation failed, so this is always set here
+        base_fleurinp = self.ctx.fleurinp_from_inpgen
 
         # Determine which species carry d or f electrons
         ldau_species_info = self._get_ldau_species_info(base_fleurinp)
@@ -411,7 +401,7 @@ class FleurFsmWorkChain(WorkChain):
             # --- Fermi energies for both spin channels ---
             # For FSM calculations FLEUR writes a FixedTotalMoment element inside each
             # iteration block with fermiEnergyUp and fermiEnergyDown attributes (in Htr).
-            # masci-tools has no dedicated parse task for this element.
+            # pyfleur has no dedicated parse task for this element.
             ef_up = None
             ef_down = None
             if outxml_tree is not None:
@@ -431,8 +421,7 @@ class FleurFsmWorkChain(WorkChain):
             density_matrix_set = []
             if outxml_tree is not None:
                 try:
-                    density_matrix_set = _extract_density_matrix_set(outxml_tree,
-                                                                      self.ctx.ldau_species_info)
+                    density_matrix_set = _extract_density_matrix_set(outxml_tree, self.ctx.ldau_species_info)
                 except Exception as exc:  # pylint: disable=broad-except
                     self.report(f'WARNING: Could not extract density matrices for FSM={fsm_val:.4f}: {exc}')
 
@@ -490,12 +479,10 @@ class FleurFsmWorkChain(WorkChain):
 
         Returns a list of dicts with keys: name, element, l, atom_type_index.
         """
-        from masci_tools.util.constants import ATOMIC_NUMBERS
-
         inp_dict = fleurinp.inp_dict
         atom_species_block = inp_dict.get('atomSpecies', {})
         if isinstance(atom_species_block, list):
-            # masci-tools returns atomSpecies as a flat list of atomType dicts
+            # the inp.xml parser returns atomSpecies as a flat list of atomType dicts
             atom_types = atom_species_block
         else:
             atom_types = atom_species_block.get('atomType', [])
@@ -506,7 +493,7 @@ class FleurFsmWorkChain(WorkChain):
         for idx, atom_type in enumerate(atom_types):
             name = atom_type.get('name', '')
             element = atom_type.get('element', '')
-            z = ATOMIC_NUMBERS.get(element, 0)
+            z = _atomic_number(element)
 
             if z in _F_BLOCK_Z:
                 l_channel = 3

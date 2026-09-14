@@ -16,7 +16,6 @@ cycle management of a FLEUR calculation with AiiDA.
 # TODO: make smarter, ggf delete mixing_history or restart with more or less iterations
 # you can use the pattern of the density convergence for this
 # TODO: maybe write dict schema for wf_parameter inputs, how?
-from lxml import etree
 from copy import deepcopy
 
 from aiida.orm import Code, load_node
@@ -25,8 +24,12 @@ from aiida.engine import WorkChain, while_, if_, ToContext
 from aiida.engine import calcfunction as cf
 from aiida.common.exceptions import NotExistent
 
+from aiida_fleur.calculation.inpgen_pyfleur import (InpgenGenerationFailed,
+                                                    generate_fleurinp_in_workchain,
+                                                    warn_if_inpgen_code_given)
 from aiida_fleur.data.fleurinpmodifier import FleurinpModifier
-from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur, get_inputs_inpgen
+from aiida_fleur.workflows._base import validate_and_freeze
+from aiida_fleur.tools.common_fleur_wf import get_inputs_fleur
 from aiida_fleur.tools.common_fleur_wf import test_and_get_codenode
 from aiida_fleur.tools.create_kpoints_from_distance import create_kpoints_from_distance_parameter
 from aiida_fleur.workflows.base_fleur import FleurBaseWorkChain
@@ -34,7 +37,7 @@ from aiida_fleur.calculation.fleur import FleurCalculation
 
 from aiida_fleur.data.fleurinp import FleurinpData, get_fleurinp_from_remote_data_cf
 
-from masci_tools.io.parsers.fleur import outxml_parser
+from pyfleur.io.parsers.fleur import outxml_parser
 
 
 class FleurScfWorkChain(WorkChain):
@@ -52,14 +55,14 @@ class FleurScfWorkChain(WorkChain):
     :param calc_parameters: (Dict), Inpgen Parameters
     :param fleurinp: (FleurinpData), to start with a Fleur calculation
     :param remote_data: (RemoteData), from a Fleur calculation
-    :param inpgen: (Code)
+    :param inpgen: (Code), accepted and ignored; the input is generated in-process
     :param fleur: (Code)
 
     :return: output_scf_wc_para (Dict), Information of workflow results
         like Success, last result node, list with convergence behavior
     """
 
-    _workflowversion = '0.6.4'
+    _workflowversion = '0.7.0'
     _default_wf_para = {
         'fleur_runmax': 4,
         'density_converged': 0.00002,
@@ -111,23 +114,29 @@ class FleurScfWorkChain(WorkChain):
     def define(cls, spec):
         super().define(spec)
         spec.input('fleur', valid_type=Code, required=True)
-        spec.input('inpgen', valid_type=Code, required=False)
+        #`inpgen` and `options_inpgen` are accepted and ignored: input generation runs
+        #in-process, so there is no executable to point at and no scheduler to configure.
+        #Kept so that existing submission scripts still run, and `non_db` so that an unused
+        #Code is not recorded as an input of the workchain. To be removed in the next major
+        #release; `warn_if_inpgen_code_given` tells the user
+        spec.input('inpgen', valid_type=Code, required=False, non_db=True)
         spec.input('wf_parameters', valid_type=Dict, required=False)
         spec.input('structure', valid_type=StructureData, required=False)
         spec.input('calc_parameters', valid_type=Dict, required=False)
         spec.input('fleurinp', valid_type=FleurinpData, required=False)
         spec.input('remote_data', valid_type=RemoteData, required=False)
         spec.input('options', valid_type=Dict, required=False)
-        spec.input('options_inpgen', valid_type=Dict, required=False)
+        spec.input('options_inpgen', valid_type=Dict, required=False, non_db=True)
         spec.input('settings', valid_type=Dict, required=False)
         spec.input('settings_inpgen', valid_type=Dict, required=False)
         spec.outline(cls.start, cls.validate_input,
                      if_(cls.fleurinpgen_needed)(cls.run_fleurinpgen), cls.run_fleur, cls.inspect_fleur, cls.get_res,
                      while_(cls.condition)(cls.run_fleur, cls.inspect_fleur, cls.get_res), cls.return_results)
 
-        spec.output('fleurinp', valid_type=FleurinpData)
+        spec.output('fleurinp', valid_type=FleurinpData, required=False)
         spec.output('output_scf_wc_para', valid_type=Dict)
-        spec.expose_outputs(FleurBaseWorkChain, namespace='last_calc')
+        spec.expose_outputs(FleurBaseWorkChain, namespace='last_calc',
+                            namespace_options={'required': False})
 
         # exit codes
         spec.exit_code(230, 'ERROR_INVALID_INPUT_PARAM', message='Invalid workchain parameters.')
@@ -243,10 +252,6 @@ class FleurScfWorkChain(WorkChain):
                 error = 'ERROR: structure input is not needed because Fleurinp was given'
                 self.report(error)
                 return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
-            if 'inpgen' in inputs:
-                error = 'ERROR: inpgen code is not needed input because Fleurinp was given'
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'calc_parameters' in inputs:
                 error = 'ERROR: calc_parameters input is not needed because Fleurinp was given'
                 self.report(error)
@@ -257,10 +262,6 @@ class FleurScfWorkChain(WorkChain):
                 self.report(warning)
         elif 'structure' in inputs:
             self.ctx.run_inpgen = True
-            if not 'inpgen' in inputs:
-                error = 'ERROR: StructureData was provided, but no inpgen code was provided'
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
             if 'remote_data' in inputs:
                 warning = ('WARNING: Only initial charge density will be copied from the'
                            'given remote folder because fleurinp is given.')
@@ -272,13 +273,7 @@ class FleurScfWorkChain(WorkChain):
             self.report(error)
             return self.exit_codes.ERROR_INVALID_INPUT_CONFIG
 
-        if 'inpgen' in inputs:
-            try:
-                test_and_get_codenode(inputs.inpgen, 'fleur.inpgen')
-            except ValueError:
-                error = 'The code you provided for inpgen of FLEUR does not use the plugin fleur.inpgen'
-                self.report(error)
-                return self.exit_codes.ERROR_INVALID_CODE_PROVIDED
+        warn_if_inpgen_code_given(inputs, self.report)
 
         if 'fleur' in inputs:
             try:
@@ -328,23 +323,20 @@ class FleurScfWorkChain(WorkChain):
 
     def fleurinpgen_needed(self):
         """
-        Returns True if inpgen calculation has to be submitted
+        Returns True if the FLEUR input still has to be generated from a structure
         before fleur calculations
         """
         return self.ctx.run_inpgen
 
     def run_fleurinpgen(self):
         """
-        run the inpgen
+        Generate the FLEUR input from the structure.
+
+        Runs in-process; no inpgen calculation is submitted.
         """
 
-        ## prepare inputs for inpgen
         structure = self.inputs.structure
         self.ctx.formula = structure.get_formula()
-        label = 'scf: inpgen'
-        description = f'{self.ctx.description_wf} inpgen on {self.ctx.formula}'
-
-        inpgencode = self.inputs.inpgen
 
         if 'calc_parameters' in self.inputs:
             params = self.inputs.calc_parameters
@@ -376,27 +368,15 @@ class FleurScfWorkChain(WorkChain):
             }
             params = create_kpoints_from_distance_parameter(**inputs)
 
-        options = {
-            'max_wallclock_seconds': int(self.ctx.options.get('max_wallclock_seconds')),
-            'resources': self.ctx.options.get('resources'),
-            'queue_name': self.ctx.options.get('queue_name', '')
-        }
-        if 'options_inpgen' in self.inputs:
-            options = {**options, **self.inputs.options_inpgen.get_dict()}
+        self.report('INFO: generating the FLEUR input')
+        try:
+            self.ctx.fleurinp_from_inpgen = generate_fleurinp_in_workchain(
+                structure, self.report, calc_parameters=params, settings=settings)
+        except InpgenGenerationFailed as exc:
+            self.control_end_wc(str(exc))
+            return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
 
-        inputs_build = get_inputs_inpgen(structure,
-                                         inpgencode,
-                                         options,
-                                         label,
-                                         description,
-                                         settings=settings,
-                                         params=params)
-
-        # Launch inpgen
-        self.report('INFO: run inpgen')
-        future = self.submit(inputs_build)
-
-        return ToContext(inpgen=future)
+        return None
 
     def reset_straight_mixing(self):
         """
@@ -416,21 +396,14 @@ class FleurScfWorkChain(WorkChain):
         if wf_dict['initial_ldau_straight_mixing']:
             fleurmode.set_inpchanges({'l_linmix': False})
 
-        # validate?
-        try:
-            fleurmode.show(display=False, validate=True)
-        except etree.DocumentInvalid:
-            error = ('ERROR: input, user wanted inp.xml changes did not validate')
-            self.report(error)
+        modified, failure = validate_and_freeze(fleurmode, self.report)
+        if failure == 'invalid':
             return self.exit_codes.ERROR_INVALID_INPUT_FILE
-        except ValueError as exc:
-            error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
-                     f'The following error was raised {exc}')
-            self.control_end_wc(error)
+        if failure is not None:
+            self.control_end_wc('Applying the requested inp.xml changes failed.')
             return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-        # apply
-        out = fleurmode.freeze()
+        out = modified
         self.ctx.fleurinp = out
         return
 
@@ -450,11 +423,9 @@ class FleurScfWorkChain(WorkChain):
         if 'fleurinp' in inputs:
             fleurin = self.inputs.fleurinp
         elif 'structure' in inputs:
-            if not self.ctx['inpgen'].is_finished_ok:
-                error = 'Inpgen calculation failed'
-                self.control_end_wc(error)
-                return self.exit_codes.ERROR_INPGEN_CALCULATION_FAILED
-            fleurin = self.ctx['inpgen'].outputs.fleurinp
+            #run_fleurinpgen already returned an exit code if generation failed, so by here
+            #this is always set
+            fleurin = self.ctx.fleurinp_from_inpgen
         elif 'remote_data' in inputs:
             # In this case only remote_data for input structure is given
             # fleurinp data has to be generated from the remote inp.xml file to use change_fleurinp
@@ -551,21 +522,14 @@ class FleurScfWorkChain(WorkChain):
                 self.control_end_wc(error)
                 return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-        # validate?
-        try:
-            fleurmode.show(display=False, validate=True)
-        except etree.DocumentInvalid:
-            error = ('ERROR: input, user wanted inp.xml changes did not validate')
-            self.report(error)
+        modified, failure = validate_and_freeze(fleurmode, self.report)
+        if failure == 'invalid':
             return self.exit_codes.ERROR_INVALID_INPUT_FILE
-        except (ValueError, TypeError) as exc:
-            error = ('ERROR: input, user wanted inp.xml changes could not be applied.'
-                     f'The following error was raised {exc}')
-            self.control_end_wc(error)
+        if failure is not None:
+            self.control_end_wc('Applying the requested inp.xml changes failed.')
             return self.exit_codes.ERROR_CHANGING_FLEURINPUT_FAILED
 
-        # apply
-        out = fleurmode.freeze()
+        out = modified
         self.ctx.fleurinp = out
         return
 
@@ -900,6 +864,7 @@ class FleurScfWorkChain(WorkChain):
         outputnode_dict['info'] = self.ctx.info
         outputnode_dict['warnings'] = self.ctx.warnings
         outputnode_dict['errors'] = self.ctx.errors
+        outputnode_dict['successful'] = self.ctx.successful
 
         if self.ctx.x_torques:
             outputnode_dict['last_x_torques'] = self.ctx.x_torques[-1]

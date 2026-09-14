@@ -12,21 +12,47 @@ from pathlib import Path
 
 CONFTEST_LOCATION = Path(__file__).parent.resolve()
 
-# aiida_testing.mock_codes in development, not yet a stable dependency
-# therefore we try to import it and if it fails we skip tests with it
-
-RUN_REGRESSION_TESTS = True
+# The mock-code / archive-cache plugin is an optional, unpinned dependency, so we try to import it
+# and skip the regression tests if it is missing.
+#
+# It used to be called `aiida_testing`. The upstream repository (aiidateam/aiida-testing) was
+# renamed and now ships the package as `aiida_test_cache`, with the same two submodules this suite
+# uses -- `mock_code` and `archive_cache` -- and the same fixture names. Only the config file name
+# changed, `.aiida-testing-config.yml` -> `.aiida-test-cache-config.yml`.
+#
+# There is deliberately no fallback to the old name: the install URL in CI resolves to the renamed
+# package, so anything still importing as `aiida_testing` predates the rename and would not find
+# its configuration under the new file name anyway.
 try:
-    import aiida_testing
+    from aiida_test_cache.archive_cache import _utils as archive_cache_utils
 except ImportError:
-    print('AiiDA-testing not in path. Running without regression tests for Workchains and CalcJobs.')
-    RUN_REGRESSION_TESTS = False
+    archive_cache_utils = None
 
-pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
+RUN_REGRESSION_TESTS = archive_cache_utils is not None
+if not RUN_REGRESSION_TESTS:
+    print('aiida-test-cache is not in the path. Running without regression tests for Workchains '
+          'and CalcJobs. Install it with:\n'
+          '  pip install git+https://github.com/aiidateam/aiida-testing.git@main')
+else:
+    # Compatibility shim. aiida_test_cache.archive_cache._utils.load_node_archive does
+    #     from aiida.tools.archive import get_format
+    # at function entry, but aiida-core does not export that name from the package root -- not in
+    # 2.8.0 (our declared floor) nor in 2.9.x; it lives in aiida.tools.archive.abstract. The import
+    # therefore raises before the function does anything, which breaks BOTH the enable_archive_cache
+    # fixture and our own load_cache, i.e. every workflow regression test.
+    #
+    # Publishing the name where the plugin looks for it is the least invasive fix available from
+    # here. Remove once aiida-test-cache imports it from the right place.
+    import aiida.tools.archive as _aiida_archive
 
+    if not hasattr(_aiida_archive, 'get_format'):
+        from aiida.tools.archive.abstract import get_format as _get_format
 
-def pytest_addoption(parser):
-    parser.addoption('--local-exe-hdf5', action='store_true', help='Is the local executable compiled with HDF5')
+        _aiida_archive.get_format = _get_format
+
+#the fixtures themselves are registered through the package's pytest11 entry points, so they are
+#loaded automatically and must not be listed here
+pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'pyfleur.testing.bokeh']
 
 
 def pytest_configure(config):
@@ -35,30 +61,22 @@ def pytest_configure(config):
     So far we add some markers here to be able to execute a certain group of tests
     We make them all lowercaps as convention
     """
-    config.addinivalue_line('markers',
-                            'regression_test: test using the aiida-testing plugin for workflow regression tests')
+    config.addinivalue_line(
+        'markers', 'regression_test: test using the aiida-test-cache plugin for workflow regression tests')
 
 
 def pytest_collection_modifyitems(session, config, items):
     """After test collection modify collection.
 
-    Skip regression test if aiida-tesing is not there
+    Skip regression tests if the mock-code/archive-cache plugin is not there
     """
-    import aiida
-
     skip_regression = pytest.mark.skip(
-        reason='Workflow regression test is skipped, because aiida-testing is not available')
-    # aiida_version_skip = pytest.mark.skipif(
-    #     aiida.get_version().startswith('2.'),
-    #     reason='Workflow regression test is skipped, because aiida-testing is not compatible with AiiDA 2.0')
+        reason='Workflow regression test is skipped, because aiida-test-cache is not available')
 
     regression_items = [item for item in items if 'regression_test' in item.keywords]
     if not RUN_REGRESSION_TESTS:
         for item in regression_items:
             item.add_marker(skip_regression)
-
-    # for item in regression_items:
-    #     item.add_marker(aiida_version_skip)
 
 
 @pytest.fixture(scope='function')
@@ -370,7 +388,7 @@ def eval_xpath():
     """Return the eval_xpath function"""
 
     def _eval_xpath(node, xpath, list_return=False):
-        from masci_tools.util.xml.common_functions import eval_xpath
+        from pyfleur.util.xml.common_functions import eval_xpath
 
         return eval_xpath(node, xpath, list_return=list_return)
 
@@ -516,7 +534,7 @@ def generate_film_structure():
     def _generate_film_structure():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
-        from masci_tools.util.constants import BOHR_A
+        from pyfleur.util.constants import BOHR_A
         a = 7.497 * BOHR_A
         cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
         structure = StructureData(cell=cell)
@@ -537,7 +555,7 @@ def generate_sym_film_structure():
     def _generate_film_structure():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
-        from masci_tools.util.constants import BOHR_A
+        from pyfleur.util.constants import BOHR_A
         a = 7.497 * BOHR_A
         cell = [[0.7071068 * a, 0.0, 0.0], [0.0, 1.0 * a, 0.0], [0.0, 0.0, 0.7071068 * a]]
         structure = StructureData(cell=cell)
@@ -596,7 +614,7 @@ def generate_structure2():
     def _generate_structure2():
         """Return a `StructureData` representing bulk silicon."""
         from aiida.orm import StructureData
-        from masci_tools.io.common_functions import rel_to_abs
+        from pyfleur.io.common_functions import rel_to_abs
 
         bohr_a_0 = 0.52917721092  # A
         a = 5.167355275190 * bohr_a_0
@@ -674,7 +692,7 @@ def inpgen_local_code(mock_code_factory, request):
 
 
 @pytest.fixture(scope='function')
-def fleur_local_code(mock_code_factory, pytestconfig, request):
+def fleur_local_code(mock_code_factory, request):
     """
     Create or load Fleur code
     """
@@ -692,9 +710,6 @@ def fleur_local_code(mock_code_factory, pytestconfig, request):
                                       'cdn.hdf', 'usage.json', 'cdn*', 'mixing_history*', 'juDFT_times.json',
                                       '*.config', '*.econfig', 'struct*.xsf', 'band.gnu'
                                   ])
-
-    if pytestconfig.getoption('--local-exe-hdf5'):
-        FleurCode.description = 'Local executable with HDF5'
 
     return FleurCode
 
@@ -740,7 +755,12 @@ def import_with_migrate(temp_dir):
         # This is the case for aiida >= 2.0.0
         def _import_with_migrate(filename, import_kwargs=None, try_migration=True):
             from click import echo
-            from aiida.tools.archive import import_archive, get_format
+            from aiida.tools.archive import import_archive
+            try:
+                from aiida.tools.archive import get_format
+            except ImportError:
+                #aiida-core stopped re-exporting it from the package root
+                from aiida.tools.archive.abstract import get_format
             from aiida.common.exceptions import IncompatibleStorageSchema
 
             if import_kwargs is None:
@@ -766,8 +786,9 @@ def import_with_migrate(temp_dir):
 def load_cache(absolute_archive_path):  # pylint: disable=redefined-outer-name
 
     def _load_cache(archive_path):
-        #TODO: private import not good
-        from aiida_testing.archive_cache._utils import load_node_archive  # pylint: disable=import-error
+        #TODO: private import not good; resolved once at import time above so that the
+        #aiida_test_cache / aiida_testing fallback lives in exactly one place
+        load_node_archive = archive_cache_utils.load_node_archive
         full_archive_path = absolute_archive_path(archive_path, overwrite=False)
         # check and load export
         export_exists = os.path.isfile(full_archive_path)

@@ -38,9 +38,10 @@ def test_fleur_default_calcinfo(aiida_profile, fixture_sandbox, generate_calc_jo
     calc_info = generate_calc_job(fixture_sandbox, CALC_ENTRY_POINT, inputs)
     codes_info = calc_info.codes_info
 
-    cmdline_params = ['-minimalOutput', '-wtime', '1']
+    #HDF5 is mandatory, so the HDF5 flags and the HDF5 density are always expected
+    cmdline_params = ['-minimalOutput', '-last_extra', '-no_send', '-wtime', '1']
     local_copy_list = [(fleurinp.uuid, 'inp.xml', 'inp.xml')]
-    retrieve_list = ['cdn1', 'inp.xml', 'out.error', 'out.xml', 'shell.out', 'usage.json']
+    retrieve_list = ['cdn_last.hdf', 'inp.xml', 'out.error', 'out.xml', 'runlog.json', 'shell.out', 'usage.json']
     retrieve_temporary_list = []
 
     # Check the attributes of the returned `CalcInfo`

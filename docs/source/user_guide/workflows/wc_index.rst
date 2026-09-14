@@ -4,57 +4,19 @@ AiiDA-FLEUR WorkChains
 General design
 ++++++++++++++
 
-All of the WorkChains have a similar interface and they share several common input nodes.
+All of the WorkChains share one interface: the same three ways to say what to compute on
+(``structure``, ``fleurinp``, ``remote_data``), the same ``wf_parameters``/``options`` steering
+dicts, the same ``inpxml_changes`` mechanism, the same ``output_<wcname>_wc_para`` result node and
+the same exit-code allocation.
 
-Inputs
-------
+That shared contract is documented in one place:
 
-There is always a ``wf_parameters``:
-:py:class:`~aiida.orm.Dict` node for controlling the workflow behavior.
-It contains all the parameters related to physical aspects of the
-workchain and its content vary between different workchains.
+.. toctree::
+   :maxdepth: 2
 
-.. note::
+   ./using_workflows
 
-    ``inpxml_changes`` key of ``wf_parameters`` exists for most of the workchains.
-    This list can be used to apply any
-    supported change to inp.xml that will be used in calculations. To add a required change,
-    simply append a two-element tuple where the first element is the name of the
-    registration method and the second is a dictionary of inputs for the registration method. For
-    more information about possible registration methods and their inputs see :ref:`fleurinp_mod`.
-    An example:
-
-    .. code-block:: python
-
-        inpxml_changes = [('set_inpchanges', {'change_dict': {'l_noco': False}})]
-
-The other common input is an ``options``: :py:class:`~aiida.orm.Dict` node
-where the technical parameters (AiiDA options) are specified i.e resources, queue name and so on.
-
-Regarding an input crystal structure, it can be set in two ways in the most of the workflows:
-
-    1. Provide a ``structure``: :py:class:`~aiida.orm.StructureData` node
-       and an optional ``calc_parameters``: :py:class:`~aiida.orm.Dict`.
-       It this case an inpgen code node is required. The workflow will call inpgen calculation and
-       create a new FleurinpData that will be used in the workchain.
-    2. Provide a ``fleurinp``: :py:class:`~aiida_fleur.data.fleurinp.FleurinpData` node
-       which contains a complete input for a FLEUR calculation.
-    3. Provide a ``remote_data``: :py:class:`~aiida.orm.RemoteData` and
-       the last charge density and ``inp.xml`` from the previous
-       calculation will be used.
-
-Input for the nested workchains has to be specified via a corresponding namespace. Please,
-refer to the documentation of a particular workchain to see the details.
-
-Outputs
--------
-Most of the workchains return a workflow specific *ParameterData*
-(:py:class:`~aiida.orm.Dict`) node named ``output_name_wc_para`` or simple ``out``
-which contains the main results and some information about the workchain.
-
-There are additional workflow specific input and output nodes, please read the
-documentation of a particular workchain that you are interested in.
-
+Read it first — the pages below document only what is specific to an individual workchain.
 
 Workchain classification
 ++++++++++++++++++++++++

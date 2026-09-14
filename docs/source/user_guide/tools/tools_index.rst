@@ -3,9 +3,8 @@ Tools
 
 here some more information about the tools contained in this package and how to use them.
 
-In general if you are looking for something which does not depend on AiiDA and may not be FLEUR specific, 
-the place to look for is the `masci-tools repository <https://github.com/JuDFTteam/masci-tools>`_ and 
-its `documentation <https://masci-tools.readthedocs.io/en/latest/?badge=latest>`_.
+In general if you are looking for something FLEUR specific which does not depend on AiiDA,
+the place to look for is the `pyfleur repository <https://iffgit.fz-juelich.de/fleur/pyfleur>`_.
 This includes:
 
 - parsers for files

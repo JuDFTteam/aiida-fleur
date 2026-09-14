@@ -44,7 +44,9 @@ INPGEN = OverridableOption('-i',
                            type=types.CodeParamType(entry_point='fleur.inpgen'),
                            default=get_inpgen,
                            show_default=True,
-                           help='A code node or label for an inpgen executable.')
+                           help='A code node or label for an inpgen executable. Used only by '
+                           '`launch inpgen`; the workchains generate their input in-process '
+                           'and ignore it.')
 
 FLEUR = OverridableOption('-f',
                           '--fleur',

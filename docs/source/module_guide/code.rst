@@ -46,6 +46,8 @@ Fleurinp modifier
    :inherited-members:
    :exclude-members: modify_xmlfile
 
+.. _code_wc:
+
 Workflows/Workchains
 ++++++++++++++++++++
 
@@ -53,6 +55,12 @@ Base: Fleur-Base WorkChain
 ----------------------------
 
 .. automodule:: aiida_fleur.workflows.base_fleur
+   :members:
+
+BaseRelax: Fleur-Base-Relax WorkChain
+-------------------------------------
+
+.. automodule:: aiida_fleur.workflows.base_relax
    :members:
 
 SCF: Fleur-Scf WorkChain
@@ -65,12 +73,6 @@ BandDos: Bandstructure WorkChain
 --------------------------------
 
 .. automodule:: aiida_fleur.workflows.banddos
-   :members:
-
-DOS: Density of states WorkChain
----------------------------------
-
-.. automodule:: aiida_fleur.workflows.dos
    :members:
 
 EOS: Calculate a lattice constant
@@ -137,6 +139,42 @@ CFCoeff: Calculation of 4f crystal field coefficients
 ------------------------------------------------------
 
 .. automodule:: aiida_fleur.workflows.cfcoeff
+   :members:
+
+Jij: Calculation of the full Jij exchange tensor
+-------------------------------------------------
+
+.. automodule:: aiida_fleur.workflows.jij
+   :members:
+
+RelaxTorque: Spin structure optimization
+-----------------------------------------
+
+.. automodule:: aiida_fleur.workflows.relax_torque
+   :members:
+
+Strain: Calculation of the deformation potential
+-------------------------------------------------
+
+.. automodule:: aiida_fleur.workflows.strain
+   :members:
+
+CutoffConv: Kmax, k-point and smearing convergence
+---------------------------------------------------
+
+.. automodule:: aiida_fleur.workflows.cutoff_conv
+   :members:
+
+FSM: Fixed spin moment calculations
+------------------------------------
+
+.. automodule:: aiida_fleur.workflows.fsm
+   :members:
+
+CreateMagnetic: Create a relaxed magnetic film
+-----------------------------------------------
+
+.. automodule:: aiida_fleur.workflows.create_magnetic_film
    :members:
 
 
