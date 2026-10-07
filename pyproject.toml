@@ -43,18 +43,19 @@ graphs = [
         "masci-tools[bokeh-plots]"
     ]
 docs = [
-    "sphinx~=4.0",
+    "sphinx~=5.0",
     "sphinx_rtd_theme",
     "sphinx-click",
-    "myst-parser~=0.15.2"
+    "myst-parser==0.18.1"
     ]
 testing = [
     "pytest>=2.9",
     "pytest-timeout",
-    "pytest-cov~=3.0",  #For reading configuration from pyproject.toml
+    "pytest-cov~=3.0",
     "pytest-mpl>=0.12",
     "pgtest",
-    "pytest-regressions>=1.0"
+    "pytest-regressions>=1.0",
+    "aiida-test-cache==0.0.1",
     ]
 pre-commit = [
     "pre-commit>=2.6.0",

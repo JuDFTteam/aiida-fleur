@@ -12,14 +12,14 @@ from pathlib import Path
 
 CONFTEST_LOCATION = Path(__file__).parent.resolve()
 
-# aiida_testing.mock_codes in development, not yet a stable dependency
+# aiida-test-cache package is in development, not yet a stable dependency
 # therefore we try to import it and if it fails we skip tests with it
 
 RUN_REGRESSION_TESTS = True
 try:
-    import aiida_testing
+    import aiida_test_cache
 except ImportError:
-    print('AiiDA-testing not in path. Running without regression tests for Workchains and CalcJobs.')
+    print('aiida-test-cache package not installed. Running without regression tests for Workchains and CalcJobs.')
     RUN_REGRESSION_TESTS = False
 
 pytest_plugins = ['aiida.manage.tests.pytest_fixtures', 'masci_tools.testing.bokeh']
@@ -36,29 +36,23 @@ def pytest_configure(config):
     We make them all lowercaps as convention
     """
     config.addinivalue_line('markers',
-                            'regression_test: test using the aiida-testing plugin for workflow regression tests')
+                            'regression_test: test using the aiida-test-cache plugin for workflow regression tests')
 
 
 def pytest_collection_modifyitems(session, config, items):
     """After test collection modify collection.
 
-    Skip regression test if aiida-tesing is not there
+    Skip regression tests if aiida-test-cache is not there
     """
     import aiida
 
     skip_regression = pytest.mark.skip(
-        reason='Workflow regression test is skipped, because aiida-testing is not available')
-    # aiida_version_skip = pytest.mark.skipif(
-    #     aiida.get_version().startswith('2.'),
-    #     reason='Workflow regression test is skipped, because aiida-testing is not compatible with AiiDA 2.0')
+        reason='Workflow regression test is skipped, because aiida-test-cache is not available')
 
     regression_items = [item for item in items if 'regression_test' in item.keywords]
     if not RUN_REGRESSION_TESTS:
         for item in regression_items:
             item.add_marker(skip_regression)
-
-    # for item in regression_items:
-    #     item.add_marker(aiida_version_skip)
 
 
 @pytest.fixture(scope='function')
@@ -767,7 +761,7 @@ def load_cache(absolute_archive_path):  # pylint: disable=redefined-outer-name
 
     def _load_cache(archive_path):
         #TODO: private import not good
-        from aiida_testing.archive_cache._utils import load_node_archive  # pylint: disable=import-error
+        from aiida_test_cache.archive_cache._utils import load_node_archive  # pylint: disable=import-error
         full_archive_path = absolute_archive_path(archive_path, overwrite=False)
         # check and load export
         export_exists = os.path.isfile(full_archive_path)
