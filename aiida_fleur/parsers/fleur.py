@@ -114,6 +114,10 @@ class FleurParser(Parser):
                     f"Expected file '{file}' not found in retrieved folder, it was probably not created by fleur")
 
         # check if something was written to the error file
+        # (initialized here so the no-output-at-all case, e.g. the remote job
+        # was never actually run, doesn't hit an UnboundLocalError below)
+        errorfile = None
+        error_file_lines = ''
         if FleurCalculation._ERROR_FILE_NAME in list_of_files:
             errorfile = FleurCalculation._ERROR_FILE_NAME
             # read
